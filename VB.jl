@@ -14,6 +14,7 @@ include("types.jl")
 
 export VBModel, Factor, Node, RandomNode, ConstantNode,
     E, Elog, var,
-    LogNormalFactor, value
+    LogNormalFactor, value,
+    register
 
 end  # module

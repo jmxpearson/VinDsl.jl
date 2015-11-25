@@ -22,8 +22,22 @@ end
 
 convert(::Type{Node}, x::Array) = ConstantNode(x, Factor[])
 
-# bind a factor and a node in the graph
-bind(n::Node, f::Factor) = push!(n.factors, f)
+# register a factor with its associated nodes in the graph
+function register(f::Factor) 
+    for var in fieldnames(f)
+        n = getfield(f, var)
+        push!(n.factors, f)
+    end
+end
+
+
+# define some factors
+type LogNormalFactor <: Factor
+    x::Node
+    μ::Node
+    τ::Node
+end
+
 
 # define an expectation method on Nodes
 "Calculates the expected value of a Node x."
@@ -37,13 +51,6 @@ var(x::ConstantNode) = zeros(x.data)
 "Calculates the expected value of the log of a Node x."
 Elog(x::ConstantNode) = map(log, x.data)
 
-
-# define some factors
-type LogNormalFactor 
-    x::Node
-    μ::Node
-    τ::Node
-end
 
 value(f::LogNormalFactor) = sum(-(1/2) * (E(f.τ) .* ( var(f.x) + var(f.μ) + 
     (E(f.x) - E(f.μ)).^2 ) + log(2π) + Elog(f.τ)))
