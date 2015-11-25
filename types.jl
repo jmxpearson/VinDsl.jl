@@ -32,6 +32,10 @@ end
 
 
 # define some factors
+type EntropyFactor <: Factor
+    x::RandomNode
+end
+
 type LogNormalFactor <: Factor
     x::Node
     μ::Node
@@ -48,9 +52,15 @@ E(x::ConstantNode) = x.data
 var(x::RandomNode) = map(var, x.data)
 var(x::ConstantNode) = zeros(x.data)
 
+"Calculates the entropy of a Node x."
+entropy(x::ConstantNode) = zeros(x.data)
+entropy(x::RandomNode) = map(entropy, x.data)
+
 "Calculates the expected value of the log of a Node x."
 Elog(x::ConstantNode) = map(log, x.data)
 
 
-value(f::LogNormalFactor) = sum(-(1/2) * (E(f.τ) .* ( var(f.x) + var(f.μ) + 
+value(f::LogNormalFactor) = -(1/2) * sum((E(f.τ) .* ( var(f.x) + var(f.μ) + 
     (E(f.x) - E(f.μ)).^2 ) + log(2π) + Elog(f.τ)))
+
+value(f::EntropyFactor) = sum(entropy(f.x))

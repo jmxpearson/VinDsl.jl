@@ -7,14 +7,15 @@ module VB
 
 using Distributions
 import Base.convert
-import Distributions.var
+import Distributions: var, entropy
 
 # data types, including VBModel, Factor, and Node
 include("types.jl")
 
-export VBModel, Factor, Node, RandomNode, ConstantNode,
-    E, Elog, var,
-    LogNormalFactor, value,
-    register
+export VBModel, 
+    Factor, EntropyFactor, LogNormalFactor,
+    Node, RandomNode, ConstantNode,
+    register,
+    E, Elog, var, value
 
 end  # module
