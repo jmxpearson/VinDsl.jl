@@ -7,6 +7,7 @@ module VB
 
 using Distributions
 import Base.convert
+import Distributions.var
 
 # data types, including VBModel, Factor, and Node
 include("types.jl")
