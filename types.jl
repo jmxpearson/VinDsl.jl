@@ -44,22 +44,22 @@ end
 
 
 # define an expectation method on Nodes
-"Calculates the expected value of a Node x."
+"Calculate the expected value of a Node x."
 E(x::RandomNode) = map(mean, x.data)
 E(x::ConstantNode) = x.data
 
-"Calculates the variance of a Node x."
+"Calculate the variance of a Node x."
 var(x::RandomNode) = map(var, x.data)
 var(x::ConstantNode) = zeros(x.data)
 
-"Calculates the entropy of a Node x."
+"Calculate the entropy of a Node x."
 entropy(x::ConstantNode) = zeros(x.data)
 entropy(x::RandomNode) = map(entropy, x.data)
 
-"Calculates the expected value of the log of a Node x."
+"Calculate the expected value of the log of a Node x."
 Elog(x::ConstantNode) = map(log, x.data)
 
-
+"Calculate the contribution of a Factor f to the objective function."
 value(f::LogNormalFactor) = -(1/2) * sum((E(f.τ) .* ( var(f.x) + var(f.μ) + 
     (E(f.x) - E(f.μ)).^2 ) + log(2π) + Elog(f.τ)))
 
