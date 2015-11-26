@@ -11,3 +11,8 @@ function naturals(d::Gamma)
     a, θ = params(d)
     (a, 1/θ)
 end
+
+function Elog(d::Gamma)
+    a, θ = params(d)
+    digamma(a) + log(θ)
+end
