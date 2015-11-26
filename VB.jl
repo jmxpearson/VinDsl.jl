@@ -17,6 +17,6 @@ export VBModel,
     Factor, EntropyFactor, LogNormalFactor, LogGammaFactor,
     Node, RandomNode, ConstantNode,
     register,
-    E, Elog, var, value, naturals
+    E, Elog, Eloggamma, var, value, naturals
 
 end  # module

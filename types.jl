@@ -8,30 +8,41 @@ abstract Node
 
 "Defines a Variational Bayes model."
 type VBModel  
-    nodes::Vector{Node}
+    nodes::Dict{Symbol, Node}
     factors::Vector{Factor}
+
+    VBModel(nodes, factors) = begin
+        for f in factors
+            register(f)
+        end
+        new(nodes, factors)
+    end
 end
 
 "Node corresponding to a collection of random variables."
 type RandomNode{D <: Distribution, N} <: Node
     data::Array{D, N}
-    factors::Vector{Factor}
+
+    # factormap includes all factors using this node, along 
+    # with the field the node is bound to in that factor
+    factormap::Dict{Factor, Symbol}
 end
-RandomNode{D <: Distribution}(d::Type{D}, pars...) = RandomNode(map(d, pars...), Factor[])
+
+RandomNode{D <: Distribution}(d::Type{D}, pars...) = RandomNode(map(d, pars...), Dict{Factor, Symbol}())
 
 type ConstantNode{T <: Number, N} <: Node
     data::Array{T, N}
-    factors::Vector{Factor}
+    factormap::Dict{Factor, Symbol}
 end
 
-convert(::Type{Node}, x::Array) = ConstantNode(x, Factor[])
+convert(::Type{Node}, x::Array) = ConstantNode(x, Dict{Factor, Symbol}())
 
 # register a factor with its associated nodes in the graph
 function register(f::Factor) 
     for var in fieldnames(f)
         n = getfield(f, var)
         if isa(n, RandomNode)
-            push!(n.factors, f)
+            push!(n.factormap, f => var)
         end
     end
 end
@@ -71,6 +82,7 @@ entropy(x::RandomNode) = map(entropy, x.data)
 Elog(x::ConstantNode) = map(log, x.data)
 Elog(x::RandomNode) = map(Elog, x.data)
 
+doc"Calculate the expected value of $\log \Gamma(x).$"
 Eloggamma(x::ConstantNode) = map(lgamma, x.data)
 
 "Calculate the contribution of a Factor f to the objective function."
