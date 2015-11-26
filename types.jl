@@ -97,3 +97,18 @@ value(f::EntropyFactor) = sum(entropy(f.x))
 "Return natural parameters from an exponential family Node x."
 naturals(x::RandomNode) = map(naturals, x.data)
 
+"Return natural parameters from a Factor f viewed as a distribution for 
+a given symbol. The last parameter is a type check for conjugacy."
+naturals(f::LogNormalFactor, ::Type{Val{:x}}, ::RandomNode{Normal}) = begin
+    μ, τ = E(f.μ), E(f.τ)
+    (μ .* τ, -τ/2)
+end
+naturals(f::LogNormalFactor, ::Type{Val{:μ}}, ::RandomNode{Normal}) = begin
+    x, τ = E(f.x), E(f.τ)
+    (x .* τ, -τ/2)
+end
+naturals(f::LogNormalFactor, ::Type{Val{:τ}}, ::RandomNode{Gamma}) = begin
+    v = var(f.x) + var(f.μ) + (E(f.x) - E(f.μ)).^2
+    (1/2, v/2)
+end
+
