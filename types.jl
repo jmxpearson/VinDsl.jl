@@ -44,10 +44,15 @@ end
 
 type LogNormalFactor <: Factor
     x::Node
-    μ::Node
-    τ::Node
+    μ::Node  # mean
+    τ::Node  # precision
 end
 
+type LogGammaFactor <: Factor
+    x::Node
+    α::Node  # shape
+    β::Node  # rate
+end
 
 # define an expectation method on Nodes
 "Calculate the expected value of a Node x."
@@ -64,12 +69,19 @@ entropy(x::RandomNode) = map(entropy, x.data)
 
 "Calculate the expected value of the log of a Node x."
 Elog(x::ConstantNode) = map(log, x.data)
+Elog(x::RandomNode) = map(Elog, x.data)
+
+Eloggamma(x::ConstantNode) = map(lgamma, x.data)
 
 "Calculate the contribution of a Factor f to the objective function."
 value(f::LogNormalFactor) = -(1/2) * sum((E(f.τ) .* ( var(f.x) + var(f.μ) + 
     (E(f.x) - E(f.μ)).^2 ) + log(2π) + Elog(f.τ)))
 
+value(f::LogGammaFactor) = sum((E(f.α) - 1) .* E(f.x) - E(f.β) .* E(f.x) + 
+    E(f.α) .* E(f.β) - Eloggamma(f.α))
+
 value(f::EntropyFactor) = sum(entropy(f.x))
 
 "Return natural parameters from an exponential family Node x."
 naturals(x::RandomNode) = map(naturals, x.data)
+
