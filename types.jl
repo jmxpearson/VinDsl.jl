@@ -1,12 +1,16 @@
 # let's define some types
 
-abstract VBModel  
-
 "Defines a factor, a term in the variational objective."
 abstract Factor
 
 "Defines a node (variable) in the model."
 abstract Node
+
+"Defines a Variational Bayes model."
+type VBModel  
+    nodes::Vector{Node}
+    factors::Vector{Factor}
+end
 
 "Node corresponding to a collection of random variables."
 type RandomNode{D <: Distribution, N} <: Node
@@ -26,7 +30,9 @@ convert(::Type{Node}, x::Array) = ConstantNode(x, Factor[])
 function register(f::Factor) 
     for var in fieldnames(f)
         n = getfield(f, var)
-        push!(n.factors, f)
+        if isa(n, RandomNode)
+            push!(n.factors, f)
+        end
     end
 end
 
@@ -64,3 +70,6 @@ value(f::LogNormalFactor) = -(1/2) * sum((E(f.τ) .* ( var(f.x) + var(f.μ) +
     (E(f.x) - E(f.μ)).^2 ) + log(2π) + Elog(f.τ)))
 
 value(f::EntropyFactor) = sum(entropy(f.x))
+
+"Return natural parameters from an exponential family Node x."
+naturals(x::RandomNode) = map(naturals, x.data)

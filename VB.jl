@@ -10,12 +10,13 @@ import Base.convert
 import Distributions: var, entropy
 
 # data types, including VBModel, Factor, and Node
+include("expfam.jl")
 include("types.jl")
 
 export VBModel, 
     Factor, EntropyFactor, LogNormalFactor,
     Node, RandomNode, ConstantNode,
     register,
-    E, Elog, var, value
+    E, Elog, var, value, naturals
 
 end  # module
