@@ -14,7 +14,7 @@ include("expfam.jl")
 include("types.jl")
 
 export VBModel, 
-    Factor, EntropyFactor, LogNormalFactor,
+    Factor, EntropyFactor, LogNormalFactor, LogGammaFactor,
     Node, RandomNode, ConstantNode,
     register,
     E, Elog, var, value, naturals
