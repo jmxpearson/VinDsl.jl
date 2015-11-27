@@ -16,7 +16,7 @@ include("types.jl")
 export VBModel, 
     Factor, EntropyFactor, LogNormalFactor, LogGammaFactor,
     Node, RandomNode, ConstantNode,
-    register,
+    register, check_conjugate,
     E, Elog, Eloggamma, var, value, naturals
 
 end  # module

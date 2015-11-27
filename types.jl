@@ -47,6 +47,11 @@ function register(f::Factor)
     end
 end
 
+function check_conjugate(n::RandomNode)
+    is_conj = Bool[method_exists(naturals, Tuple{typeof(f), Type{Val{s}}, typeof(n)}) for (f, s) in n.factormap]
+    all(is_conj)
+end
+
 
 # define some factors
 type EntropyFactor <: Factor
@@ -110,5 +115,11 @@ end
 naturals(f::LogNormalFactor, ::Type{Val{:τ}}, ::RandomNode{Gamma}) = begin
     v = var(f.x) + var(f.μ) + (E(f.x) - E(f.μ)).^2
     (1/2, v/2)
+end
+naturals(f::LogGammaFactor, ::Type{Val{:x}}, ::RandomNode{Gamma}) = (E(f.α) - 1, -E(f.β))
+
+"Update a RandomNode n."
+update(n::RandomNode, ::Type{Val{:conjugate}}) = begin
+    #foo
 end
 
