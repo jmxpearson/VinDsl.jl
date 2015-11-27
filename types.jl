@@ -119,7 +119,7 @@ end
 naturals(f::LogGammaFactor, ::Type{Val{:x}}, ::RandomNode{Gamma}) = (E(f.α) - 1, -E(f.β))
 
 "Update a RandomNode n."
-update!{D}(n::RandomNode{D}, ::Type{Val{:conjugate}}) = begin
+function update!{D}(n::RandomNode{D}, ::Type{Val{:conjugate}})
     # get natural parameter vectors for each factor
     nlist = [naturals(f, Val{s}, n) for (f, s) in n.factormap]
 
