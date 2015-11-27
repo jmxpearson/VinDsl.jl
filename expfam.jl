@@ -12,7 +12,18 @@ function naturals(d::Gamma)
     (a, 1/θ)
 end
 
+function naturals_to_params(η, ::Type{Normal})
+    σ = sqrt(-1/(2η[2]))
+    (η[1] * σ, σ)
+end
+
+function naturals_to_params(η, ::Type{Gamma})
+    (η[1] + 1, -η[2])
+end
+
 function Elog(d::Gamma)
     a, θ = params(d)
     digamma(a) + log(θ)
 end
+
+
