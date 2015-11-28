@@ -5,7 +5,7 @@ abstract Factor
 
 # a node is either a random variable or a constant
 # constant is not necessarily scalar (e.g., Multivariate Normal)
-typealias Node Union{Distribution, Array, Number}
+typealias Node Distribution
 typealias NodeArray{N} Array{Node, N}
 
 # define outer constructor for making node arrays
@@ -54,28 +54,28 @@ type EntropyFactor <: Factor
 end
 
 type LogNormalFactor <: Factor
-    x::Node
-    μ::Node  # mean
-    τ::Node  # precision
+    x::Union{Node, Float64}
+    μ::Union{Node, Float64}  # mean
+    τ::Union{Node, Float64}  # precision
 end
 
 type LogGammaFactor <: Factor
-    x::Node
-    α::Node  # shape
-    β::Node  # rate
+    x::Union{Node, Float64}
+    α::Union{Node, Float64}  # shape
+    β::Union{Node, Float64}  # rate
 end
 
-# define an expectation method on Nodes
+# define an expectation method on Distributions
 "Calculate the expected value of a Node x."
 E(x::Distribution) = mean(x)
 
-# Now, define functions for nonrandom nodes.
+# Define functions for nonrandom nodes.
 # In each case, a specialized method is already defined for distributions.
-E(x::Node) = x
-var(x::Node) = zero(x)
-entropy(x::Node) = zero(x)
-Elog(x::Node) = log(x)
-Eloggamma(x::Node) = lgamma(x)
+E(x) = x
+var(x) = zero(x)
+entropy(x) = zero(x)
+Elog(x) = log(x)
+Eloggamma(x) = lgamma(x)
 
 "Calculate the contribution of a Factor f to the objective function."
 value(f::LogNormalFactor) = -(1/2) * ((E(f.τ) * ( var(f.x) + var(f.μ) + 
