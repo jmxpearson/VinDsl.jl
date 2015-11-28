@@ -21,6 +21,8 @@ function naturals_to_params(η, ::Type{Gamma})
     (η[1] + 1, -η[2])
 end
 
+naturals_to_params(η, d::Distribution) = naturals_to_params(η, typeof(d))
+
 function Elog(d::Gamma)
     a, θ = params(d)
     digamma(a) + log(θ)
