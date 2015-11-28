@@ -6,7 +6,7 @@ objective are connected to nodes defining variables.
 module VB
 
 using Distributions
-import Base.convert
+import Base: convert, call
 import Distributions: var, entropy
 
 # data types, including VBModel, Factor, and Node
@@ -15,7 +15,7 @@ include("types.jl")
 
 export VBModel, 
     Factor, EntropyFactor, LogNormalFactor, LogGammaFactor,
-    Node, RandomNode, ConstantNode,
+    Node, NodeArray,
     register, check_conjugate, update!,
     E, Elog, Eloggamma, var, value, naturals
 
