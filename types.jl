@@ -3,105 +3,158 @@
 "Defines a factor, a term in the variational objective."
 abstract Factor
 
-# a node is either a random variable or a constant
-# constant is not necessarily scalar (e.g., Multivariate Normal)
-typealias Node Distribution
-typealias NodeArray{N} Array{Node, N}
+immutable Node{D <: Distribution}
+    name::Symbol
+    indices::Vector{Symbol}
+    data::Array{D}
 
-# define outer constructor for making node arrays
-call{D <: Distribution}(::Type{NodeArray}, ::Type{D}, pars...) = map(D, pars...)
-
-"Defines a Variational Bayes model."
-type VBModel  
-    # nodes maps symbols to the nodes/groups of nodes associated with them
-    nodes::Dict{Symbol, Union{Array{Node}, Node}}
-
-    # all factors in the graph
-    factors::Vector{Factor}
-
-    # dictionary linking all random variables to a list of tuples
-    # each tuple gives a factor and the name of the random variable
-    # in that factor
-    graph::Dict{Distribution, Vector{Tuple{Factor, Symbol}}}
-
-    VBModel(nodes, factors) = begin
-        for f in factors
-            register(f)
-        end
-        new(nodes, factors)
+    function Node(name, indices, data)
+        @assert ndims(data) == length(indices) "Indices do not match data shape."
+        new(name, indices, data)
     end
 end
+Node{D <: Distribution}(name::Symbol, indices::Vector{Symbol}, ::Type{D}, 
+    pars...) = Node{D}(name, indices, map(D, pars...))
 
+immutable FactorInds
+    indices::Vector{Symbol}
+    ranges::Vector{Int}
+    indexmap::Dict{Symbol, Vector{Int}}
+end
 
-# register a factor with its associated nodes in the graph
-function register(f::Factor, m::VBModel) 
-    for var in fieldnames(f)
-        n = getfield(f, var)
-        if isa(n, Distribution)
-            push!(m.graph, n => (f, var))
+"""
+Given a list of nodes, return a FactorInds type variable that calculates
+the unique indices in the nodes, their ranges, and the map from node symbols
+to integer indices.
+"""
+function get_structure(nodes::Vector{Node})
+    # first, get all unique indices
+    allinds = union([n.indices for n in nodes]...)
+
+    # now, map these indices to consecutive integers
+    idx_to_int = [idx => idxnum for (idxnum, idx) in enumerate(allinds)]
+
+    # initialize Dicts that will hold maps from index symbols to their 
+    # sizes in various nodes (for checking) and from node names to 
+    # the (integer) indices they contain
+    idxdict = Dict{Symbol, Vector{Int}}([(idx => []) for idx in allinds])
+    node_to_int_inds = Dict{Symbol, Vector{Int}}([(n.name => []) for n in nodes])
+
+    # now loop over nodes, building these dicts
+    for n in nodes
+        for (d, idx) in enumerate(n.indices)
+            push!(idxdict[idx], size(n.data, d))
+            push!(node_to_int_inds[n.name], idx_to_int[idx])
         end
     end
+
+    # lastly, check that the index ranges are the same for every node in 
+    # which an index appears; build a vector of index ranges
+    idxsizes = Integer[]
+    for (idx, lengths) in idxdict
+        if !all(x -> x == lengths[1], lengths)
+            error("Index length mismatch in index $idx.")
+        else
+            push!(idxsizes, lengths[1])
+        end
+    end
+
+    FactorInds(allinds, idxsizes, node_to_int_inds)
 end
 
-function check_conjugate(n::Distribution, m::VBModel)
-    is_conj = Bool[method_exists(naturals, Tuple{typeof(f), Type{Val{s}}, typeof(n)}) for (f, s) in m.graph[n]]
-    all(is_conj)
-end
+# "Defines a Variational Bayes model."
+# type VBModel  
+#     # nodes maps symbols to the nodes/groups of nodes associated with them
+#     nodes::Dict{Symbol, Node}
 
-# define some factors
-type EntropyFactor <: Factor
-    x::Node
-end
+#     # all factors in the graph
+#     factors::Vector{Factor}
 
-type LogNormalFactor <: Factor
-    x::Union{Node, Float64}
-    μ::Union{Node, Float64}  # mean
-    τ::Union{Node, Float64}  # precision
-end
+#     # dictionary linking all random variables to a list of tuples
+#     # each tuple gives a factor and the name of the random variable
+#     # in that factor
+#     graph::Dict{Distribution, Vector{Tuple{Factor, Symbol}}}
 
-type LogGammaFactor <: Factor
-    x::Union{Node, Float64}
-    α::Union{Node, Float64}  # shape
-    β::Union{Node, Float64}  # rate
-end
+#     VBModel(nodes, factors) = begin
+#         for f in factors
+#             register(f)
+#         end
+#         new(nodes, factors)
+#     end
+# end
 
-# define an expectation method on Distributions
-"Calculate the expected value of a Node x."
-E(x::Distribution) = mean(x)
+# function getwidth(nodes::Vector{Node})
+#     allinds = Set([n.indices for n in nodes])
+# end
 
-# Define functions for nonrandom nodes.
-# In each case, a specialized method is already defined for distributions.
-E(x) = x
-var(x) = zero(x)
-entropy(x) = zero(x)
-Elog(x) = log(x)
-Eloggamma(x) = lgamma(x)
+# # register a factor with its associated nodes in the graph
+# function register(f::Factor, m::VBModel) 
+#     for var in fieldnames(f)
+#         n = getfield(f, var)
+#         if isa(n, Distribution)
+#             push!(m.graph, n => (f, var))
+#         end
+#     end
+# end
 
-"Calculate the contribution of a Factor f to the objective function."
-value(f::LogNormalFactor) = -(1/2) * ((E(f.τ) * ( var(f.x) + var(f.μ) + 
-    (E(f.x) - E(f.μ))^2 ) + log(2π) + Elog(f.τ)))
+# function check_conjugate(n::Distribution, m::VBModel)
+#     is_conj = Bool[method_exists(naturals, Tuple{typeof(f), Type{Val{s}}, typeof(n)}) for (f, s) in m.graph[n]]
+#     all(is_conj)
+# end
 
-value(f::LogGammaFactor) = (E(f.α) - 1) * E(f.x) - E(f.β) * E(f.x) + 
-    E(f.α) * E(f.β) - Eloggamma(f.α)
+# # define some factors
+# type EntropyFactor <: Factor
+#     x::Node
+# end
 
-value(f::EntropyFactor) = entropy(f.x)
+# type LogNormalFactor <: Factor
+#     x::Union{Node, Float64}
+#     μ::Union{Node, Float64}  # mean
+#     τ::Union{Node, Float64}  # precision
+# end
+
+# type LogGammaFactor <: Factor
+#     x::Union{Node, Float64}
+#     α::Union{Node, Float64}  # shape
+#     β::Union{Node, Float64}  # rate
+# end
+
+# # define an expectation method on Distributions
+# "Calculate the expected value of a Node x."
+# E(x::Distribution) = mean(x)
+
+# # Define functions for nonrandom nodes.
+# # In each case, a specialized method is already defined for distributions.
+# E(x) = x
+# entropy(x) = zero(x)
+# Elog(x) = log(x)
+# Eloggamma(x) = lgamma(x)
+
+# "Calculate the contribution of a Factor f to the objective function."
+# value(f::LogNormalFactor) = -(1/2) * ((E(f.τ) * ( var(f.x) + var(f.μ) + 
+#     (E(f.x) - E(f.μ))^2 ) + log(2π) + Elog(f.τ)))
+
+# value(f::LogGammaFactor) = (E(f.α) - 1) * E(f.x) - E(f.β) * E(f.x) + 
+#     E(f.α) * E(f.β) - Eloggamma(f.α)
+
+# value(f::EntropyFactor) = entropy(f.x)
 
 
-"Return natural parameters from a Factor f viewed as a distribution for 
-a given symbol. The last parameter is a type check for conjugacy."
-naturals(f::LogNormalFactor, ::Type{Val{:x}}, ::Normal) = begin
-    μ, τ = E(f.μ), E(f.τ)
-    (μ .* τ, -τ/2)
-end
-naturals(f::LogNormalFactor, ::Type{Val{:μ}}, ::Normal) = begin
-    x, τ = E(f.x), E(f.τ)
-    (x .* τ, -τ/2)
-end
-naturals(f::LogNormalFactor, ::Type{Val{:τ}}, ::Gamma) = begin
-    v = var(f.x) + var(f.μ) + (E(f.x) - E(f.μ)).^2
-    (1/2, v/2)
-end
-naturals(f::LogGammaFactor, ::Type{Val{:x}}, ::Gamma) = (E(f.α) - 1, -E(f.β))
+# "Return natural parameters from a Factor f viewed as a distribution for 
+# a given symbol. The last parameter is a type check for conjugacy."
+# naturals(f::LogNormalFactor, ::Type{Val{:x}}, ::Normal) = begin
+#     μ, τ = E(f.μ), E(f.τ)
+#     (μ .* τ, -τ/2)
+# end
+# naturals(f::LogNormalFactor, ::Type{Val{:μ}}, ::Normal) = begin
+#     x, τ = E(f.x), E(f.τ)
+#     (x .* τ, -τ/2)
+# end
+# naturals(f::LogNormalFactor, ::Type{Val{:τ}}, ::Gamma) = begin
+#     v = var(f.x) + var(f.μ) + (E(f.x) - E(f.μ)).^2
+#     (1/2, v/2)
+# end
+# naturals(f::LogGammaFactor, ::Type{Val{:x}}, ::Gamma) = (E(f.α) - 1, -E(f.β))
 
 # "Update a RandomNode n."
 # function update!{D}(n::RandomNode{D}, ::Type{Val{:conjugate}})
