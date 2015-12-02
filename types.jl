@@ -135,6 +135,22 @@ macro wrapvars(vars, ex, indtup)
     esc(_wrapvars(vars, ex, indtup))
 end
 
+"""
+Calculate the value of a factor. Relies on value methods taking factor 
+types as arguments.
+"""
+@generated function value{N}(f::Factor{N})
+    vars = fieldnames(f)
+    val_expr = value(f)
+    quote
+        v = 0
+        @nloops $N i d -> f.inds.ranges[d] begin
+            v += @wrapvars $vars $val_expr (@ntuple $N i)
+        end
+        v
+    end
+end
+
 # "Defines a Variational Bayes model."
 # type VBModel  
 #     # nodes maps symbols to the nodes/groups of nodes associated with them
@@ -193,20 +209,21 @@ end
 #     β::Union{Node, Float64}  # rate
 # end
 
-# # define an expectation method on Distributions
-# "Calculate the expected value of a Node x."
-# E(x::Distribution) = mean(x)
+# define an expectation method on Distributions
+"Calculate the expected value of a Node x."
+E(x) = x
+E(x::Distribution) = mean(x)
 
-# # Define functions for nonrandom nodes.
-# # In each case, a specialized method is already defined for distributions.
-# E(x) = x
-# entropy(x) = zero(x)
-# Elog(x) = log(x)
-# Eloggamma(x) = lgamma(x)
+# Define functions for nonrandom nodes.
+# In each case, a specialized method is already defined for distributions.
+entropy(x) = zero(x)
+Elog(x) = log(x)
+Eloggamma(x) = lgamma(x)
 
 # "Calculate the contribution of a Factor f to the objective function."
-# value(f::LogNormalFactor) = -(1/2) * ((E(f.τ) * ( var(f.x) + var(f.μ) + 
-#     (E(f.x) - E(f.μ))^2 ) + log(2π) + Elog(f.τ)))
+value{N}(::Type{LogNormalFactor{N}}) = quote
+    -(1/2) * ((E(τ) * ( var(x) + var(μ) + (E(x) - E(μ))^2 ) + log(2π) + Elog(τ)))
+end
 
 # value(f::LogGammaFactor) = (E(f.α) - 1) * E(f.x) - E(f.β) * E(f.x) + 
 #     E(f.α) * E(f.β) - Eloggamma(f.α)
