@@ -44,6 +44,10 @@ macro factor(ftype, nodes...)
     esc(ex)
 end
 
+
+###################################################
+# Functions to deal with factor structure
+###################################################
 """
 Given a list of nodes, return a FactorInds type variable that calculates
 the unique indices in the nodes, their ranges, and the map from node symbols
@@ -84,10 +88,16 @@ function get_structure(nodes...)
     FactorInds(allinds, idxsizes, node_to_int_inds)
 end
 
-# macro factor(ftype, nodes...)
-#     finds = get_structure(nodes...)
-#     :($ftype(finds, nodes...))
-# end
+"""
+Given a factor, a symbol naming a node in that factor, and a tuple of 
+index ranges for the factor as a whole, return the elements of node
+corresponding to the global range of indices.
+"""
+function project(f::Factor, name::Symbol, rangetuple)
+    node = getfield(f, name)
+    node_inds = f.inds.indexmap[name]
+    node.data[rangetuple[node_inds]...]
+end
 
 # "Defines a Variational Bayes model."
 # type VBModel  

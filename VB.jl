@@ -14,10 +14,10 @@ include("expfam.jl")
 include("types.jl")
 
 export VBModel, 
-    Factor, FactorInds, @factor,
+    Factor, FactorInds, @factor, get_structure, project,
     EntropyFactor, LogNormalFactor, LogGammaFactor,
     Node, RandomNode, ConstantNode,
-    register, check_conjugate, update!, get_structure,
+    register, check_conjugate, update!, 
     E, Elog, Eloggamma, var, value, naturals
 
 end  # module
