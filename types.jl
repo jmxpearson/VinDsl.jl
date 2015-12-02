@@ -27,16 +27,21 @@ ConstantNode(x::Number) = ConstantNode(gensym("const"), [:scalar], [x])
 
 #################### Factor #######################
 "Defines a factor, a term in the variational objective."
-abstract Factor
-
-macro factor(ftype, nodes...)
-    :($ftype(get_structure($(nodes...)), $(nodes...)))
-end
+abstract Factor{N}
 
 immutable FactorInds
     indices::Vector{Symbol}
     ranges::Vector{Int}
     indexmap::Dict{Symbol, Vector{Int}}
+end
+
+
+macro factor(ftype, nodes...)
+    local ex = quote
+        fi = get_structure($(nodes...))
+        $ftype{length(fi.indices)}(fi, $(nodes...))
+    end
+    esc(ex)
 end
 
 """
@@ -129,11 +134,11 @@ end
 #     x::Node
 # end
 
-immutable LogNormalFactor <: Factor
+immutable LogNormalFactor{N} <: Factor{N}
     inds::FactorInds
-    x::Union{Node, Array{Float64}}
-    μ::Union{Node, Array{Float64}}  # mean
-    τ::Union{Node, Array{Float64}}  # precision
+    x::Node
+    μ::Node  # mean
+    τ::Node  # precision
 end
 
 # type LogGammaFactor <: Factor
