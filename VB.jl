@@ -8,13 +8,14 @@ module VB
 using Distributions
 import Base: convert, call
 import Distributions: var, entropy
+using Base.Cartesian
 
 # data types, including VBModel, Factor, and Node
 include("expfam.jl")
 include("types.jl")
 
 export VBModel, 
-    Factor, FactorInds, @factor, get_structure, project,
+    Factor, FactorInds, @factor, get_structure, project, @wrapvars,
     EntropyFactor, LogNormalFactor, LogGammaFactor,
     Node, RandomNode, ConstantNode,
     register, check_conjugate, update!, 

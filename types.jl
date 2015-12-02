@@ -99,6 +99,42 @@ function project(f::Factor, name::Symbol, rangetuple)
     node.data[rangetuple[node_inds]...]
 end
 
+
+_wrapvars(vars, x, y) = x
+
+function _wrapvars(vars::Vector{Symbol}, ex::Expr, indtup)
+    # copy AST
+    new_ex = copy(ex)
+
+    # recursively wrap variables
+    for i in eachindex(ex.args)
+        new_ex.args[i] = _wrapvars(vars, ex.args[i], indtup)
+    end
+
+    # return new expression
+    new_ex
+end
+
+function _wrapvars(vars::Vector{Symbol}, s::Symbol, indtup)
+    # if s is a variable in the approved list of vars
+    if s in vars 
+        sym = Expr(:quote, s)
+        :(project(f, $sym, $indtup))
+    else
+        s
+    end
+end
+
+
+"""
+Recursively wrap variables in an expression so that in the new expression,
+they are projected down to their index tuples in a factor with variables
+given in vars.
+"""
+macro wrapvars(vars, ex, indtup)
+    esc(_wrapvars(vars, ex, indtup))
+end
+
 # "Defines a Variational Bayes model."
 # type VBModel  
 #     # nodes maps symbols to the nodes/groups of nodes associated with them
