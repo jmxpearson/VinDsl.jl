@@ -19,6 +19,10 @@ immutable ConstantNode{T <: Number} <: Node
     name::Symbol
     indices::Vector{Symbol}
     data::Array{T}
+    function ConstantNode(name, indices, data)
+        @assert ndims(data) == length(indices) "Indices do not match data shape."
+        new(name, indices, data)
+    end
 end
 ConstantNode{T <: Number}(data::Array{T}, indices::Vector{Symbol}) = 
     ConstantNode(gensym("const"), indices, data)
