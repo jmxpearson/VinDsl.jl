@@ -1,26 +1,37 @@
 # let's define some types
+#################### Node #######################
 
+abstract Node
+
+immutable RandomNode{D <: Distribution} <: Node
+    name::Symbol
+    indices::Vector{Symbol}
+    data::Array{D}
+
+    function RandomNode(name, indices, data)
+        @assert ndims(data) == length(indices) "Indices do not match data shape."
+        new(name, indices, data)
+    end
+end
+RandomNode{D <: Distribution}(name::Symbol, indices::Vector{Symbol}, ::Type{D}, pars...) = RandomNode{D}(name, indices, map(D, pars...))
+
+immutable ConstantNode{T <: Number} <: Node
+    name::Symbol
+    indices::Vector{Symbol}
+    data::Array{T}
+end
+ConstantNode{T <: Number}(data::Array{T}, indices::Vector{Symbol}) = 
+    ConstantNode(gensym("const"), indices, data)
+ConstantNode(x::Number) = ConstantNode(gensym("const"), [:scalar], [x])
+
+
+#################### Factor #######################
 "Defines a factor, a term in the variational objective."
 abstract Factor
 
 macro factor(ftype, nodes...)
     :($ftype(get_structure($nodes), $nodes...))
 end
-
-
-
-immutable Node{D <: Distribution}
-    name::Symbol
-    indices::Vector{Symbol}
-    data::Array{D}
-
-    function Node(name, indices, data)
-        @assert ndims(data) == length(indices) "Indices do not match data shape."
-        new(name, indices, data)
-    end
-end
-Node{D <: Distribution}(name::Symbol, indices::Vector{Symbol}, ::Type{D}, 
-    pars...) = Node{D}(name, indices, map(D, pars...))
 
 immutable FactorInds
     indices::Vector{Symbol}
