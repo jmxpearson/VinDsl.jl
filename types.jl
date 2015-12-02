@@ -30,7 +30,7 @@ ConstantNode(x::Number) = ConstantNode(gensym("const"), [:scalar], [x])
 abstract Factor
 
 macro factor(ftype, nodes...)
-    :($ftype(get_structure($nodes), $nodes...))
+    :($ftype(get_structure($(nodes...)), $(nodes...)))
 end
 
 immutable FactorInds
@@ -44,7 +44,7 @@ Given a list of nodes, return a FactorInds type variable that calculates
 the unique indices in the nodes, their ranges, and the map from node symbols
 to integer indices.
 """
-function get_structure(nodes::Vector{Node})
+function get_structure(nodes...)
     # first, get all unique indices
     allinds = union([n.indices for n in nodes]...)
 
@@ -79,10 +79,10 @@ function get_structure(nodes::Vector{Node})
     FactorInds(allinds, idxsizes, node_to_int_inds)
 end
 
-macro factor(ftype, nodes...)
-    finds = get_structure(nodes...)
-    $ftype(finds, nodes...)
-end
+# macro factor(ftype, nodes...)
+#     finds = get_structure(nodes...)
+#     :($ftype(finds, nodes...))
+# end
 
 # "Defines a Variational Bayes model."
 # type VBModel  
