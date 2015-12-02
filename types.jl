@@ -3,6 +3,12 @@
 "Defines a factor, a term in the variational objective."
 abstract Factor
 
+macro factor(ftype, nodes...)
+    :($ftype(get_structure($nodes), $nodes...))
+end
+
+
+
 immutable Node{D <: Distribution}
     name::Symbol
     indices::Vector{Symbol}
@@ -62,6 +68,11 @@ function get_structure(nodes::Vector{Node})
     FactorInds(allinds, idxsizes, node_to_int_inds)
 end
 
+macro factor(ftype, nodes...)
+    finds = get_structure(nodes...)
+    $ftype(finds, nodes...)
+end
+
 # "Defines a Variational Bayes model."
 # type VBModel  
 #     # nodes maps symbols to the nodes/groups of nodes associated with them
@@ -107,11 +118,12 @@ end
 #     x::Node
 # end
 
-# type LogNormalFactor <: Factor
-#     x::Union{Node, Float64}
-#     μ::Union{Node, Float64}  # mean
-#     τ::Union{Node, Float64}  # precision
-# end
+immutable LogNormalFactor <: Factor
+    inds::FactorInds
+    x::Union{Node, Array{Float64}}
+    μ::Union{Node, Array{Float64}}  # mean
+    τ::Union{Node, Array{Float64}}  # precision
+end
 
 # type LogGammaFactor <: Factor
 #     x::Union{Node, Float64}
