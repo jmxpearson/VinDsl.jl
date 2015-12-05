@@ -25,9 +25,10 @@ immutable ConstantNode{T <: Number} <: Node
         new(name, indices, data)
     end
 end
-# ConstantNode{T <: Number}(data::Array{T}, indices::Vector{Symbol}) = 
-#     ConstantNode(gensym("const"), indices, data)
-# ConstantNode(x::Number) = ConstantNode(gensym("const"), [:scalar], [x])
+ConstantNode{T <: Number}(name::Symbol, indices::Vector{Symbol}, data::Array{T}) = ConstantNode{T}(name, indices, data)
+ConstantNode{T <: Number}(data::Array{T}, indices::Vector{Symbol}) = 
+    ConstantNode(gensym("const"), indices, data)
+ConstantNode(x::Number) = ConstantNode(gensym("const"), [:scalar], [x])
 
 """
 Create a node using formula syntax. E.g.

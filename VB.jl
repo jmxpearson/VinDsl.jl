@@ -10,8 +10,8 @@ import Base: convert, call
 import Distributions: var, entropy
 using Base.Cartesian
 
-# data types, including VBModel, Factor, and Node
 include("expfam.jl")
+# data types, including VBModel, Factor, and Node
 include("types.jl")
 
 export VBModel, 
