@@ -19,15 +19,44 @@ immutable ConstantNode{T <: Number} <: Node
     name::Symbol
     indices::Vector{Symbol}
     data::Array{T}
+
     function ConstantNode(name, indices, data)
         @assert ndims(data) == length(indices) "Indices do not match data shape."
         new(name, indices, data)
     end
 end
-ConstantNode{T <: Number}(data::Array{T}, indices::Vector{Symbol}) = 
-    ConstantNode(gensym("const"), indices, data)
-ConstantNode(x::Number) = ConstantNode(gensym("const"), [:scalar], [x])
+# ConstantNode{T <: Number}(data::Array{T}, indices::Vector{Symbol}) = 
+#     ConstantNode(gensym("const"), indices, data)
+# ConstantNode(x::Number) = ConstantNode(gensym("const"), [:scalar], [x])
 
+"""
+Create a node using formula syntax. E.g.
+x[i, j, k] ~ Normal(μ, σ)
+z ~ Gamma(a, b)
+y[a, b] ~ Const(Y)  (for a constant node)
+"""
+macro ~(varex, distex)
+    if isa(varex, Symbol)
+        name = Expr(:quote, varex)
+        inds = :(:scalar)
+    elseif varex.head == :ref
+        name = Expr(:quote, varex.args[1])
+        inds = Symbol[varex.args[2:end]...]        
+    end
+    
+    if distex.head == :call
+        if distex.args[1] == :Const
+            constr = :ConstantNode
+            out = :($constr($name, $inds, $(distex.args[2])))
+        else
+            constr = :RandomNode
+            dist = distex.args[1]
+            distargs = distex.args[2:end]
+            out = :($constr($name, $inds, $dist, $(distargs...)))
+        end
+    end
+    esc(out)
+end
 
 #################### Factor #######################
 "Defines a factor, a term in the variational objective."
