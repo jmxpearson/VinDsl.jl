@@ -252,24 +252,26 @@ end
 "Calculate the expected value of a Node x."
 E(x) = x
 E(x::Distribution) = mean(x)
+V(x) = zero(x)
+V(x::Distribution) = var(x)
+H(x) = zero(x)
+H(x::Distribution) = entropy(x)
 
 # Define functions for nonrandom nodes.
 # In each case, a specialized method is already defined for distributions.
-var(x) = zero(x)
-entropy(x) = zero(x)
 Elog(x) = log(x)
 Eloggamma(x) = lgamma(x)
 
 # "Calculate the contribution of a Factor f to the objective function."
 value{N}(::Type{LogNormalFactor{N}}) = quote
-    -(1/2) * ((E(τ) * ( var(x) + var(μ) + (E(x) - E(μ))^2 ) + log(2π) + Elog(τ)))
+    -(1/2) * ((E(τ) * ( V(x) + V(μ) + (E(x) - E(μ))^2 ) + log(2π) + Elog(τ)))
 end
 
 value{N}(::Type{LogGammaFactor{N}}) = quote
     (E(α) - 1) * Elog(x) - E(β) * E(x) + E(α) * E(β) - Eloggamma(α)
 end
 
-value{N}(::Type{EntropyFactor{N}}) = quote entropy(x) end
+value{N}(::Type{EntropyFactor{N}}) = quote H(x) end
 
 naturals(n::Node) = map(naturals, n.data)
 # "Return natural parameters from a Factor f viewed as a distribution for 
