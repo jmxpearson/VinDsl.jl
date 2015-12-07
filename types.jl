@@ -226,10 +226,13 @@ end
 #     all(is_conj)
 # end
 
-# # define some factors
-# type EntropyFactor <: Factor
-#     x::Node
-# end
+###################################################
+# Define some factors
+###################################################
+immutable EntropyFactor{N} <: Factor{N}
+    inds::FactorInds
+    x::Node
+end
 
 immutable LogNormalFactor{N} <: Factor{N}
     inds::FactorInds
@@ -263,7 +266,7 @@ end
 # value(f::LogGammaFactor) = (E(f.α) - 1) * E(f.x) - E(f.β) * E(f.x) + 
 #     E(f.α) * E(f.β) - Eloggamma(f.α)
 
-# value(f::EntropyFactor) = entropy(f.x)
+value{N}(::Type{EntropyFactor{N}}) = quote entropy(x) end
 
 
 # "Return natural parameters from a Factor f viewed as a distribution for 
