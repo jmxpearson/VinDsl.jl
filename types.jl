@@ -186,40 +186,46 @@ types as arguments.
     end
 end
 
-# "Defines a Variational Bayes model."
-# type VBModel  
-#     # nodes maps symbols to the nodes/groups of nodes associated with them
-#     nodes::Dict{Symbol, Node}
+#################### Model #######################
+"Defines a Variational Bayes model."
+type VBModel  
+    # nodes maps symbols to the nodes/groups of nodes associated with them
+    nodes::Vector{Node}
 
-#     # all factors in the graph
-#     factors::Vector{Factor}
+    # all factors in the graph
+    factors::Vector{Factor}
 
-#     # dictionary linking all random variables to a list of tuples
-#     # each tuple gives a factor and the name of the random variable
-#     # in that factor
-#     graph::Dict{Distribution, Vector{Tuple{Factor, Symbol}}}
+    # dictionary linking all random variables to a list of tuples;
+    # each tuple gives a factor and the name of the random variable
+    # in that factor
+    graph::Dict{Node, Vector{Tuple{Factor, Symbol}}}
 
-#     VBModel(nodes, factors) = begin
-#         for f in factors
-#             register(f)
-#         end
-#         new(nodes, factors)
-#     end
-# end
+    VBModel(nodes, factors) = begin
+        m = new(nodes, factors)
 
-# function getwidth(nodes::Vector{Node})
-#     allinds = Set([n.indices for n in nodes])
-# end
+        # build an empty graph
+        m.graph = Dict{Node, Vector{Tuple{Factor, Symbol}}}()
+        for n in nodes
+            push!(m.graph, n => [])
+        end
 
-# # register a factor with its associated nodes in the graph
-# function register(f::Factor, m::VBModel) 
-#     for var in fieldnames(f)
-#         n = getfield(f, var)
-#         if isa(n, Distribution)
-#             push!(m.graph, n => (f, var))
-#         end
-#     end
-# end
+        # register factors
+        for f in factors
+            register(f, m)
+        end
+        m
+    end
+end
+
+# register a factor with its associated nodes in the graph
+function register(f::Factor, m::VBModel) 
+    for var in fieldnames(f)
+        n = getfield(f, var)
+        if isa(n, Node)
+            push!(m.graph[n], (f, var))
+        end
+    end
+end
 
 # function check_conjugate(n::Distribution, m::VBModel)
 #     is_conj = Bool[method_exists(naturals, Tuple{typeof(f), Type{Val{s}}, typeof(n)}) for (f, s) in m.graph[n]]
