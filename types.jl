@@ -130,12 +130,12 @@ corresponding to the global range of indices.
 """
 function project(f::Factor, name::Symbol, rangetuple)
     node = getfield(f, name)
-    node_inds = f.inds.indexmap[name]
+    node_inds = f.inds.indexmap[node.name]
     node.data[rangetuple[node_inds]...]
 end
 
 
-_wrapvars(vars, x, y) = x
+_wrapvars(vars, x, y) = x 
 
 function _wrapvars(vars::Vector{Symbol}, ex::Expr, indtup)
     # copy AST
@@ -242,6 +242,7 @@ immutable LogNormalFactor{N} <: Factor{N}
 end
 
 immutable LogGammaFactor{N} <: Factor{N}
+    inds::FactorInds
     x::Node
     α::Node  # shape
     β::Node  # rate
@@ -254,6 +255,7 @@ E(x::Distribution) = mean(x)
 
 # Define functions for nonrandom nodes.
 # In each case, a specialized method is already defined for distributions.
+var(x) = zero(x)
 entropy(x) = zero(x)
 Elog(x) = log(x)
 Eloggamma(x) = lgamma(x)
