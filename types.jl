@@ -38,22 +38,23 @@ y[a, b] ~ Const(Y)  (for a constant node)
 """
 macro ~(varex, distex)
     if isa(varex, Symbol)
-        name = Expr(:quote, varex)
-        inds = :(:scalar)
+        name = varex
+        inds = :([:scalar])
     elseif varex.head == :ref
-        name = Expr(:quote, varex.args[1])
+        name = varex.args[1]
         inds = Symbol[varex.args[2:end]...]        
     end
+    qname = Expr(:quote, name)
     
     if distex.head == :call
         if distex.args[1] == :Const
             constr = :ConstantNode
-            out = :($constr($name, $inds, $(distex.args[2])))
+            out = :($name = $constr($qname, $inds, $(distex.args[2])))
         else
             constr = :RandomNode
             dist = distex.args[1]
             distargs = distex.args[2:end]
-            out = :($constr($name, $inds, $dist, $(distargs...)))
+            out = :($name = $constr($qname, $inds, $dist, $(distargs...)))
         end
     end
     esc(out)
