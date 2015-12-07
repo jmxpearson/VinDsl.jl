@@ -263,13 +263,13 @@ value{N}(::Type{LogNormalFactor{N}}) = quote
     -(1/2) * ((E(τ) * ( var(x) + var(μ) + (E(x) - E(μ))^2 ) + log(2π) + Elog(τ)))
 end
 
-value(::Type{LogGammaFactor{N}}) = quote
+value{N}(::Type{LogGammaFactor{N}}) = quote
     (E(α) - 1) * Elog(x) - E(β) * E(x) + E(α) * E(β) - Eloggamma(α)
 end
 
 value{N}(::Type{EntropyFactor{N}}) = quote entropy(x) end
 
-
+naturals(n::Node) = map(naturals, n.data)
 # "Return natural parameters from a Factor f viewed as a distribution for 
 # a given symbol. The last parameter is a type check for conjugacy."
 # naturals(f::LogNormalFactor, ::Type{Val{:x}}, ::Normal) = begin
