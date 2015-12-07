@@ -241,11 +241,11 @@ immutable LogNormalFactor{N} <: Factor{N}
     τ::Node  # precision
 end
 
-# type LogGammaFactor <: Factor
-#     x::Union{Node, Float64}
-#     α::Union{Node, Float64}  # shape
-#     β::Union{Node, Float64}  # rate
-# end
+immutable LogGammaFactor{N} <: Factor{N}
+    x::Node
+    α::Node  # shape
+    β::Node  # rate
+end
 
 # define an expectation method on Distributions
 "Calculate the expected value of a Node x."
@@ -263,8 +263,9 @@ value{N}(::Type{LogNormalFactor{N}}) = quote
     -(1/2) * ((E(τ) * ( var(x) + var(μ) + (E(x) - E(μ))^2 ) + log(2π) + Elog(τ)))
 end
 
-# value(f::LogGammaFactor) = (E(f.α) - 1) * E(f.x) - E(f.β) * E(f.x) + 
-#     E(f.α) * E(f.β) - Eloggamma(f.α)
+value(::Type{LogGammaFactor{N}}) = quote
+    (E(α) - 1) * Elog(x) - E(β) * E(x) + E(α) * E(β) - Eloggamma(α)
+end
 
 value{N}(::Type{EntropyFactor{N}}) = quote entropy(x) end
 
