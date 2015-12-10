@@ -70,15 +70,19 @@ immutable FactorInds
     indexmap::Dict{Symbol, Vector{Int}}
 end
 
-
 macro factor(ftype, nodes...)
     local ex = quote
         fi = get_structure($(nodes...))
-        $ftype{length(fi.indices)}(fi, $(nodes...))
+        symdict = get_name_mapping($ftype, $(nodes...))
+        $ftype{length(fi.indices)}($(nodes...), fi, symdict)
     end
     esc(ex)
 end
 
+function get_name_mapping{F <: Factor}(ftype::Type{F}, nodes...)
+    nodenames = [n.name for n in nodes]
+    Dict(zip(nodenames, fieldnames(ftype)))
+end
 
 ###################################################
 # Functions to deal with factor structure
@@ -121,6 +125,12 @@ function get_structure(nodes...)
     end
 
     FactorInds(allinds, idxsizes, node_to_int_inds)
+end
+
+function get_node_size(f::Factor, n::Node)
+    fi = f.inds
+    syminds = fi.indexmap[n.name]
+    fi.ranges[syminds]
 end
 
 """
@@ -236,22 +246,25 @@ end
 # Define some factors
 ###################################################
 immutable EntropyFactor{N} <: Factor{N}
-    inds::FactorInds
     x::Node
+    inds::FactorInds
+    namemap::Dict{Symbol, Symbol}
 end
 
 immutable LogNormalFactor{N} <: Factor{N}
-    inds::FactorInds
     x::Node
     μ::Node  # mean
     τ::Node  # precision
+    inds::FactorInds
+    namemap::Dict{Symbol, Symbol}
 end
 
 immutable LogGammaFactor{N} <: Factor{N}
-    inds::FactorInds
     x::Node
     α::Node  # shape
     β::Node  # rate
+    inds::FactorInds
+    namemap::Dict{Symbol, Symbol}
 end
 
 # define an expectation method on Distributions
