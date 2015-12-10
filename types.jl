@@ -144,6 +144,12 @@ function project(f::Factor, name::Symbol, rangetuple)
     node.data[rangetuple[node_inds]...]
 end
 
+function project_inds(f::Factor, name::Symbol, rangetuple)
+    node = getfield(f, name)
+    node_inds = f.inds.indexmap[node.name]
+    rangetuple[node_inds]
+end
+
 
 _wrapvars(vars, x, y) = x 
 
@@ -292,9 +298,47 @@ end
 
 value{N}(::Type{EntropyFactor{N}}) = quote H(x) end
 
-naturals(n::Node) = map(naturals, n.data)
-# "Return natural parameters from a Factor f viewed as a distribution for 
-# a given symbol. The last parameter is a type check for conjugacy."
+function naturals(f::Factor, n::RandomNode)
+    fsym = f.namemap[n.name]
+    naturals(f, Val{fsym}, n)
+end
+
+@generated function naturals{N, S, D}(f::Factor{N}, fsym::Type{Val{S}}, n::RandomNode{D})
+    vars = fieldnames(f)
+
+    # get expression corresponding to the natural parameters
+    nat_expr = naturals(f, Val{S}, D)
+
+    quote
+        # init array of natural parameter tuples  
+        # should have the same dimension as fsym
+        # get the type of the naturals by calling the 
+        # function on the first element of the array
+        η_type = typeof(naturals(n.data[1]))
+        η = Array{η_type}(get_node_size(f, n)...) 
+        for i in eachindex(η)
+            η[i] = map(zero_like, η[i])
+        end
+
+        @nloops $N i d -> 1:f.inds.ranges[d] begin
+            nats = @wrapvars $vars $nat_expr (@ntuple $N i)
+            nat_tup = project_inds(f, S, (@ntuple $N i))
+            η[nat_tup...] = map(.+, η[nat_tup...], nats)
+        end
+        η
+    end
+end
+
+"Return natural parameters from a Factor f viewed as a distribution for 
+a given symbol. The last parameter is a type check for conjugacy."
+naturals{N}(::Type{LogNormalFactor{N}}, ::Type{Val{:x}}, ::Type{Normal}) = quote
+    Eμ, Eτ = E(μ), E(τ)
+    (Eμ .* Eτ, -Eτ/2)
+end
+naturals{N}(::Type{LogNormalFactor{N}}, ::Type{Val{:μ}}, ::Type{Normal}) = quote
+    Ex, Eτ = E(x), E(τ)
+    (Ex .* Eτ, -Eτ/2)
+end
 # naturals(f::LogNormalFactor, ::Type{Val{:x}}, ::Normal) = begin
 #     μ, τ = E(f.μ), E(f.τ)
 #     (μ .* τ, -τ/2)
@@ -326,4 +370,5 @@ naturals(n::Node) = map(naturals, n.data)
 #         n.data[idx] = D(naturals_to_params(natpars, D)...)
 #     end
 # end
+
 

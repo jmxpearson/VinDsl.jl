@@ -6,9 +6,12 @@ objective are connected to nodes defining variables.
 module VB
 
 using Distributions
-import Base: convert, call
+import Base: convert, call, zero
 import Distributions: var, entropy
 using Base.Cartesian
+
+zero_like(A::Array) = zeros(A)
+zero_like(x::Number) = zero(x)
 
 include("expfam.jl")
 # data types, including VBModel, Factor, and Node
@@ -19,6 +22,7 @@ export VBModel,
     EntropyFactor, LogNormalFactor, LogGammaFactor,
     Node, RandomNode, ConstantNode, @~,
     register, check_conjugate, update!, 
-    E, Elog, Eloggamma, var, value, naturals
+    E, Elog, Eloggamma, var, value, naturals,
+    get_node_size, get_name_mapping
 
 end  # module
