@@ -189,7 +189,7 @@ types as arguments.
     val_expr = value(f)
     quote
         v = 0
-        @nloops $N i d -> f.inds.ranges[d] begin
+        @nloops $N i d -> 1:f.inds.ranges[d] begin
             v += @wrapvars $vars $val_expr (@ntuple $N i)
         end
         v
