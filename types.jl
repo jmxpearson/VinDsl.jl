@@ -307,7 +307,7 @@ end
     vars = fieldnames(f)
 
     # get expression corresponding to the natural parameters
-    nat_expr = naturals(f, Val{S}, D)
+    nat_expr = natural_formula(f, Val{S}, D)
 
     quote
         # init array of natural parameter tuples  
@@ -329,23 +329,56 @@ end
     end
 end
 
-"Return natural parameters from a Factor f viewed as a distribution for 
-a given symbol. The last parameter is a type check for conjugacy."
-naturals{N}(::Type{LogNormalFactor{N}}, ::Type{Val{:x}}, ::Type{Normal}) = quote
+"""
+Define natural parameters for a given factor type, variable within that
+factor, and form of the conjugate distribution for that variable.
+"""
+macro defnaturals(factortype, varname, disttype, expr)
+    nat_expr = Expr(:quote, expr)
+    varsym = Expr(:quote, varname)
+    ex = quote
+        natural_formula{N}(::Type{$(factortype){N}}, ::Type{Val{$varsym}}, ::Type{$disttype}) = $nat_expr
+    end
+    esc(ex)
+end
+
+@defnaturals LogNormalFactor x Normal begin
     Eμ, Eτ = E(μ), E(τ)
-    (Eμ .* Eτ, -Eτ/2)
+    (Eμ * Eτ, -Eτ/2)
 end
-naturals{N}(::Type{LogNormalFactor{N}}, ::Type{Val{:μ}}, ::Type{Normal}) = quote
+
+@defnaturals LogNormalFactor μ Normal begin
     Ex, Eτ = E(x), E(τ)
-    (Ex .* Eτ, -Eτ/2)
+    (Ex * Eτ, -Eτ/2)
 end
-naturals{N}(::Type{LogNormalFactor{N}}, ::Type{Val{:τ}}, ::Type{Gamma}) = quote
-    v = V(x) + V(μ) + (E(x) - E(μ)).^2
+
+@defnaturals LogNormalFactor τ Gamma begin
+    v = V(x) + V(μ) + (E(x) - E(μ))^2
     (1/2, v/2)
 end
-naturals{N}(::Type{LogGammaFactor{N}}, ::Type{Val{:x}}, ::Type{Gamma}) = quote
+
+@defnaturals LogGammaFactor x Gamma begin
     (E(α) - 1, -E(β))
 end
+
+# "Return natural parameters from a Factor f viewed as a distribution for 
+# a given symbol. The last parameter is a type check for conjugacy."
+# naturals{N}(::Type{LogNormalFactor{N}}, ::Type{Val{:x}}, ::Type{Normal}) = quote
+#     Eμ, Eτ = E(μ), E(τ)
+#     (Eμ .* Eτ, -Eτ/2)
+# end
+# naturals{N}(::Type{LogNormalFactor{N}}, ::Type{Val{:μ}}, ::Type{Normal}) = quote
+#     Ex, Eτ = E(x), E(τ)
+#     (Ex .* Eτ, -Eτ/2)
+# end
+# naturals{N}(::Type{LogNormalFactor{N}}, ::Type{Val{:τ}}, ::Type{Gamma}) = quote
+#     v = V(x) + V(μ) + (E(x) - E(μ)).^2
+#     (1/2, v/2)
+# end
+# naturals{N}(::Type{LogGammaFactor{N}}, ::Type{Val{:x}}, ::Type{Gamma}) = quote
+#     (E(α) - 1, -E(β))
+# end
+
 
 # "Update a RandomNode n."
 # function update!{D}(n::RandomNode{D}, ::Type{Val{:conjugate}})
