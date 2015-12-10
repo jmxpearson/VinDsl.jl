@@ -79,11 +79,6 @@ macro factor(ftype, nodes...)
     esc(ex)
 end
 
-function get_name_mapping{F <: Factor}(ftype::Type{F}, nodes...)
-    nodenames = [n.name for n in nodes]
-    Dict(zip(nodenames, fieldnames(ftype)))
-end
-
 ###################################################
 # Functions to deal with factor structure
 ###################################################
@@ -131,6 +126,11 @@ function get_node_size(f::Factor, n::Node)
     fi = f.inds
     syminds = fi.indexmap[n.name]
     fi.ranges[syminds]
+end
+
+function get_name_mapping{F <: Factor}(ftype::Type{F}, nodes...)
+    nodenames = [n.name for n in nodes]
+    Dict(zip(nodenames, fieldnames(ftype)))
 end
 
 """
