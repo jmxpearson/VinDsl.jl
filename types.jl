@@ -300,10 +300,10 @@ value{N}(::Type{EntropyFactor{N}}) = quote H(x) end
 
 function naturals(f::Factor, n::RandomNode)
     fsym = f.namemap[n.name]
-    naturals(f, Val{fsym}, n)
+    _naturals(f, Val{fsym}, n)
 end
 
-@generated function naturals{N, S, D}(f::Factor{N}, fsym::Type{Val{S}}, n::RandomNode{D})
+@generated function _naturals{N, S, D}(f::Factor{N}, fsym::Type{Val{S}}, n::RandomNode{D})
     vars = fieldnames(f)
 
     # get expression corresponding to the natural parameters
@@ -339,19 +339,13 @@ naturals{N}(::Type{LogNormalFactor{N}}, ::Type{Val{:μ}}, ::Type{Normal}) = quot
     Ex, Eτ = E(x), E(τ)
     (Ex .* Eτ, -Eτ/2)
 end
-# naturals(f::LogNormalFactor, ::Type{Val{:x}}, ::Normal) = begin
-#     μ, τ = E(f.μ), E(f.τ)
-#     (μ .* τ, -τ/2)
-# end
-# naturals(f::LogNormalFactor, ::Type{Val{:μ}}, ::Normal) = begin
-#     x, τ = E(f.x), E(f.τ)
-#     (x .* τ, -τ/2)
-# end
-# naturals(f::LogNormalFactor, ::Type{Val{:τ}}, ::Gamma) = begin
-#     v = var(f.x) + var(f.μ) + (E(f.x) - E(f.μ)).^2
-#     (1/2, v/2)
-# end
-# naturals(f::LogGammaFactor, ::Type{Val{:x}}, ::Gamma) = (E(f.α) - 1, -E(f.β))
+naturals{N}(::Type{LogNormalFactor{N}}, ::Type{Val{:τ}}, ::Type{Gamma}) = quote
+    v = V(x) + V(μ) + (E(x) - E(μ)).^2
+    (1/2, v/2)
+end
+naturals{N}(::Type{LogGammaFactor{N}}, ::Type{Val{:x}}, ::Type{Gamma}) = quote
+    (E(α) - 1, -E(β))
+end
 
 # "Update a RandomNode n."
 # function update!{D}(n::RandomNode{D}, ::Type{Val{:conjugate}})
