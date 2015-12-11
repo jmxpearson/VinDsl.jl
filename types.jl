@@ -369,22 +369,28 @@ end
 end
 
 
-# "Update a RandomNode n."
-# function update!{D}(n::RandomNode{D}, ::Type{Val{:conjugate}})
-#     # get natural parameter vectors for each factor
-#     nlist = [naturals(f, Val{s}, n) for (f, s) in n.factormap]
+"Update a RandomNode n."
+function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:conjugate}})
+    # get natural parameter vectors for each factor
+    messages = [naturals(f, n) for (f, _) in m.graph[n]]
 
-#     # sum all natural parameter vectors
-#     # zip converts a list of natural parameter vectors for each factor into 
-#     # a list of factors for each element of the natural parameter vector
-#     # we then map + over each of these lists
-#     totals = map(x -> +(x...), zip(nlist))
+    # sum all natural parameter vectors
+    # zip converts a list of natural parameter vectors for each factor into 
+    # a list of factors for each element of the natural parameter vector
+    # we then map + over each of these lists
+    # totals = map(x -> +(x...), zip(nlist))
 
-#     # update each distribution in the array
-#     for idx in eachindex(n.data)
-#         natpars = Any[par[idx] for par in totals]
-#         n.data[idx] = D(naturals_to_params(natpars, D)...)
-#     end
-# end
+    # update each distribution in the array
+    for idx in eachindex(n.data)
+        # get all messages corresponding to this element
+        this_messages = Any[msg[idx] for msg in messages]
+
+        # sum respective tuple elements
+        natpars = map(x -> +(x...), this_messages)
+
+        # convert natural parameters to Distributions.jl parameters
+        n.data[idx] = D(naturals_to_params(natpars, D)...)
+    end
+end
 
 
