@@ -369,16 +369,9 @@ end
 end
 
 
-"Update a RandomNode n."
 function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:conjugate}})
     # get natural parameter vectors for each factor
     messages = [naturals(f, n) for (f, _) in m.graph[n]]
-
-    # sum all natural parameter vectors
-    # zip converts a list of natural parameter vectors for each factor into 
-    # a list of factors for each element of the natural parameter vector
-    # we then map + over each of these lists
-    # totals = map(x -> +(x...), zip(nlist))
 
     # update each distribution in the array
     for idx in eachindex(n.data)
@@ -393,4 +386,11 @@ function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:conjugate}})
     end
 end
 
+function update!(m::VBModel)
+    for n in m.nodes
+        if isa(n, RandomNode)
+            update!(n, m, Val{:conjugate}) 
+        end
+    end
+end
 
