@@ -216,6 +216,9 @@ type VBModel
     # in that factor
     graph::Dict{Node, Vector{Tuple{Factor, Symbol}}}
 
+    # dictionary containing the update strategy for each node
+    update_strategy::Dict{Node, Symbol}
+
     VBModel(nodes, factors) = begin
         m = new(nodes, factors)
 
@@ -229,7 +232,19 @@ type VBModel
         for f in factors
             register(f, m)
         end
+
+        # calculate default update strategy
+        m.update_strategy = Dict{Node, Symbol}()
+        for n in nodes
+            if isa(n, ConstantNode)
+                m.update_strategy[n] = :constant
+            elseif isa(n, RandomNode) && check_conjugate(n, m)
+                m.update_strategy[n] = :conjugate
+            end
+        end
+
         m
+
     end
 end
 
@@ -386,11 +401,12 @@ function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:conjugate}})
     end
 end
 
+function update!(n::Node, m::VBModel, ::Type{Val{:constant}})
+end
+
 function update!(m::VBModel)
     for n in m.nodes
-        if isa(n, RandomNode)
-            update!(n, m, Val{:conjugate}) 
-        end
+        update!(n, m, Val{m.update_strategy[n]}) 
     end
 end
 
