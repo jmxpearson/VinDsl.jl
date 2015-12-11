@@ -22,7 +22,7 @@ export VBModel,
     EntropyFactor, LogNormalFactor, LogGammaFactor,
     Node, RandomNode, ConstantNode, @~,
     register, check_conjugate, update!, 
-    E, Elog, Eloggamma, var, value, naturals, @defnaturals,
+    E, Elog, Eloggamma, var, value, naturals, @defnaturals, 
     get_node_size, get_name_mapping
 
 end  # module

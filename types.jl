@@ -243,10 +243,17 @@ function register(f::Factor, m::VBModel)
     end
 end
 
-# function check_conjugate(n::Distribution, m::VBModel)
-#     is_conj = Bool[method_exists(naturals, Tuple{typeof(f), Type{Val{s}}, typeof(n)}) for (f, s) in m.graph[n]]
-#     all(is_conj)
-# end
+function check_conjugate{D}(n::RandomNode{D}, m::VBModel)
+    is_conj = true
+    for (f, s) in m.graph[n]
+        ttype = Tuple{Type{typeof(f)}, Type{Val{s}}, Type{D}}
+        if !method_exists(natural_formula, ttype)
+            is_conj = false
+            break
+        end
+    end
+    is_conj
+end
 
 ###################################################
 # Define some factors
@@ -360,24 +367,6 @@ end
 @defnaturals LogGammaFactor x Gamma begin
     (E(α) - 1, -E(β))
 end
-
-# "Return natural parameters from a Factor f viewed as a distribution for 
-# a given symbol. The last parameter is a type check for conjugacy."
-# naturals{N}(::Type{LogNormalFactor{N}}, ::Type{Val{:x}}, ::Type{Normal}) = quote
-#     Eμ, Eτ = E(μ), E(τ)
-#     (Eμ .* Eτ, -Eτ/2)
-# end
-# naturals{N}(::Type{LogNormalFactor{N}}, ::Type{Val{:μ}}, ::Type{Normal}) = quote
-#     Ex, Eτ = E(x), E(τ)
-#     (Ex .* Eτ, -Eτ/2)
-# end
-# naturals{N}(::Type{LogNormalFactor{N}}, ::Type{Val{:τ}}, ::Type{Gamma}) = quote
-#     v = V(x) + V(μ) + (E(x) - E(μ)).^2
-#     (1/2, v/2)
-# end
-# naturals{N}(::Type{LogGammaFactor{N}}, ::Type{Val{:x}}, ::Type{Gamma}) = quote
-#     (E(α) - 1, -E(β))
-# end
 
 
 # "Update a RandomNode n."
