@@ -273,26 +273,31 @@ end
 ###################################################
 # Define some factors
 ###################################################
-immutable EntropyFactor{N} <: Factor{N}
-    x::Node
-    inds::FactorInds
-    namemap::Dict{Symbol, Symbol}
+macro deffactor(typename, vars, valexpr)
+    varlist = [:($v::Node) for v in vars.args]
+    varblock = Expr(:block, varlist...)
+    value_formula = Expr(:quote, valexpr)
+
+    ex = quote
+        immutable ($typename){N} <: Factor{N}
+            $varblock
+            inds::FactorInds
+            namemap::Dict{Symbol, Symbol}
+        end
+
+        value{N}(::Type{($typename){N}}) = $value_formula
+    end
+    esc(ex)
 end
 
-immutable LogNormalFactor{N} <: Factor{N}
-    x::Node
-    μ::Node  # mean
-    τ::Node  # precision
-    inds::FactorInds
-    namemap::Dict{Symbol, Symbol}
+@deffactor EntropyFactor [x] H(x)
+
+@deffactor LogNormalFactor [x, μ, τ] begin
+    -(1/2) * ((E(τ) * ( V(x) + V(μ) + (E(x) - E(μ))^2 ) + log(2π) + Elog(τ)))
 end
 
-immutable LogGammaFactor{N} <: Factor{N}
-    x::Node
-    α::Node  # shape
-    β::Node  # rate
-    inds::FactorInds
-    namemap::Dict{Symbol, Symbol}
+@deffactor LogGammaFactor [x, α, β] begin
+    (E(α) - 1) * Elog(x) - E(β) * E(x) + E(α) * E(β) - Eloggamma(α)
 end
 
 # define an expectation method on Distributions
@@ -309,16 +314,6 @@ H(x::Distribution) = entropy(x)
 Elog(x) = log(x)
 Eloggamma(x) = lgamma(x)
 
-# "Calculate the contribution of a Factor f to the objective function."
-value{N}(::Type{LogNormalFactor{N}}) = quote
-    -(1/2) * ((E(τ) * ( V(x) + V(μ) + (E(x) - E(μ))^2 ) + log(2π) + Elog(τ)))
-end
-
-value{N}(::Type{LogGammaFactor{N}}) = quote
-    (E(α) - 1) * Elog(x) - E(β) * E(x) + E(α) * E(β) - Eloggamma(α)
-end
-
-value{N}(::Type{EntropyFactor{N}}) = quote H(x) end
 
 function naturals(f::Factor, n::RandomNode)
     fsym = f.namemap[n.name]
