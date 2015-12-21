@@ -26,7 +26,7 @@ immutable ConstantNode{T <: Number} <: Node
     end
 end
 ConstantNode{T <: Number}(name::Symbol, indices::Vector{Symbol}, data::Array{T}) = ConstantNode{T}(name, indices, data)
-ConstantNode{T <: Number}(data::Array{T}, indices::Vector{Symbol}) = 
+ConstantNode{T <: Number}(data::Array{T}, indices::Vector{Symbol}) =
     ConstantNode(gensym("const"), indices, data)
 ConstantNode(x::Number) = ConstantNode(gensym("const"), [:scalar], [x])
 
@@ -42,10 +42,10 @@ macro ~(varex, distex)
         inds = :([:scalar])
     elseif varex.head == :ref
         name = varex.args[1]
-        inds = Symbol[varex.args[2:end]...]        
+        inds = Symbol[varex.args[2:end]...]
     end
     qname = Expr(:quote, name)
-    
+
     if distex.head == :call
         if distex.args[1] == :Const
             constr = :ConstantNode
@@ -94,8 +94,8 @@ function get_structure(nodes...)
     # now, map these indices to consecutive integers
     idx_to_int = [idx => idxnum for (idxnum, idx) in enumerate(allinds)]
 
-    # initialize Dicts that will hold maps from index symbols to their 
-    # sizes in various nodes (for checking) and from node names to 
+    # initialize Dicts that will hold maps from index symbols to their
+    # sizes in various nodes (for checking) and from node names to
     # the (integer) indices they contain
     idxdict = Dict{Symbol, Vector{Int}}([(idx => []) for idx in allinds])
     node_to_int_inds = Dict{Symbol, Vector{Int}}([(n.name => []) for n in nodes])
@@ -108,7 +108,7 @@ function get_structure(nodes...)
         end
     end
 
-    # lastly, check that the index ranges are the same for every node in 
+    # lastly, check that the index ranges are the same for every node in
     # which an index appears; build a vector of index ranges
     idxsizes = Integer[]
     for (idx, lengths) in idxdict
@@ -134,7 +134,7 @@ function get_name_mapping{F <: Factor}(ftype::Type{F}, nodes...)
 end
 
 """
-Given a factor, a symbol naming a node in that factor, and a tuple of 
+Given a factor, a symbol naming a node in that factor, and a tuple of
 index ranges for the factor as a whole, return the elements of node
 corresponding to the global range of indices.
 """
@@ -151,7 +151,7 @@ function project_inds(f::Factor, name::Symbol, rangetuple)
 end
 
 
-_wrapvars(vars, x, y) = x 
+_wrapvars(vars, x, y) = x
 
 function _wrapvars(vars::Vector{Symbol}, ex::Expr, indtup)
     # copy AST
@@ -168,7 +168,7 @@ end
 
 function _wrapvars(vars::Vector{Symbol}, s::Symbol, indtup)
     # if s is a variable in the approved list of vars
-    if s in vars 
+    if s in vars
         sym = Expr(:quote, s)
         :(project(f, $sym, $indtup))
     else
@@ -187,7 +187,7 @@ macro wrapvars(vars, ex, indtup)
 end
 
 """
-Calculate the value of a factor. Relies on value methods taking factor 
+Calculate the value of a factor. Relies on value methods taking factor
 types as arguments.
 """
 @generated function value{N}(f::Factor{N})
@@ -204,7 +204,7 @@ end
 
 #################### Model #######################
 "Defines a Variational Bayes model."
-type VBModel  
+type VBModel
     # nodes maps symbols to the nodes/groups of nodes associated with them
     nodes::Vector{Node}
 
@@ -249,7 +249,7 @@ type VBModel
 end
 
 # register a factor with its associated nodes in the graph
-function register(f::Factor, m::VBModel) 
+function register(f::Factor, m::VBModel)
     for var in fieldnames(f)
         n = getfield(f, var)
         if isa(n, Node)
@@ -300,12 +300,18 @@ end
     (E(α) - 1) * Elog(x) - E(β) * E(x) + E(α) * E(β) - Eloggamma(α)
 end
 
+@deffactor LogMvNormalCanonFactor [x, μ, Λ] begin
+    δ = E(x) - E(μ)
+    -(1/2) * (trace(E(Λ) * (V(x) + V(μ) + δ * δ')) + length(x) * log(2π) - Elogdet(Λ))
+end
+
 # define an expectation method on Distributions
 "Calculate the expected value of a Node x."
 E(x) = x
 E(x::Distribution) = mean(x)
 V(x) = zero(x)
 V(x::Distribution) = var(x)
+V(x::AbstractMvNormal) = cov(x)
 H(x) = zero(x)
 H(x::Distribution) = entropy(x)
 
@@ -313,6 +319,7 @@ H(x::Distribution) = entropy(x)
 # In each case, a specialized method is already defined for distributions.
 Elog(x) = log(x)
 Eloggamma(x) = lgamma(x)
+Elogdet(x) = logdet(x)
 
 
 function naturals(f::Factor, n::RandomNode)
@@ -327,12 +334,12 @@ end
     nat_expr = natural_formula(f, Val{S}, D)
 
     quote
-        # init array of natural parameter tuples  
+        # init array of natural parameter tuples
         # should have the same dimension as fsym
-        # get the type of the naturals by calling the 
+        # get the type of the naturals by calling the
         # function on the first element of the array
         η_type = typeof(naturals(n.data[1]))
-        η = Array{η_type}(get_node_size(f, n)...) 
+        η = Array{η_type}(get_node_size(f, n)...)
         for i in eachindex(η)
             η[i] = map(zero_like, η[i])
         end
@@ -378,6 +385,15 @@ end
     (E(α) - 1, -E(β))
 end
 
+@defnaturals LogMvNormalCanonFactor x MvNormalCanon begin
+    Eμ, EΛ = E(μ), E(Λ)
+    (EΛ * Eμ, -EΛ/2)
+end
+
+@defnaturals LogMvNormalCanonFactor μ MvNormalCanon begin
+    Ex, EΛ = E(x), E(Λ)
+    (EΛ * Ex, -EΛ/2)
+end
 
 function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:conjugate}})
     # get natural parameter vectors for each factor
@@ -401,7 +417,6 @@ end
 
 function update!(m::VBModel)
     for n in m.nodes
-        update!(n, m, Val{m.update_strategy[n]}) 
+        update!(n, m, Val{m.update_strategy[n]})
     end
 end
-
