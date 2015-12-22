@@ -75,9 +75,9 @@ end
 abstract Factor{N}
 
 immutable FactorInds
-    indices::Vector{Symbol}
-    ranges::Vector{Int}
-    indexmap::Dict{Symbol, Vector{Int}}
+    indices::Vector{Symbol}  # all fully outer indices
+    maxvals::Vector{Int}  # maximum value of each index
+    indexmap::Dict{Symbol, Vector{Int}}  # map node to integers corresponding to entries in indices
 end
 
 macro factor(ftype, nodes...)
@@ -141,7 +141,7 @@ end
 function get_node_size(f::Factor, n::Node)
     fi = f.inds
     syminds = fi.indexmap[n.name]
-    fi.ranges[syminds]
+    fi.maxvals[syminds]
 end
 
 function get_name_mapping{F <: Factor}(ftype::Type{F}, nodes...)
@@ -213,7 +213,7 @@ types as arguments.
     val_expr = value(f)
     quote
         v = 0
-        @nloops $N i d -> 1:f.inds.ranges[d] begin
+        @nloops $N i d -> 1:f.inds.maxvals[d] begin
             v += @wrapvars $vars $val_expr (@ntuple $N i)
         end
         v
@@ -373,7 +373,7 @@ end
             η[i] = map(zero_like, η[i])
         end
 
-        @nloops $N i d -> 1:f.inds.ranges[d] begin
+        @nloops $N i d -> 1:f.inds.maxvals[d] begin
             nats = @wrapvars $vars $nat_expr (@ntuple $N i)
             nat_tup = project_inds(f, S, (@ntuple $N i))
             η[nat_tup...] = map(.+, η[nat_tup...], nats)
