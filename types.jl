@@ -5,33 +5,43 @@ abstract Node
 
 immutable RandomNode{D <: Distribution} <: Node
     name::Symbol
-    indices::Vector{Symbol}
+    innerinds::Vector{Symbol}
+    outerinds::Vector{Symbol}
     data::Array{D}
 
     function RandomNode(name, indices, data)
-        @assert ndims(data) == length(indices) "Indices do not match data shape."
-        new(name, indices, data)
+        # length(size(data[1])) gives number of dimensions in
+        # the random distribution D
+        # inner indices are assumed listed first
+        innerinds = indices[1:length(size(data[1]))]
+        ninner = length(innerinds)
+        outerinds = indices[ninner + 1:end]
+        @assert ndims(data) == length(outerinds) "Indices do not match data shape."
+        new(name, innerinds, outerinds, data)
     end
 end
 RandomNode{D <: Distribution}(name::Symbol, indices::Vector{Symbol}, ::Type{D}, pars...) = RandomNode{D}(name, indices, map(D, pars...))
 
-immutable ConstantNode{T <: Number} <: Node
+immutable ConstantNode{T} <: Node
     name::Symbol
-    indices::Vector{Symbol}
+    innerinds::Vector{Symbol}
+    outerinds::Vector{Symbol}
     data::Array{T}
 
     function ConstantNode(name, indices, data)
         @assert ndims(data) == length(indices) "Indices do not match data shape."
-        new(name, indices, data)
+        outerinds = indices
+        innerinds = Symbol[]
+        new(name, innerinds, outerinds, data)
     end
 end
-ConstantNode{T <: Number}(name::Symbol, indices::Vector{Symbol}, data::Array{T}) = ConstantNode{T}(name, indices, data)
-ConstantNode{T <: Number}(data::Array{T}, indices::Vector{Symbol}) =
+ConstantNode{T}(name::Symbol, indices::Vector{Symbol}, data::Array{T}) = ConstantNode{T}(name, indices, data)
+ConstantNode{T}(data::Array{T}, indices::Vector{Symbol}) =
     ConstantNode(gensym("const"), indices, data)
 ConstantNode(x::Number) = ConstantNode(gensym("const"), [:scalar], [x])
 
 """
-Create a node using formula syntax. E.g.
+Create a node using formula syntax. E.g.,
 x[i, j, k] ~ Normal(μ, σ)
 z ~ Gamma(a, b)
 y[a, b] ~ Const(Y)  (for a constant node)
@@ -88,8 +98,11 @@ the unique indices in the nodes, their ranges, and the map from node symbols
 to integer indices.
 """
 function get_structure(nodes...)
-    # first, get all unique indices
-    allinds = union([n.indices for n in nodes]...)
+    # first, get all indices that are not inner for any node
+    # these will be the nodes that need explicit summing
+    outers = union([n.outerinds for n in nodes]...)
+    inners = union([n.innerinds for n in nodes]...)
+    allinds = setdiff(outers, intersect(outers, inners))
 
     # now, map these indices to consecutive integers
     idx_to_int = [idx => idxnum for (idxnum, idx) in enumerate(allinds)]
@@ -102,9 +115,12 @@ function get_structure(nodes...)
 
     # now loop over nodes, building these dicts
     for n in nodes
-        for (d, idx) in enumerate(n.indices)
-            push!(idxdict[idx], size(n.data, d))
-            push!(node_to_int_inds[n.name], idx_to_int[idx])
+        for (d, idx) in enumerate(n.outerinds)
+            # if this outer index is to be summed over...
+            if idx in allinds
+                push!(idxdict[idx], size(n.data, d))
+                push!(node_to_int_inds[n.name], idx_to_int[idx])
+            end
         end
     end
 
