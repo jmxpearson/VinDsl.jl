@@ -337,6 +337,17 @@ Elog(x) = log(x)
 Eloggamma(x) = lgamma(x)
 Elogdet(x) = logdet(x)
 
+# now make version of all these functions that work on nodes
+# by working elementwise
+macro make_mapped_version(fn)
+    esc(:($fn(n::Node) = map($fn, n.data)))
+end
+
+to_map = [E, V, H, Elog, Eloggamma, Elogdet]
+for fn in to_map
+    @make_mapped_version fn
+end
+
 
 function naturals(f::Factor, n::RandomNode)
     fsym = f.namemap[n.name]
