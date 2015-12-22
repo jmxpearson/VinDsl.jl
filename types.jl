@@ -155,12 +155,14 @@ index ranges for the factor as a whole, return the elements of node
 corresponding to the global range of indices.
 """
 function project(f::Factor, name::Symbol, rangetuple)
-    node = getfield(f, name)
-    node_inds = f.inds.indexmap[node.name]
-    node.data[rangetuple[node_inds]...]
+    node.data[_project_inds(f, name, rangetuple)...]
 end
 
 function project_inds(f::Factor, name::Symbol, rangetuple)
+    _project_inds(f, name, rangetuple)
+end
+
+function _project_inds(f::Factor, name::Symbol, rangetuple)
     node = getfield(f, name)
     node_inds = f.inds.indexmap[node.name]
     rangetuple[node_inds]
