@@ -77,7 +77,15 @@ abstract Factor{N}
 immutable FactorInds
     indices::Vector{Symbol}  # all fully outer indices
     maxvals::Vector{Int}  # maximum value of each index
-    indexmap::Dict{Symbol, Vector{Int}}  # map node to integers corresponding to entries in indices
+    #=
+    The next two dicts take care of a pair of necessary mappings:
+    - inds_in_factor maps a node symbol to the (integer) subset of factor
+        indices involving this node
+    - inds_in_node maps a node symbol to the (integer) subset of node indices
+        involved in this factor
+    =#
+    inds_in_factor::Dict{Symbol, Vector{Int}}
+    inds_in_node::Dict{Symbol, Vector{Int}}
 end
 
 macro factor(ftype, nodes...)
@@ -96,6 +104,9 @@ end
 Given a list of nodes, return a FactorInds type variable that calculates
 the unique indices in the nodes, their ranges, and the map from node symbols
 to integer indices.
+
+TODO: Example showing how inner and outer indices get parsed and what the
+inds_in_* mappings are.
 """
 function get_structure(nodes...)
     # first, get all indices that are not inner for any node
@@ -107,11 +118,18 @@ function get_structure(nodes...)
     # now, map these indices to consecutive integers
     idx_to_int = [idx => idxnum for (idxnum, idx) in enumerate(allinds)]
 
-    # initialize Dicts that will hold maps from index symbols to their
-    # sizes in various nodes (for checking) and from node names to
-    # the (integer) indices they contain
+    #=
+    initialize some Dicts that will be useful for working with factors:
+    - idxdict: map index symbol to the size of each node along this
+        dimension
+    - node_to_int_inds: map node symbol to the integer codes within the
+        factor of its fully outer indices
+    - ints_within_node: map node symbol to the subset of *all* its indices
+        corresponding to the fully outer indices
+    =#
     idxdict = Dict{Symbol, Vector{Int}}([(idx => []) for idx in allinds])
-    node_to_int_inds = Dict{Symbol, Vector{Int}}([(n.name => []) for n in nodes])
+    inds_in_factor = Dict{Symbol, Vector{Int}}([(n.name => []) for n in nodes])
+    inds_in_node = Dict{Symbol, Vector{Int}}([(n.name => []) for n in nodes])
 
     # now loop over nodes, building these dicts
     for n in nodes
@@ -119,28 +137,29 @@ function get_structure(nodes...)
             # if this outer index is to be summed over...
             if idx in allinds
                 push!(idxdict[idx], size(n.data, d))
-                push!(node_to_int_inds[n.name], idx_to_int[idx])
+                push!(inds_in_factor[n.name], idx_to_int[idx])
+                push!(inds_in_node[n.name], indexin([idx], n.outerinds)[1])
             end
         end
     end
 
     # lastly, check that the index ranges are the same for every node in
     # which an index appears; build a vector of index ranges
-    idxsizes = Integer[]
+    maxvals = Integer[]
     for (idx, lengths) in idxdict
         if !all(x -> x == lengths[1], lengths)
             error("Index length mismatch in index $idx.")
         else
-            push!(idxsizes, lengths[1])
+            push!(maxvals, lengths[1])
         end
     end
 
-    FactorInds(allinds, idxsizes, node_to_int_inds)
+    FactorInds(allinds, maxvals, inds_in_factor, inds_in_node)
 end
 
 function get_node_size(f::Factor, n::Node)
     fi = f.inds
-    syminds = fi.indexmap[n.name]
+    syminds = fi.inds_in_factor[n.name]
     fi.maxvals[syminds]
 end
 
@@ -150,22 +169,28 @@ function get_name_mapping{F <: Factor}(ftype::Type{F}, nodes...)
 end
 
 """
-Given a factor, a symbol naming a node in that factor, and a tuple of
+Given a factor, a symbol naming a variable in that factor, and a tuple of
 index ranges for the factor as a whole, return the elements of node
 corresponding to the global range of indices.
 """
 function project(f::Factor, name::Symbol, rangetuple)
-    node.data[_project_inds(f, name, rangetuple)...]
+    node = getfield(f, name)
+    node.data[project_inds(f, name, rangetuple)...]
 end
 
 function project_inds(f::Factor, name::Symbol, rangetuple)
-    _project_inds(f, name, rangetuple)
-end
-
-function _project_inds(f::Factor, name::Symbol, rangetuple)
     node = getfield(f, name)
-    node_inds = f.inds.indexmap[node.name]
-    rangetuple[node_inds]
+    factor_inds = f.inds.inds_in_factor[node.name]
+    node_inds = f.inds.inds_in_node[node.name]
+    ninds = length(node.outerinds)
+
+    outtuple = repmat(Any[Colon()], ninds)
+    if !isempty(node_inds)
+        for (ni, fi) in zip(node_inds, factor_inds)
+            outtuple[ni] = rangetuple[fi]
+        end
+    end
+    outtuple
 end
 
 
@@ -330,6 +355,7 @@ E(x::Distribution) = mean(x)
 V(x) = zero(x)
 V(x::Distribution) = var(x)
 V(x::AbstractMvNormal) = cov(x)
+V{D <: Distribution}(x::Vector{D}) = diagm(map(V, x))
 H(x) = zero(x)
 H(x::Distribution) = entropy(x)
 
@@ -342,7 +368,7 @@ Elogdet(x) = logdet(x)
 # now make version of all these functions that work on nodes
 # by working elementwise
 macro make_mapped_version(fn)
-    esc(:($fn(n::Node) = map($fn, n.data)))
+    esc(:($fn{D <: Distribution}(n::Array{D}) = map($fn, n)))
 end
 
 to_map = [E, V, H, Elog, Eloggamma, Elogdet]
