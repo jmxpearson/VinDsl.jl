@@ -15,7 +15,6 @@ immutable RandomNode{D <: Distribution} <: Node
         nouter = ndims(data)
         outerinds = indices[ninds - nouter + 1:end]
         innerinds = indices[1:ninds - nouter]
-        # innerinds = indices[1:length(size(data[1]))]
         ninner = length(innerinds)
         @assert nouter == length(outerinds) "Indices do not match data shape."
         if ninner > 0
