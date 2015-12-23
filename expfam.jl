@@ -53,5 +53,5 @@ end
 convert(::Type{IsoNormalCanon}, v::Normal) = begin
     J = 1 / var(v)
     μ = mean(v)
-    DiagNormalCanon(J * μ, J)
+    DiagNormalCanon([J * μ], J)
 end
