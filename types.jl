@@ -10,13 +10,19 @@ immutable RandomNode{D <: Distribution} <: Node
     data::Array{D}
 
     function RandomNode(name, indices, data)
-        # length(size(data[1])) gives number of dimensions in
-        # the random distribution D
         # inner indices are assumed listed first
-        innerinds = indices[1:length(size(data[1]))]
+        ninds = length(indices)
+        nouter = ndims(data)
+        outerinds = indices[ninds - nouter + 1:end]
+        innerinds = indices[1:ninds - nouter]
+        # innerinds = indices[1:length(size(data[1]))]
         ninner = length(innerinds)
-        outerinds = indices[ninner + 1:end]
-        @assert ndims(data) == length(outerinds) "Indices do not match data shape."
+        @assert nouter == length(outerinds) "Indices do not match data shape."
+        if ninner > 0
+            # length(size(data[1])) gives number of dimensions in
+            # the random distribution D
+            @assert ninner == length(size(data[1])) "Inner indices, if provided, must match distribution shape."
+        end
         new(name, innerinds, outerinds, data)
     end
 end
