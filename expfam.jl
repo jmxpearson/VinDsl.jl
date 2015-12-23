@@ -43,3 +43,15 @@ function naturals_to_params(η, ::Type{MvNormalCanon})
     # no need to convert
     (η[1], -2η[2])
 end
+
+convert(::Type{DiagNormalCanon}, v::Vector{Normal}) = begin
+    J = 1 ./ map(var, v)
+    μ = map(mean, v)
+    DiagNormalCanon(J .* μ, J)
+end
+
+convert(::Type{IsoNormalCanon}, v::Normal) = begin
+    J = 1 / var(v)
+    μ = mean(v)
+    DiagNormalCanon(J * μ, J)
+end
