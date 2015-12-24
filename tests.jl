@@ -60,13 +60,51 @@ facts("Can create basic node types using constructors.") do
 end
 
 facts("Inferring Factor structure") do
-    aa = RandomNode(:a, [:i, :j], Normal, rand(5, 5), rand(5, 5))
-    bb = RandomNode(:b, [:j, :k], Gamma, rand(5, 3), rand(5, 3))
 
-    nodes = Node[aa, bb]
-    fi = get_structure(nodes...)
+    context("All indices outer") do
+        a[i, j] ~ Normal(rand(5, 5), rand(5, 5))
+        b[j, k] ~ Gamma(rand(5, 3), rand(5, 3))
 
-    # order should not be important
-    @fact Set(fi.indices) --> Set([:i, :j, :k])
-    @fact Set(zip(fi.indices, fi.maxvals)) --> Set([(:i, 5), (:j, 5), (:k, 3)])
+        nodes = Node[a, b]
+        fi = get_structure(nodes...)
+
+        # order should not be important, so compare Sets
+        @fact Set(fi.indices) --> Set([:i, :j, :k])
+        @fact Set(zip(fi.indices, fi.maxvals)) --> Set([(:i, 5), (:j, 5), (:k, 3)])
+
+        # check definition of inds_in_factor
+        @fact Set(fi.indices[fi.inds_in_factor[:a]]) --> Set([:i, :j])
+        @fact Set(fi.indices[fi.inds_in_factor[:b]]) --> Set([:k, :j])
+
+        # check definition of inds_in_node
+        @fact Set(a.outerinds[fi.inds_in_node[:a]]) --> Set([:i, :j])
+        @fact Set(b.outerinds[fi.inds_in_node[:b]]) --> Set([:j, :k])
+    end
+
+    context("Some indices inner") do
+        dims = (5, 3)
+        m = [rand(dims[1]) for x in 1:dims[2]]
+        VV = [diagm(rand(dims[1])) for x in 1:dims[2]]
+
+        d[i, j] ~ MvNormal(m, VV)
+        a[i, k] ~ Normal(rand(5, 4), rand(5, 4))
+
+        nodes = Node[a, d]
+        fi = get_structure(nodes...)
+
+        # order should not be important, so compare Sets
+        @fact Set(fi.indices) --> Set([:j, :k])
+        @fact Set(zip(fi.indices, fi.maxvals)) --> Set([(:j, 3), (:k, 4)])
+
+        # check definition of inds_in_factor
+        @fact Set(fi.indices[fi.inds_in_factor[:a]]) --> Set([:k])
+        @fact Set(fi.indices[fi.inds_in_factor[:d]]) --> Set([:j])
+
+        # check definition of inds_in_node
+        @fact Set(a.outerinds[fi.inds_in_node[:a]]) --> Set([:k])
+        @fact Set(d.outerinds[fi.inds_in_node[:d]]) --> Set([:j])
+    end
+
+    context("Dimension mismatch throws error") do
+    end
 end
