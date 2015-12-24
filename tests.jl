@@ -59,9 +59,14 @@ facts("Can create basic node types using constructors.") do
 
 end
 
-# facts("Inferring Factor structure") do
-#     μ = rand(5, 5)
-#     σ = rand(5, 5)
-#     aa = RandomNode(:a, [:i, :j], Normal, μ, σ)
-#     bb = RandomNode(:b, [:j, :k], Gamma, rand(5, 3), rand(5, 3))
-# end
+facts("Inferring Factor structure") do
+    aa = RandomNode(:a, [:i, :j], Normal, rand(5, 5), rand(5, 5))
+    bb = RandomNode(:b, [:j, :k], Gamma, rand(5, 3), rand(5, 3))
+
+    nodes = Node[aa, bb]
+    fi = get_structure(nodes...)
+
+    # order should not be important
+    @fact Set(fi.indices) --> Set([:i, :j, :k])
+    @fact Set(zip(fi.indices, fi.maxvals)) --> Set([(:i, 5), (:j, 5), (:k, 3)])
+end

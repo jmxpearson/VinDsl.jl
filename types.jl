@@ -13,6 +13,7 @@ immutable RandomNode{D <: Distribution} <: Node
         # inner indices are assumed listed first
         ninds = length(indices)
         nouter = ndims(data)
+        @assert nouter <= ninds "Indices do not match data shape"
         outerinds = indices[ninds - nouter + 1:end]
         innerinds = indices[1:ninds - nouter]
         ninner = length(innerinds)
@@ -151,7 +152,8 @@ function get_structure(nodes...)
     # lastly, check that the index ranges are the same for every node in
     # which an index appears; build a vector of index ranges
     maxvals = Integer[]
-    for (idx, lengths) in idxdict
+    for idx in allinds
+        lengths = idxdict[idx]
         if !all(x -> x == lengths[1], lengths)
             error("Index length mismatch in index $idx.")
         else
