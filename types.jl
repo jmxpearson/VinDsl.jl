@@ -457,6 +457,25 @@ end
     (EΛ * Ex, -EΛ/2)
 end
 
+@defnaturals LogMvNormalCanonFactor μ IsoNormalCanon begin
+    Ex, EΛ = E(x), E(Λ)
+    (sum(EΛ * Ex), -sum(EΛ)/2)
+end
+
+@defnaturals LogMvNormalCanonFactor Λ Vector{Gamma} begin
+    δ = E(x) - E(μ)
+    d = length(x)
+    v = var(x) + var(μ) + δ.^2
+    [(1/2, vv/2) for vv in v]
+end
+
+@defnaturals LogMvNormalCanonFactor Λ Gamma begin
+    δ = E(x) - E(μ)
+    d = length(x)
+    v = var(x) + var(μ) + δ.^2
+    (d/2, sum(v)/2)
+end
+
 function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:conjugate}})
     # get natural parameter vectors for each factor
     messages = [naturals(f, n) for (f, _) in m.graph[n]]

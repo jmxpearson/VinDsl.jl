@@ -233,3 +233,12 @@ facts("Conjugate Normal model") do
 
     update!(m)
 end
+
+facts("Univariate ⟷ multivariate naturals extraction") do
+    # scalar mean, full covariance
+    # vector mean, full covariance
+    # vector mean, diag covariance
+    # scalar mean, diag cov
+    # vector mean, scalar cov
+    # scalar mean, scalar cov
+end
