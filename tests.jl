@@ -46,6 +46,12 @@ facts("Can create basic node types using constructors.") do
         @fact_throws AssertionError a[i, j, k] ~ Normal(rand(3, 3), rand(3, 3))
     end
 
+    #=
+    TODO: check for duplicate indices
+    make sure duplicate inners have same size
+    duplicate inner/outers should throw error
+    =#
+
     context("Multivariate nodes") do
         dims = (5, 3)
         m = [rand(dims[1]) for x in 1:dims[2]]
@@ -106,5 +112,124 @@ facts("Inferring Factor structure") do
     end
 
     context("Dimension mismatch throws error") do
+        a[i, j] ~ Normal(rand(5, 5), rand(5, 5))
+        b[j, k] ~ Gamma(rand(4, 3), rand(4, 3))
+
+        nodes = Node[a, b]
+
+        @fact_throws ErrorException get_structure(nodes...)
     end
+
+    context("Inner indices optional") do
+        dims = (5, 3)
+        m = [rand(dims[1]) for x in 1:dims[2]]
+        VV = [diagm(rand(dims[1])) for x in 1:dims[2]]
+        LL = rand(3)
+
+        d[j] ~ MvNormal(m, VV)
+        L[j] ~ Const(LL)
+
+        nodes = Node[L, d]
+        fi = get_structure(nodes...)
+        inds = fi.indices
+        maxvals = fi.maxvals
+
+        @fact Set(inds) --> Set([:j])
+    end
+
+    context("Inner indices arbitrary") do
+        dims = (5, 3)
+        m = [rand(dims[1]) for x in 1:dims[2]]
+        VV = [diagm(rand(dims[1])) for x in 1:dims[2]]
+        LL = rand(5, 5, 3)
+
+        d[a, j] ~ MvNormal(m, VV)
+        L[a, a, j] ~ Const(LL)
+
+        nodes = Node[L, d]
+        fi = get_structure(nodes...)
+        inds = fi.indices
+        maxvals = fi.maxvals
+
+        @fact Set(inds) --> Set([:j])
+    end
+end
+
+facts("Basic factor construction") do
+
+    context("Simple univariate nodes") do
+        dims = (10, 2)
+
+        a[j] ~ Normal(rand(dims[2]), ones(dims[2]))
+        b ~ Gamma(1, 1)
+        y[i, j] ~ Normal(rand(dims), ones(dims))
+
+        f = @factor LogNormalFactor y a b;
+        inds = f.inds.indices
+        maxvals = f.inds.maxvals
+
+        @fact Set(inds) --> Set([:i, :j, :scalar])
+
+        # internals use names defined for factor type, not node names
+        @fact project_inds(f, :x, inds) --> [:i, :j]
+        @fact project_inds(f, :μ, inds) --> [:j]
+        @fact project_inds(f, :τ, inds) --> [:scalar]
+        @fact isa(project(f, :x, maxvals), Normal) --> true
+        @fact isa(project(f, :μ, maxvals), Normal) --> true
+        @fact isa(project(f, :τ, maxvals), Gamma) --> true
+        @fact value(f) --> isfinite
+    end
+
+    context("Multivariate nodes in factor") do
+        dims = (5, 3)
+        m = [rand(dims[1]) for x in 1:dims[2]]
+        VV = [diagm(rand(dims[1])) for x in 1:dims[2]]
+
+        y[i, j] ~ MvNormal(m, VV)
+        μ[i] ~ Normal(zeros(dims[1]), ones(dims[1]))
+        Λ[j] ~ Const([diagm(rand(dims[1])) for x in 1:dims[2]])
+
+        f = @factor LogMvNormalCanonFactor y μ Λ
+        inds = f.inds.indices
+        maxvals = f.inds.maxvals
+
+        @fact Set(inds) --> Set([:j])
+        @fact project_inds(f, :x, inds) --> [:j]
+        @fact project_inds(f, :μ, inds) --> [Colon()]
+        @fact project_inds(f, :Λ, inds) --> [:j]
+        @fact isa(project(f, :x, maxvals), MvNormal) --> true
+        @fact isa(project(f, :μ, maxvals), Vector{Normal}) --> true
+        @fact isa(project(f, :Λ, maxvals), Matrix{Float64}) --> true
+        @fact value(f) --> isfinite
+    end
+
+end
+
+facts("Conjugate Normal model") do
+    dims = (20, 6)
+
+    # note: it won't matter much how we initialize here
+    μ[j] ~ Normal(zeros(dims[2]), ones(dims[2]))
+    τ[j] ~ Gamma(1.1 * ones(dims[2]), ones(dims[2]))
+    μ0[j] ~ Const(zeros(dims[2]))
+    τ0[j] ~ Const(2 * ones(dims[2]))
+    a0[j] ~ Const(1.1 * ones(dims[2]))
+    b0[j] ~ Const(ones(dims[2]))
+
+    y[i, j] ~ Const(rand(dims))
+
+    # make factors
+    obs = @factor LogNormalFactor y μ τ
+    μ_prior = @factor LogNormalFactor μ μ0 τ0
+    τ_prior = @factor LogGammaFactor τ a0 b0
+
+    m = VBModel([μ, τ, μ0, τ0, a0, b0, y], [obs, μ_prior, τ_prior])
+
+    @fact Set([n.name for n in m.nodes]) --> Set([:μ, :τ, :μ0, :τ0, :a0, :b0, :y])
+    @fact Set([typeof(f) for f in m.factors]) --> Set([VB.LogNormalFactor{2}, VB.LogNormalFactor{1}, VB.LogGammaFactor{1}])
+    @fact length(m.graph) --> 7
+    @fact check_conjugate(τ, m) --> true
+    @fact check_conjugate(μ, m) --> true
+
+    update!(m)
 end
