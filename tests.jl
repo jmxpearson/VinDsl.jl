@@ -35,9 +35,12 @@ facts("Can create basic node types using constructors.") do
 
     context("Tilde node definitions") do
         a[i, j] ~ Normal(rand(4, 4), rand(4, 4))
+        b ~ Normal(0, 1)
         c[i, j] ~ Const(rand(4, 4))
+        d ~ Const(5.)
 
         @fact isa(a, RandomNode) --> true
+        @fact isa(b, RandomNode) --> true
         @fact isa(c, ConstantNode) --> true
     end
 
@@ -51,6 +54,21 @@ facts("Can create basic node types using constructors.") do
     make sure duplicate inners have same size
     duplicate inner/outers should throw error
     =#
+
+    context("Multivariate nodes with no outer indices") do
+        d = 5
+        x ~ MvNormal(zeros(d), diagm(ones(d)))
+        @fact size(x.data) --> (1,)
+
+        z[i] ~ MvNormal(zeros(d), diagm(ones(d)))
+        @fact size(z.data) --> (1,)
+
+        w ~ Wishart(float(d), diagm(rand(d)))
+        @fact size(w.data) --> (1,)
+
+        y[p, q] ~ Wishart(float(d), diagm(rand(d)))
+        @fact size(w.data) --> (1,)
+    end
 
     context("Multivariate nodes") do
         dims = (5, 3)

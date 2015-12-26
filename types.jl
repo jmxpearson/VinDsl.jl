@@ -10,12 +10,19 @@ immutable RandomNode{D <: Distribution} <: Node
     data::Array{D}
 
     function RandomNode(name, indices, data)
+        # handle the case where node is scalar in outer indices
+        if length(data) == 1
+            inds = vcat(indices, :scalar)
+        else
+            inds = copy(indices)
+        end
+
         # inner indices are assumed listed first
-        ninds = length(indices)
+        ninds = length(inds)
         nouter = ndims(data)
         @assert nouter <= ninds "Indices do not match data shape"
-        outerinds = indices[ninds - nouter + 1:end]
-        innerinds = indices[1:ninds - nouter]
+        outerinds = inds[ninds - nouter + 1:end]
+        innerinds = inds[1:ninds - nouter]
         ninner = length(innerinds)
         @assert nouter == length(outerinds) "Indices do not match data shape."
         if ninner > 0
@@ -26,7 +33,18 @@ immutable RandomNode{D <: Distribution} <: Node
         new(name, innerinds, outerinds, data)
     end
 end
-RandomNode{D <: Distribution}(name::Symbol, indices::Vector{Symbol}, ::Type{D}, pars...) = RandomNode{D}(name, indices, map(D, pars...))
+RandomNode{D <: Distribution}(name::Symbol, indices::Vector{Symbol}, ::Type{D}, pars...) = begin
+    dims = map(size, pars)
+
+    # if all pars have the same size, assume these are arrays of
+    # params to be mapped over, otherwise, assume they are tuples to be
+    # fed directly to D
+    if length(unique(dims)) == 1
+        RandomNode{D}(name, indices, map(D, pars...))
+    else
+        RandomNode{D}(name, indices, [D(pars...)])
+    end
+end
 
 immutable ConstantNode{T} <: Node
     name::Symbol
@@ -42,6 +60,7 @@ immutable ConstantNode{T} <: Node
     end
 end
 ConstantNode{T}(name::Symbol, indices::Vector{Symbol}, data::Array{T}) = ConstantNode{T}(name, indices, data)
+ConstantNode(name::Symbol, indices::Vector{Symbol}, data::Number) = ConstantNode(name, [:scalar], [data])
 ConstantNode{T}(data::Array{T}, indices::Vector{Symbol}) =
     ConstantNode(gensym("const"), indices, data)
 ConstantNode(x::Number) = ConstantNode(gensym("const"), [:scalar], [x])
@@ -55,7 +74,7 @@ y[a, b] ~ Const(Y)  (for a constant node)
 macro ~(varex, distex)
     if isa(varex, Symbol)
         name = varex
-        inds = :([:scalar])
+        inds = :(Symbol[])
     elseif varex.head == :ref
         name = varex.args[1]
         inds = Symbol[varex.args[2:end]...]
