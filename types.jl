@@ -476,6 +476,11 @@ end
     (EΛ * Eμ, -EΛ/2)
 end
 
+@defnaturals LogMvNormalCanonFactor x Normal begin
+    Eμ, EΛ = E(μ), E(Λ)
+    (sum(EΛ * Eμ), -sum(EΛ)/2)
+end
+
 @defnaturals LogMvNormalCanonFactor μ MvNormalCanon begin
     Ex, EΛ = E(x), E(Λ)
     (EΛ * Ex, -EΛ/2)
