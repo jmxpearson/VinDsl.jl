@@ -427,11 +427,17 @@ end
         @nloops $N i d -> 1:f.inds.maxvals[d] begin
             nats = @wrapvars $vars $nat_expr (@ntuple $N i)
             nat_tup = project_inds(f, S, (@ntuple $N i))
-            η[nat_tup...] = map(.+, η[nat_tup...], nats)
+            η[nat_tup...] = map(naturals_combine, η[nat_tup...], nats)
         end
         η
     end
 end
+
+function naturals_combine{N}(x::Tuple{N}, y::Tuple{N})
+    map(.+, x, y)
+end
+
+naturals_combine(x, y) = x .+ y
 
 """
 Define natural parameters for a given factor type, variable within that
