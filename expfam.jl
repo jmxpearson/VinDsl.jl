@@ -35,7 +35,7 @@ end
 function naturals(d::MvNormalCanon)
     # h = Λ * μ
     # J = Λ
-    (d.h, -d.J/2)
+    (d.h, -d.J.mat/2)
 end
 
 function naturals_to_params(η, ::Type{MvNormalCanon})

@@ -419,10 +419,11 @@ end
         # should have the same dimension as fsym
         # get the type of the naturals by calling the
         # function on the first element of the array
-        η_type = typeof(naturals(n.data[1]))
+        nats = naturals(n.data[1])
+        η_type = typeof(nats)
         η = Array{η_type}(get_node_size(f, n)...)
         for i in eachindex(η)
-            η[i] = map(zero_like, η[i])
+            η[i] = map(zero_like, nats)
         end
 
         @nloops $N i d -> 1:f.inds.maxvals[d] begin
