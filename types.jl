@@ -472,22 +472,30 @@ end
 end
 
 @defnaturals LogMvNormalCanonFactor x MvNormalCanon begin
-    Eμ, EΛ = E(μ), E(Λ)
+    Eμ = E(μ)
+    EL = E(Λ)
+    EΛ = ndims(EL) == 1 ? diagm(EL) : EL
     (EΛ * Eμ, -EΛ/2)
 end
 
 @defnaturals LogMvNormalCanonFactor x Normal begin
-    Eμ, EΛ = E(μ), E(Λ)
+    Eμ = E(μ)
+    EL = E(Λ)
+    EΛ = ndims(EL) == 1 ? diagm(EL) : EL
     (sum(EΛ * Eμ), -sum(EΛ)/2)
 end
 
 @defnaturals LogMvNormalCanonFactor μ MvNormalCanon begin
-    Ex, EΛ = E(x), E(Λ)
+    Ex = E(x)
+    EL = E(Λ)
+    EΛ = ndims(EL) == 1 ? diagm(EL) : EL
     (EΛ * Ex, -EΛ/2)
 end
 
 @defnaturals LogMvNormalCanonFactor μ Normal begin
-    Ex, EΛ = E(x), E(Λ)
+    Ex = E(x)
+    EL = E(Λ)
+    EΛ = ndims(EL) == 1 ? diagm(EL) : EL
     (sum(EΛ * Ex), -sum(EΛ)/2)
 end
 
