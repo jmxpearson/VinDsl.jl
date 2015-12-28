@@ -371,7 +371,9 @@ end
 
 @deffactor LogMvNormalCanonFactor [x, μ, Λ] begin
     δ = E(x) - E(μ)
-    -(1/2) * (trace(E(Λ) * (V(x) .+ V(μ) .+ δ * δ')) + length(x) * log(2π) - Elogdet(Λ))
+    EL = E(Λ)
+    EΛ = ndims(EL) == 1 ? diagm(EL) : EL
+    -(1/2) * (trace(EΛ * (V(x) .+ V(μ) .+ δ * δ')) + length(x) * log(2π) - Elogdet(Λ))
 end
 
 # define an expectation method on Distributions
@@ -379,7 +381,7 @@ end
 E(x) = x
 E(x::Distribution) = mean(x)
 V(x) = zero(x)
-V(x::Distribution) = var(x)
+V(x::Distribution{Univariate}) = var(x)
 V(x::AbstractMvNormal) = cov(x)
 V{D <: Distribution}(x::Vector{D}) = diagm(map(V, x))
 H(x) = zero(x)
@@ -390,6 +392,8 @@ H(x::Distribution) = entropy(x)
 Elog(x) = log(x)
 Eloggamma(x) = lgamma(x)
 Elogdet(x) = logdet(x)
+Elogdet{D <: Distribution{Univariate}}(x::Array{D}) = prod(Elog(x))
+Elogdet(x::Distribution{Univariate}) = Elog(x)
 
 # now make version of all these functions that work on nodes
 # by working elementwise
@@ -477,15 +481,9 @@ end
     (EΛ * Ex, -EΛ/2)
 end
 
-@defnaturals LogMvNormalCanonFactor μ IsoNormalCanon begin
+@defnaturals LogMvNormalCanonFactor μ Normal begin
     Ex, EΛ = E(x), E(Λ)
     (sum(EΛ * Ex), -sum(EΛ)/2)
-end
-
-@defnaturals LogMvNormalCanonFactor Λ Vector{Gamma} begin
-    δ = E(x) - E(μ)
-    v = var(x) + var(μ) + δ.^2
-    [(1/2, vv/2) for vv in v]
 end
 
 @defnaturals LogMvNormalCanonFactor Λ Gamma begin

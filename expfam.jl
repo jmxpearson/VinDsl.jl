@@ -44,18 +44,6 @@ function naturals_to_params(η, ::Type{MvNormalCanon})
     (η[1], -2η[2])
 end
 
-convert(::Type{DiagNormalCanon}, v::Vector{Normal}) = begin
-    J = 1 ./ map(var, v)
-    μ = map(mean, v)
-    DiagNormalCanon(J .* μ, J)
-end
-
-convert(::Type{IsoNormalCanon}, v::Normal) = begin
-    J = 1 / var(v)
-    μ = mean(v)
-    DiagNormalCanon([J * μ], J)
-end
-
 ################# Wishart ####################
 function naturals(d::Wishart)
     (-inv(d.S).mat/2, (d.df - size(d)[1] - 1)/2)

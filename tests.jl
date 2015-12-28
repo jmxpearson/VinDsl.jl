@@ -264,10 +264,64 @@ facts("Univariate ⟷ multivariate naturals extraction") do
         @fact map(size, naturals(f, μ)[1]) --> ((d,), (d, d))
         @fact map(size, naturals(f, Λ)[1]) --> ((d, d), ())
     end
-    # scalar mean, full covariance
-    # vector mean, full covariance
-    # vector mean, diag covariance
-    # scalar mean, diag cov
-    # vector mean, scalar cov
-    # scalar mean, scalar cov
+
+    context("vector mean, diagonal covariance") do
+        d = 5
+        μ[i] ~ MvNormalCanon(zeros(d), diagm(ones(d)))
+        τ[i] ~ Gamma(1.1 * ones(d), ones(d))
+        x[i, j] ~ Const(randn(d, 20))
+        f = @factor LogMvNormalCanonFactor x μ τ
+
+        @fact value(f) --> isfinite
+        @fact map(size, naturals(f, μ)[1]) --> ((d,), (d, d))
+        @fact size(naturals(f, τ)[1]) --> (d,)
+    end
+
+    context("vector mean, scalar covariance") do
+        d = 5
+        μ[i] ~ MvNormalCanon(zeros(d), diagm(ones(d)))
+        τ ~ Gamma(1.1, 1.)
+        x[i, j] ~ Const(randn(d, 20))
+        f = @factor LogMvNormalCanonFactor x μ τ
+
+        @fact value(f) --> isfinite
+        @fact map(size, naturals(f, μ)[1]) --> ((d,), (d, d))
+        @fact map(size, naturals(f, τ)[1]) --> ((), ())
+    end
+
+    context("scalar mean, full covariance") do
+        d = 5
+        μ ~ Normal(0, 1)
+        Λ[i, i] ~ Wishart(float(d), diagm(ones(d)))
+        x[i, j] ~ Const(randn(d, 20))
+        f = @factor LogMvNormalCanonFactor x μ Λ
+
+        @fact value(f) --> isfinite
+        @fact map(size, naturals(f, μ)[1]) --> ((), ())
+        @fact map(size, naturals(f, Λ)[1]) --> ((d, d), ())
+    end
+
+    context("scalar mean, diagonal covariance") do
+        d = 5
+        μ ~ Normal(0, 1)
+        τ[i] ~ Gamma(1.1 * ones(d), ones(d))
+        x[i, j] ~ Const(randn(d, 20))
+        f = @factor LogMvNormalCanonFactor x μ τ
+
+        @fact value(f) --> isfinite
+        @fact map(size, naturals(f, μ)[1]) --> ((), ())
+        @fact map(size, naturals(f, τ)[1]) --> ((), ())
+    end
+
+    context("scalar mean, scalar covariance") do
+        d = 5
+        μ ~ Normal(0, 1)
+        τ ~ Gamma(1.1, 1)
+        x[i, j] ~ Const(randn(d, 20))
+        f = @factor LogMvNormalCanonFactor x μ τ
+
+        @fact value(f) --> isfinite
+        @fact map(size, naturals(f, μ)[1]) --> ((), ())
+        @fact map(size, naturals(f, τ)[1]) --> ((), ())
+    end
 end
