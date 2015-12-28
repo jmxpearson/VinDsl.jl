@@ -55,3 +55,12 @@ convert(::Type{IsoNormalCanon}, v::Normal) = begin
     μ = mean(v)
     DiagNormalCanon([J * μ], J)
 end
+
+################# Wishart ####################
+function naturals(d::Wishart)
+    (-inv(d.S).mat/2, (d.df - size(d)[1] - 1)/2)
+end
+
+function naturals_to_params(η, ::Type{Wishart})
+    (-inv(η[1])/2, 2η[2] + size(eta[1], 1) + 1)
+end

@@ -484,7 +484,6 @@ end
 
 @defnaturals LogMvNormalCanonFactor Λ Vector{Gamma} begin
     δ = E(x) - E(μ)
-    d = length(x)
     v = var(x) + var(μ) + δ.^2
     [(1/2, vv/2) for vv in v]
 end
@@ -494,6 +493,13 @@ end
     d = length(x)
     v = var(x) + var(μ) + δ.^2
     (d/2, sum(v)/2)
+end
+
+@defnaturals LogMvNormalCanonFactor Λ Wishart begin
+    δ = E(x) - E(μ)
+    d = length(x)
+    v = V(x) .+ V(μ) .+ δ * δ'
+    (v/2, 0)
 end
 
 function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:conjugate}})

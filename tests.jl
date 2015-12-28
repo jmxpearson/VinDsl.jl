@@ -253,6 +253,16 @@ facts("Conjugate Normal model") do
 end
 
 facts("Univariate ⟷ multivariate naturals extraction") do
+    context("vector mean, full covariance") do
+        d = 5
+        μ[i] ~ MvNormalCanon(zeros(d), diagm(ones(d)))
+        Λ[i, i] ~ Wishart(float(d), diagm(ones(d)))
+        x[i, j] ~ Const(randn(d, 20))
+        f = @factor LogMvNormalCanonFactor x μ Λ
+
+        @fact map(size, naturals(f, μ)[1]) --> ((d,), (d, d))
+        @fact map(size, naturals(f, Λ)[1]) --> ((d, d), ())
+    end
     # scalar mean, full covariance
     # vector mean, full covariance
     # vector mean, diag covariance
