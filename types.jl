@@ -371,7 +371,7 @@ end
 
 @deffactor LogMvNormalCanonFactor [x, μ, Λ] begin
     δ = E(x) - E(μ)
-    -(1/2) * (trace(E(Λ) * (V(x) + V(μ) + δ * δ')) + length(x) * log(2π) - Elogdet(Λ))
+    -(1/2) * (trace(E(Λ) * (V(x) .+ V(μ) .+ δ * δ')) + length(x) * log(2π) - Elogdet(Λ))
 end
 
 # define an expectation method on Distributions

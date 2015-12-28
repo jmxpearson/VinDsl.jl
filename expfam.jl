@@ -64,3 +64,5 @@ end
 function naturals_to_params(η, ::Type{Wishart})
     (-inv(η[1])/2, 2η[2] + size(eta[1], 1) + 1)
 end
+
+Elogdet(d::Wishart) = Distributions.meanlogdet(d)

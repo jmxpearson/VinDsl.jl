@@ -260,6 +260,7 @@ facts("Univariate ⟷ multivariate naturals extraction") do
         x[i, j] ~ Const(randn(d, 20))
         f = @factor LogMvNormalCanonFactor x μ Λ
 
+        @fact value(f) --> isfinite
         @fact map(size, naturals(f, μ)[1]) --> ((d,), (d, d))
         @fact map(size, naturals(f, Λ)[1]) --> ((d, d), ())
     end
