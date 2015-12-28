@@ -183,12 +183,6 @@ function get_structure(nodes...)
     FactorInds(allinds, maxvals, inds_in_factor, inds_in_node)
 end
 
-function get_node_size(f::Factor, n::Node)
-    fi = f.inds
-    syminds = fi.inds_in_factor[n.name]
-    fi.maxvals[syminds]
-end
-
 function get_name_mapping{F <: Factor}(ftype::Type{F}, nodes...)
     nodenames = [n.name for n in nodes]
     Dict(zip(nodenames, fieldnames(ftype)))
@@ -425,7 +419,7 @@ end
         # function on the first element of the array
         nats = naturals(n.data[1])
         η_type = typeof(nats)
-        η = Array{η_type}(get_node_size(f, n)...)
+        η = Array{η_type}(size(n.data)...)
         for i in eachindex(η)
             η[i] = map(zero_like, nats)
         end
