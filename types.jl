@@ -365,9 +365,14 @@ end
 
 @deffactor LogMvNormalCanonFactor [x, μ, Λ] begin
     δ = E(x) - E(μ)
-    EL = E(Λ)
-    EΛ = ndims(EL) == 1 ? diagm(EL) : EL
+    EΛ = E(Λ)
     -(1/2) * (trace(EΛ * (V(x) .+ V(μ) .+ δ * δ')) + length(x) * log(2π) - Elogdet(Λ))
+end
+
+@deffactor LogMvNormalDiagCanonFactor [x, μ, τ] begin
+    δ = E(x) - E(μ)
+    Eτ = E(τ)
+    -(1/2) * (sum(Eτ .* (V(x) .+ V(μ) .+ δ * δ')) + length(x) * log(2π) - Elogdet(τ))
 end
 
 # define an expectation method on Distributions
@@ -375,9 +380,11 @@ end
 E(x) = x
 E(x::Distribution) = mean(x)
 V(x) = zero(x)
-V(x::Distribution{Univariate}) = var(x)
-V(x::AbstractMvNormal) = cov(x)
-V{D <: Distribution}(x::Vector{D}) = diagm(map(V, x))
+V(x::Distribution) = var(x)
+C(x) = zero(x)
+C(x::Distribution{Univariate}) = V(x)
+C(x::AbstractMvNormal) = cov(x)
+C{D <: Distribution}(x::Vector{D}) = diagm(map(V, x))
 H(x) = zero(x)
 H(x::Distribution) = entropy(x)
 
