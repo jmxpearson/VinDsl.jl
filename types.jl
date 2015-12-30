@@ -427,17 +427,31 @@ end
         @nloops $N i d -> 1:f.inds.maxvals[d] begin
             nats = @wrapvars $vars $nat_expr (@ntuple $N i)
             nat_tup = project_inds(f, S, (@ntuple $N i))
-            η[nat_tup...] = map(naturals_combine, η[nat_tup...], nats)
+            η[nat_tup...] = add_nats(η[nat_tup...], nats)
         end
         η
     end
 end
 
-function naturals_combine{N}(x::Tuple{N}, y::Tuple{N})
-    map(.+, x, y)
+#=
+The strategy for combining natural parameters is:
+- If η and nats are both tuples, add elementwise
+- If η is a tuple and nats an array, collapse the array, adding tuples elementwise
+- If η and nats are arrays of the same size, add the tuples at each position elementwise
+=#
+@inline function add_nats{N}(η::NTuple{N}, nats::NTuple{N})
+    map(+, η, nats)
 end
 
-naturals_combine(x, y) = x .+ y
+@inline function add_nats{T <: NTuple}(η::T, nats::Array{T})
+    nats_red = reduce(add_nats, nats)
+    add_nats(η, nats_red)
+end
+
+@inline function add_nats{T <: NTuple, N}(η::Array{T, N}, nats::Array{T, N})
+    map(add_nats, η, nats)
+end
+
 
 """
 Define natural parameters for a given factor type, variable within that
@@ -503,14 +517,14 @@ end
     δ = E(x) - E(μ)
     d = length(x)
     v = var(x) + var(μ) + δ.^2
-    (d/2, sum(v)/2)
+    Tuple{Float64, Float64}[(1/2, vv/2) for vv in v]
 end
 
 @defnaturals LogMvNormalCanonFactor Λ Wishart begin
     δ = E(x) - E(μ)
     d = length(x)
     v = V(x) .+ V(μ) .+ δ * δ'
-    (v/2, 0)
+    (v/2, 0.)
 end
 
 function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:conjugate}})

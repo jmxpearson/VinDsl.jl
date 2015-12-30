@@ -274,7 +274,7 @@ facts("Univariate ⟷ multivariate naturals extraction") do
 
         @fact value(f) --> isfinite
         @fact map(size, naturals(f, μ)[1]) --> ((d,), (d, d))
-        @fact size(naturals(f, τ)[1]) --> (d,)
+        @fact size(naturals(f, τ)) --> (d,)
     end
 
     context("vector mean, scalar covariance") do
@@ -309,6 +309,20 @@ facts("Univariate ⟷ multivariate naturals extraction") do
         f = @factor LogMvNormalCanonFactor x μ τ
 
         @fact value(f) --> isfinite
+        @fact map(size, naturals(f, μ)[1]) --> ((), ())
+        @fact map(size, naturals(f, τ)[1]) --> ((), ())
+    end
+
+    context("vector-of-scalars mean, diagonal covariance") do
+        d = 5
+        μ[i] ~ Normal(zeros(d), ones(d))
+        τ[i] ~ Gamma(1.1 * ones(d), ones(d))
+        x[i, j] ~ Const(randn(d, 20))
+        f = @factor LogMvNormalCanonFactor x μ τ
+
+        @fact value(f) --> isfinite
+        @fact size(naturals(f, μ)) --> (d,)
+        @fact size(naturals(f, τ)) --> (d,)
         @fact map(size, naturals(f, μ)[1]) --> ((), ())
         @fact map(size, naturals(f, τ)[1]) --> ((), ())
     end
