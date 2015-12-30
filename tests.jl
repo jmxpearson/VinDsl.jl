@@ -257,7 +257,7 @@ facts("Univariate ⟷ multivariate naturals extraction") do
         d = 5
         μ[i] ~ MvNormalCanon(zeros(d), diagm(ones(d)))
         Λ[i, i] ~ Wishart(float(d), diagm(ones(d)))
-        x[i, j] ~ Const(randn(d, 20))
+        x[i, j] ~ MvNormalCanon([randn(d) for x in 1:20], [diagm(ones(d)) for x in 1:20])
         f = @factor LogMvNormalCanonFactor x μ Λ
 
         @fact value(f) --> isfinite
@@ -269,8 +269,8 @@ facts("Univariate ⟷ multivariate naturals extraction") do
         d = 5
         μ[i] ~ MvNormalCanon(zeros(d), diagm(ones(d)))
         τ[i] ~ Gamma(1.1 * ones(d), ones(d))
-        x[i, j] ~ Const(randn(d, 20))
-        f = @factor LogMvNormalCanonFactor x μ τ
+        x[i, j] ~ MvNormalCanon([randn(d) for x in 1:20], [diagm(ones(d)) for x in 1:20])
+        f = @factor LogMvNormalDiagCanonFactor x μ τ
 
         @fact value(f) --> isfinite
         @fact map(size, naturals(f, μ)[1]) --> ((d,), (d, d))
@@ -281,8 +281,8 @@ facts("Univariate ⟷ multivariate naturals extraction") do
         d = 5
         μ[i] ~ MvNormalCanon(zeros(d), diagm(ones(d)))
         τ ~ Gamma(1.1, 1.)
-        x[i, j] ~ Const(randn(d, 20))
-        f = @factor LogMvNormalCanonFactor x μ τ
+        x[i, j] ~ MvNormalCanon([randn(d) for x in 1:20], [diagm(ones(d)) for x in 1:20])
+        f = @factor LogMvNormalDiagCanonFactor x μ τ
 
         @fact value(f) --> isfinite
         @fact map(size, naturals(f, μ)[1]) --> ((d,), (d, d))
@@ -293,7 +293,7 @@ facts("Univariate ⟷ multivariate naturals extraction") do
         d = 5
         μ ~ Normal(0, 1)
         Λ[i, i] ~ Wishart(float(d), diagm(ones(d)))
-        x[i, j] ~ Const(randn(d, 20))
+        x[i, j] ~ MvNormalCanon([randn(d) for x in 1:20], [diagm(ones(d)) for x in 1:20])
         f = @factor LogMvNormalCanonFactor x μ Λ
 
         @fact value(f) --> isfinite
@@ -305,8 +305,8 @@ facts("Univariate ⟷ multivariate naturals extraction") do
         d = 5
         μ ~ Normal(0, 1)
         τ[i] ~ Gamma(1.1 * ones(d), ones(d))
-        x[i, j] ~ Const(randn(d, 20))
-        f = @factor LogMvNormalCanonFactor x μ τ
+        x[i, j] ~ MvNormalCanon([randn(d) for x in 1:20], [diagm(ones(d)) for x in 1:20])
+        f = @factor LogMvNormalDiagCanonFactor x μ τ
 
         @fact value(f) --> isfinite
         @fact map(size, naturals(f, μ)[1]) --> ((), ())
@@ -315,27 +315,33 @@ facts("Univariate ⟷ multivariate naturals extraction") do
 
     context("vector-of-scalars mean, diagonal covariance") do
         d = 5
+        N = 20
         μ[i] ~ Normal(zeros(d), ones(d))
         τ[i] ~ Gamma(1.1 * ones(d), ones(d))
-        x[i, j] ~ Const(randn(d, 20))
-        f = @factor LogMvNormalCanonFactor x μ τ
+        x[i, j] ~ MvNormalCanon([randn(d) for x in 1:N], [diagm(ones(d)) for x in 1:N])
+        f = @factor LogMvNormalDiagCanonFactor x μ τ
 
         @fact value(f) --> isfinite
         @fact size(naturals(f, μ)) --> (d,)
         @fact size(naturals(f, τ)) --> (d,)
+        @fact size(naturals(f, x)) --> (N,)
         @fact map(size, naturals(f, μ)[1]) --> ((), ())
         @fact map(size, naturals(f, τ)[1]) --> ((), ())
+        @fact map(size, naturals(f, x)[1]) --> ((d,), (d, d))
     end
 
     context("scalar mean, scalar covariance") do
         d = 5
+        N = 20
         μ ~ Normal(0, 1)
         τ ~ Gamma(1.1, 1)
-        x[i, j] ~ Const(randn(d, 20))
-        f = @factor LogMvNormalCanonFactor x μ τ
+        x[i, j] ~ MvNormalCanon([randn(d) for x in 1:N], [diagm(ones(d)) for x in 1:N])
+        f = @factor LogMvNormalDiagCanonFactor x μ τ
 
         @fact value(f) --> isfinite
         @fact map(size, naturals(f, μ)[1]) --> ((), ())
         @fact map(size, naturals(f, τ)[1]) --> ((), ())
+        @fact size(naturals(f, x)) --> (N,)
+        @fact map(size, naturals(f, x)[1]) --> ((d,), (d, d))
     end
 end

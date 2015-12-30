@@ -443,16 +443,10 @@ end
 #=
 The strategy for combining natural parameters is:
 - If η and nats are both tuples, add elementwise
-- If η is a tuple and nats an array, collapse the array, adding tuples elementwise
 - If η and nats are arrays of the same size, add the tuples at each position elementwise
 =#
 @inline function add_nats{N}(η::NTuple{N}, nats::NTuple{N})
     map(+, η, nats)
-end
-
-@inline function add_nats{T <: NTuple}(η::T, nats::Array{T})
-    nats_red = reduce(add_nats, nats)
-    add_nats(η, nats_red)
 end
 
 @inline function add_nats{T <: NTuple, N}(η::Array{T, N}, nats::Array{T, N})
@@ -492,46 +486,78 @@ end
     (E(α) - 1, -E(β))
 end
 
-@defnaturals LogMvNormalCanonFactor x MvNormalCanon begin
-    Eμ = E(μ)
-    EL = E(Λ)
-    EΛ = ndims(EL) == 1 ? diagm(EL) : EL
-    (EΛ * Eμ, -EΛ/2)
-end
+nats_mvn{T <: Number}(μ::Vector{T}, Λ::Matrix{T}, x::MvNormalCanon) =
+    (Λ * μ, -Λ/2)
+nats_mvn{T <: Number}(μ::Number, Λ::Matrix{T}, x::MvNormalCanon) =
+    (μ * sum(Λ, 2), -Λ/2)
+nats_mvn{T <: Number}(μ::Vector{T}, τ::Vector{T}, x::MvNormalCanon) =
+    (τ .* μ, -diagm(τ)/2)
+nats_mvn{T <: Number}(μ::Number, τ::Vector{T}, x::MvNormalCanon) =
+    (τ * μ, -diagm(τ)/2)
+nats_mvn{T <: Number}(μ::Vector{T}, τ::Number, x::MvNormalCanon) =
+    (τ * μ, -τ * eye(length(μ))/2)
+nats_mvn(μ::Number, τ::Number, x::MvNormalCanon) =
+    (μ * τ * ones(length(x)), -τ * eye(length(x))/2)
+nats_mvn{T <: Number}(μ::Vector{T}, Λ::Matrix{T}, x::Normal) =
+    (sum(Λ * μ), -sum(Λ)/2)
+nats_mvn{T <: Number}(μ::Number, Λ::Matrix{T}, x::Normal) =
+    (μ * sum(Λ), -sum(Λ)/2)
+nats_mvn{T <: Number}(μ::Vector{T}, τ::Vector{T}, x::Vector{Normal}) =
+    [nats_mvn(m, t) for (m, t) in zip(μ, τ)]
+nats_mvn{T <: Number}(μ::Vector{T}, τ::Number, x::Vector{Normal}) =
+    [nats_mvn(m, τ) for m in μ]
+nats_mvn{T <: Number}(μ::Number, τ::Vector{T}, x::Vector{Normal}) =
+    [nats_mvn(μ, t) for t in τ]
+nats_mvn(μ, τ, x::Normal) =
+    reduce(add_nats, nats_mvn(μ, τ, [x]))
+nats_mvn(μ::Number, τ::Number) = (μ * τ, -τ/2)
+nats_mvn(v::Vector, x::Vector{Gamma}) =
+    Tuple{Float64, Float64}[(1/2, vv/2) for vv in v]
+nats_mvn(v::Vector, x::Gamma) =
+    reduce(add_nats, nats_mvn(v, [x]))
 
-@defnaturals LogMvNormalCanonFactor x Normal begin
-    Eμ = E(μ)
-    EL = E(Λ)
-    EΛ = ndims(EL) == 1 ? diagm(EL) : EL
-    (sum(EΛ * Eμ), -sum(EΛ)/2)
+@defnaturals LogMvNormalCanonFactor x MvNormalCanon begin
+    nats_mvn(E(μ), E(Λ), x)
 end
 
 @defnaturals LogMvNormalCanonFactor μ MvNormalCanon begin
-    Ex = E(x)
-    EL = E(Λ)
-    EΛ = ndims(EL) == 1 ? diagm(EL) : EL
-    (EΛ * Ex, -EΛ/2)
+    nats_mvn(E(x), E(Λ), μ)
+end
+
+@defnaturals LogMvNormalCanonFactor x Normal begin
+    nats_mvn(E(μ), E(Λ), x)
 end
 
 @defnaturals LogMvNormalCanonFactor μ Normal begin
-    Ex = E(x)
-    EL = E(Λ)
-    EΛ = ndims(EL) == 1 ? diagm(EL) : EL
-    (sum(EΛ * Ex), -sum(EΛ)/2)
-end
-
-@defnaturals LogMvNormalCanonFactor Λ Gamma begin
-    δ = E(x) - E(μ)
-    d = length(x)
-    v = var(x) + var(μ) + δ.^2
-    Tuple{Float64, Float64}[(1/2, vv/2) for vv in v]
+    nats_mvn(E(x), E(Λ), μ)
 end
 
 @defnaturals LogMvNormalCanonFactor Λ Wishart begin
     δ = E(x) - E(μ)
-    d = length(x)
-    v = V(x) .+ V(μ) .+ δ * δ'
+    v = C(x) .+ C(μ) .+ δ * δ'
     (v/2, 0.)
+end
+
+@defnaturals LogMvNormalDiagCanonFactor x Normal begin
+    nats_mvn(E(μ), E(τ), x)
+end
+
+@defnaturals LogMvNormalDiagCanonFactor x MvNormalCanon begin
+    nats_mvn(E(μ), E(τ), x)
+end
+
+@defnaturals LogMvNormalDiagCanonFactor μ Normal begin
+    nats_mvn(E(x), E(τ), μ)
+end
+
+@defnaturals LogMvNormalDiagCanonFactor μ MvNormalCanon begin
+    nats_mvn(E(x), E(τ), μ)
+end
+
+@defnaturals LogMvNormalDiagCanonFactor τ Gamma begin
+    δ = E(x) - E(μ)
+    v = V(x) + V(μ) + δ.^2
+    nats_mvn(v, τ)
 end
 
 function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:conjugate}})
