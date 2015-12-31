@@ -40,10 +40,10 @@ for t in 1:T
 end
 
 # logpdf of observations, conditioned on state
-ψ = Array{Float64}(K, T)
+logψ = Array{Float64}(K, T)
 for t in 1:T
     for k in 1:K
-        ψ[k, t] = logpdf(Poisson(λ[k]), N[t])
+        logψ[k, t] = logpdf(Poisson(λ[k]), N[t])
     end
 end
 
@@ -52,6 +52,15 @@ facts("Checking validity of test data.") do
     @fact sum(A, 1) --> roughly(ones(1, K))
     @fact length(find(z)) --> T
     @fact sum(z .!= 0, 1) --> ones(1, T)
-    @fact ψ .≤ 0 --> all
+    @fact logψ .≤ 0 --> all
+end
 
+facts("Check return shapes.") do
+    γ, logZ, Ξ = forwardbackward(π0, A, map(exp, logψ))
+
+    @fact size(γ) --> (K, T)
+    @fact sum(γ, 1) --> roughly(ones(1, T))
+    @fact size(logZ) --> ()
+    @fact size(Ξ) --> (K, K, T - 1)
+    @fact sum(Ξ, [1, 2]) --> roughly(ones(1, 1, T - 1))
 end
