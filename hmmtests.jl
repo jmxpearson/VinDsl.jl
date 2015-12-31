@@ -6,38 +6,51 @@ include("HMM.jl")
 
 srand(12345)
 
-# set up some contants for test dataset
-T = 500  # time points
-U = 50  # number of observations at each time
-K = 5  # states
-dt = 1  # time step
+facts("Checking HMM distribution") do
+    K = 4
+    T = 50
+    pars = Dirichlet(K, 1)
+    A = Array{Float64}(K, K)
+    π0 = rand(pars)
+    for k in 1:K
+        A[:, k] = rand(pars)
+    end
+    ψ = rand(K, T)
 
-# make transition probabilities
-# we assume that the transition matrix A is right stochastic
-pars = Dirichlet(K, 1)
-A = Array{Float64}(K, K)
-π0 = rand(pars)
-for k in 1:K
-    A[:, k] = rand(pars)
-end
+    x = HMM(ψ, π0, A)
 
-# draw a chain of states
-z = zeros(K, T)
-z_ints = Array{Int}(T)
-init_state = rand(Categorical(π0))
-z[init_state, 1] = 1
-z_ints[1] = init_state
-for t in 2:T
-    newstate = rand(Categorical(A * z[:, t - 1]))
-    z[newstate, t] = 1
-    z_ints[t] = newstate
-end
+    context("Constructors") do
+        @fact isa(x, HMM) --> true
+        @fact isa(x, DiscreteMatrixDistribution) --> true
+        @fact isa(x, Distribution) --> true
+        @fact x.ψ --> ψ
+        @fact x.A --> A
+        @fact x.π0 --> π0
+        @fact size(x.ξ) --> size(ψ)
+        @fact size(x.Ξ) --> (K, K, T - 1)
+    end
 
-# observation model: Poisson
-λ = 10 * collect(1:K)
-N = Array{Int}(U, T)
-for t in 1:T
-    N[:, t] = rand(Poisson(λ[z_ints[t]]), U)
+    context("Bad constructor inputs throw errors") do
+        @fact_throws ErrorException HMM(ψ[2:end, :], π0, A)
+        @fact_throws ErrorException HMM(ψ, π0[2:end], A)
+        @fact_throws ErrorException HMM(ψ, π0, A[2:end, :])
+        @fact_throws ErrorException HMM(ψ, π0, A[:, 2:end])
+    end
+
+    context("Check basic interface") do
+        @fact nstates(x) --> K
+        @fact size(x) --> (K, T)
+        @fact length(x) --> K * T
+    end
+
+    context("Check mean") do
+        ξ = mean(x)
+        @fact ξ --> x.ξ
+    end
+
+    context("Check sampling") do
+        @fact_throws rand(x) ErrorException
+    end
 end
 
 facts("Checking forward-backward algorithm.") do

@@ -1,3 +1,39 @@
+using Distributions
+import Base.size, Base.length, Base.rand
+
+immutable HMM{N <: Number} <: DiscreteMatrixDistribution
+    ψ::Matrix{N}
+    π0::Vector{N}  # vector of initial state probabilities
+    A::Matrix{N}  # transition matrix (columns sum to 1)
+    ξ::Matrix{N}  # mean of distribution
+    Ξ::Array{N, 3}  # two-slice marginal of distribution
+    logZ::N  # log normalization constant for distribution
+
+    function HMM(ψ, π0, A)
+        size(ψ, 1) == length(π0) == size(A, 1) == size(A, 2) || error("A and π0 have incompatible shapes")
+
+        M, T = size(ψ)
+
+        sum(π0) ≈ 1 || error("Entries of π0 do not sum to 1.")
+
+        sum(A, 1) ≈ ones(1, M) || error("Columns of A do not sum to 1.")
+
+        ξ, logZ, Ξ = forwardbackward(π0, A, ψ)
+
+        new(ψ, π0, A, ξ, Ξ)
+    end
+end
+
+HMM{N <: Number}(ψ::Matrix{N}, π0::Vector{N}, A::Matrix{N}) = HMM{N}(ψ, π0, A)
+
+nstates(x::HMM) = length(x.π0)
+size(x::HMM) = size(x.ψ)
+length(x::HMM) = prod(size(x))
+
+mean(x::HMM) = x.ξ
+
+rand(x::HMM) = error("Not implemented!")
+
 """
 Implement the forward-backward inference algorithm.
 A is a matrix of transition probabilities that acts to the right:
@@ -18,14 +54,13 @@ function forwardbackward(π0, A, ψ)
     α = Array{Float64}(M, T)
     β = Array{Float64}(M, T)
     γ = Array{Float64}(M, T)
-    logZ = Array{Float64}(T)
     Ξ = Array{Float64}(M, M, T - 1)
 
     # initialize
     a = ψ[:, 1] .* π0
     α[:, 1] = a / sum(a)
-    logZ[1] = log(sum(a))
-    β[:, T] = 1/M
+    logZ = log(sum(a))
+    β[:, T] = 1
 
     # forward pass
     for t in 2:T
@@ -42,7 +77,7 @@ function forwardbackward(π0, A, ψ)
             α[i, t] = a[i] / asum
         end
 
-        logZ[t] = log(asum)
+        logZ += log(asum)
     end
 
     # backward pass
@@ -93,6 +128,6 @@ function forwardbackward(π0, A, ψ)
         end
     end
 
-    γ, sum(logZ), Ξ
+    γ, logZ, Ξ
 
 end
