@@ -51,6 +51,24 @@ facts("Checking HMM distribution") do
     context("Check sampling") do
         @fact_throws rand(x) ErrorException
     end
+
+    context("Check logpdf") do
+        # draw a chain of states
+        z = zeros(K, T)
+        init_state = rand(Categorical(π0))
+        z[init_state, 1] = 1
+        for t in 2:T
+            newstate = rand(Categorical(A * z[:, t - 1]))
+            z[newstate, t] = 1
+        end
+        lpdf = logpdf(x, z)
+
+        @fact lpdf --> less_than_or_equal(0)
+    end
+
+    context("Check entropy") do
+        @fact entropy(x) --> greater_than_or_equal(0)    
+    end
 end
 
 facts("Checking forward-backward algorithm.") do

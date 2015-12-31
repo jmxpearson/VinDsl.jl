@@ -1,5 +1,5 @@
 using Distributions
-import Base.size, Base.length, Base.rand
+import Base.size, Base.length, Base.rand, Distributions.logpdf
 
 immutable HMM{N <: Number} <: DiscreteMatrixDistribution
     ψ::Matrix{N}
@@ -26,13 +26,41 @@ end
 
 HMM{N <: Number}(ψ::Matrix{N}, π0::Vector{N}, A::Matrix{N}) = HMM{N}(ψ, π0, A)
 
-nstates(x::HMM) = length(x.π0)
-size(x::HMM) = size(x.ψ)
-length(x::HMM) = prod(size(x))
+nstates(d::HMM) = length(d.π0)
+size(d::HMM) = size(d.ψ)
+length(d::HMM) = prod(size(d))
 
-mean(x::HMM) = x.ξ
+mean(d::HMM) = d.ξ
 
-rand(x::HMM) = error("Not implemented!")
+rand(d::HMM) = error("Not implemented!")
+
+function logpdf{N <: Number}(d::HMM{N}, x::Matrix{N})
+    size(x) == size(d) || error("Input matrix x has wrong size.")
+
+    T = size(x, 2)
+
+    emission_piece = sum(x .* log(d.ψ))
+    initial_piece = sum(x[:, 1] .* log(d.π0))
+    transition_piece = 0.
+    for t in 1:(T - 1)
+        transition_piece += (x[:, t + 1]' * log(d.A) * x[:, t])[1]
+    end
+
+    emission_piece + initial_piece + transition_piece - d.logZ
+end
+
+function entropy(d::HMM)
+    _, T = size(d)
+
+    emission_piece = sum(d.ξ .* log(d.ψ))
+    initial_piece = sum(d.ξ[:, 1] .* log(d.π0))
+    transition_piece = 0.
+    for t in 1:(T - 1)
+        transition_piece += sum(d.Ξ[:, :, t] .* log(d.A))
+    end
+
+    d.logZ -(emission_piece + initial_piece + transition_piece)
+end
 
 """
 Implement the forward-backward inference algorithm.
