@@ -49,7 +49,10 @@ facts("Checking HMM distribution") do
     end
 
     context("Check sampling") do
-        @fact_throws rand(x) ErrorException
+        z = rand(x)
+        @fact size(z) --> (K, T)
+        @fact length(find(z)) --> T
+        @fact sum(z .!= 0, 1) --> ones(1, T)
     end
 
     context("Check logpdf") do
@@ -67,7 +70,7 @@ facts("Checking HMM distribution") do
     end
 
     context("Check entropy") do
-        @fact entropy(x) --> greater_than_or_equal(0)    
+        @fact entropy(x) --> greater_than_or_equal(0)
     end
 end
 

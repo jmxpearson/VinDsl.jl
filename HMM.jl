@@ -32,7 +32,19 @@ length(d::HMM) = prod(size(d))
 
 mean(d::HMM) = d.ξ
 
-rand(d::HMM) = error("Not implemented!")
+function rand(d::HMM)
+    M, T = size(d)
+    z = zeros(M, T)
+    init_state = rand(Categorical(d.ξ[:, 1]))
+    z[init_state, 1] = 1
+    for t in 2:T
+        pvec = d.Ξ[:, findfirst(z[:, t - 1]), t - 1]
+        pvec /= sum(pvec)  # normalize, since Ξ is joint, not conditional
+        newstate = rand(Categorical(pvec))
+        z[newstate, t] = 1
+    end
+    z
+end
 
 function logpdf{N <: Number}(d::HMM{N}, x::Matrix{N})
     size(x) == size(d) || error("Input matrix x has wrong size.")
