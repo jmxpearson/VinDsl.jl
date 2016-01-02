@@ -375,6 +375,10 @@ end
     -(1/2) * (sum(Eτ .* (V(x) .+ V(μ) .+ δ * δ')) + length(x) * log(2π) - Elogdet(τ))
 end
 
+@deffactor LogDirichletFactor [x, α] begin
+    dot(E(α) - 1, Elog(x)) - Elogbeta(α)
+end
+
 # define an expectation method on Distributions
 "Calculate the expected value of a Node x."
 E(x) = x
@@ -392,6 +396,7 @@ H(x::Distribution) = entropy(x)
 # In each case, a specialized method is already defined for distributions.
 Elog(x) = log(x)
 Eloggamma(x) = lgamma(x)
+Elogbeta(x) = lbeta(x)
 Elogdet(x) = logdet(x)
 Elogdet{D <: Distribution{Univariate}}(x::Array{D}) = prod(Elog(x))
 Elogdet(x::Distribution{Univariate}) = Elog(x)
