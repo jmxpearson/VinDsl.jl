@@ -30,6 +30,20 @@ function Elog(d::Gamma)
     digamma(a) + log(θ)
 end
 
+################# Dirichlet ####################
+function naturals(d::Dirichlet)
+    (d.alpha - 1,)
+end
+
+function naturals_to_params(η, ::Type{Dirichlet})
+    (η + 1,)
+end
+
+function Elog(d::Dirichlet)
+    α = d.alpha
+    digamma(α) - digamma(sum(α))
+end
+
 ################# MvNormalCanon ####################
 # exponential family representation of the multivariate normal
 function naturals(d::MvNormalCanon)
