@@ -124,7 +124,7 @@ end
 
 function logpdf{N <: Number}(d::MarkovMatrix, x::Matrix{N})
     size(x) == size(d) || error("Input matrix x has wrong size.")
-    s = 0
+    s = 0.
     for i in 1:nstates(d)
         s += logpdf(d.cols[i], x[:, i])
     end
@@ -132,7 +132,7 @@ function logpdf{N <: Number}(d::MarkovMatrix, x::Matrix{N})
 end
 
 function entropy(d::MarkovMatrix)
-    s = 0
+    s = 0.
     for c in d.cols
         s += entropy(c)
     end
