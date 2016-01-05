@@ -74,6 +74,67 @@ facts("Checking HMM distribution") do
     end
 end
 
+facts("Checking MarkovMatrix distribution") do
+    d = 5
+
+    pars = [Dirichlet(d, 1) for i in 1:d]
+    parmat = hcat([rand(Dirichlet(d, 1)) for i in 1:d]...)
+
+    x = MarkovMatrix(pars)
+
+    context("Inner constructor") do
+        @fact isa(x, MarkovMatrix) --> true
+        @fact isa(x, DiscreteMatrixDistribution) --> true
+        @fact isa(x, Distribution) --> true
+        @fact x.cols --> pars
+    end
+
+    context("Inner constructor consistency checks") do
+        @fact_throws ErrorException MarkovMatrix(pars[2:end, :])
+    end
+
+    context("Outer constructor") do
+        x = MarkovMatrix(parmat)
+        @fact isa(x, MarkovMatrix) --> true
+    end
+
+    context("Outer constructor consistency checks") do
+        @fact_throws ErrorException MarkovMatrix(parmat[2:end, :])
+    end
+
+    context("Check basic interfact") do
+        @fact nstates(x) --> d
+        @fact size(x) --> (d, d)
+        @fact length(x) --> d^2
+    end
+
+    context("Check mean") do
+        m = mean(x)
+        @fact size(m) --> (d, d)
+        @fact sum(m, 1) --> roughly(ones(1, d))
+    end
+
+    context("Check sampling") do
+        A = rand(x)
+        @fact size(A) --> (d, d)
+        @fact sum(A, 1) --> roughly(ones(1, d))
+    end
+
+    context("Check logpdf") do
+        # draw a matrix
+        A = rand(x)
+        lpdf = logpdf(x, A)
+
+        ll = sum([logpdf(x.cols[i], A[:, i]) for i in 1:nstates(x)])
+        @fact lpdf --> roughly(ll)
+    end
+
+    context("Check entropy") do
+        H = sum([entropy(c) for c in x.cols])
+        @fact entropy(x) --> roughly(H)
+    end
+end
+
 facts("Checking forward-backward algorithm.") do
     # set up some contants for test dataset
     T = 500  # time points

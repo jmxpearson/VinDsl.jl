@@ -1,6 +1,7 @@
 using Distributions
-import Base.size, Base.length, Base.rand, Distributions.logpdf
+import Base.size, Base.length, Base.rand, Base.mean, Distributions.logpdf, Distributions.entropy
 
+################### Hidden Markov Model distribution #####################
 immutable HMM{N <: Number} <: DiscreteMatrixDistribution
     ψ::Matrix{N}
     π0::Vector{N}  # vector of initial state probabilities
@@ -72,6 +73,63 @@ function entropy(d::HMM)
     end
 
     d.logZ -(emission_piece + initial_piece + transition_piece)
+end
+
+################### Markov Matrix distribution #####################
+immutable MarkovMatrix <: DiscreteMatrixDistribution
+    cols::Vector{Dirichlet}  # each column is a Dirichlet distribution
+
+    function MarkovMatrix(cols)
+        length(cols) == length(cols[1]) || error("Input is not a square matrix.")
+
+        new(cols)
+    end
+end
+
+function MarkovMatrix{N <: Number}(A::Matrix{N})
+    r, c = size(A)
+    r == c || error("Input matrix must be square.")
+
+    MarkovMatrix([Dirichlet(A[:, i]) for i in 1:c])
+end
+
+nstates(d::MarkovMatrix) = length(d.cols)
+size(d::MarkovMatrix) = (length(d.cols), length(d.cols))
+length(d::MarkovMatrix) = length(d.cols)^2
+
+function mean(d::MarkovMatrix)
+    p = nstates(d)
+    m = Array{Float64}(p, p)
+    for i in 1:p
+        m[:, i] = mean(d.cols[i])
+    end
+    m
+end
+
+function rand(d::MarkovMatrix)
+    p = nstates(d)
+    x = Array{Float64}(p, p)
+    for i in 1:p
+        x[:, i] = rand(d.cols[i])
+    end
+    x
+end
+
+function logpdf{N <: Number}(d::MarkovMatrix, x::Matrix{N})
+    size(x) == size(d) || error("Input matrix x has wrong size.")
+    s = 0
+    for i in 1:nstates(d)
+        s += logpdf(d.cols[i], x[:, i])
+    end
+    s
+end
+
+function entropy(d::MarkovMatrix)
+    s = 0
+    for c in d.cols
+        s += entropy(c)
+    end
+    s
 end
 
 """
