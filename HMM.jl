@@ -76,7 +76,7 @@ function entropy(d::HMM)
 end
 
 ################### Markov Matrix distribution #####################
-immutable MarkovMatrix <: DiscreteMatrixDistribution
+immutable MarkovMatrix <: ContinuousMatrixDistribution
     cols::Vector{Dirichlet}  # each column is a Dirichlet distribution
 
     function MarkovMatrix(cols)

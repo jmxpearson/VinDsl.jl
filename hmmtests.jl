@@ -85,7 +85,7 @@ facts("Checking MarkovMatrix distribution") do
 
     context("Inner constructor") do
         @fact isa(x, MarkovMatrix) --> true
-        @fact isa(x, DiscreteMatrixDistribution) --> true
+        @fact isa(x, ContinuousMatrixDistribution) --> true
         @fact isa(x, Distribution) --> true
         @fact x.cols --> pars
     end
