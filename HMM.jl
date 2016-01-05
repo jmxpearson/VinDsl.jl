@@ -93,6 +93,13 @@ function MarkovMatrix{N <: Number}(A::Matrix{N})
     MarkovMatrix([Dirichlet(A[:, i]) for i in 1:c])
 end
 
+function MarkovMatrix{N <: Number}(cols::Vector{Vector{N}})
+    p = length(cols)
+    all(x -> length(x) == p, cols) || error("Probability vector lengths do not match.")
+
+    MarkovMatrix([Dirichlet(c) for c in cols])
+end
+
 nstates(d::MarkovMatrix) = length(d.cols)
 size(d::MarkovMatrix) = (length(d.cols), length(d.cols))
 length(d::MarkovMatrix) = length(d.cols)^2

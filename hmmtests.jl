@@ -79,6 +79,7 @@ facts("Checking MarkovMatrix distribution") do
 
     pars = [Dirichlet(d, 1) for i in 1:d]
     parmat = hcat([rand(Dirichlet(d, 1)) for i in 1:d]...)
+    parvec = [rand(Dirichlet(d, 1)) for i in 1:d]
 
     x = MarkovMatrix(pars)
 
@@ -96,6 +97,9 @@ facts("Checking MarkovMatrix distribution") do
     context("Outer constructor") do
         x = MarkovMatrix(parmat)
         @fact isa(x, MarkovMatrix) --> true
+
+        y = MarkovMatrix(parvec)
+        @fact isa(y, MarkovMatrix) --> true
     end
 
     context("Outer constructor consistency checks") do
