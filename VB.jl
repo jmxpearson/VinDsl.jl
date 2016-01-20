@@ -21,11 +21,11 @@ include("types.jl")
 export VBModel,
     Factor, FactorInds, @factor, get_structure, project, project_inds, @wrapvars, value,
     EntropyFactor, LogNormalFactor, LogGammaFactor, LogMvNormalCanonFactor,
-    LogMvNormalDiagCanonFactor,
+    LogMvNormalDiagCanonFactor, LogHMMFactor,
     @deffactor,
     Node, RandomNode, ConstantNode, @~,
     register, check_conjugate, update!,
     E, Elog, Eloggamma, Elogdet, V, H, C, value, naturals, @defnaturals,
-    get_node_size, get_name_mapping
+    get_node_size, get_name_mapping, HMM, MarkovMatrix
 
 end  # module

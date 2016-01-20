@@ -390,6 +390,11 @@ end
     dot(E(α) - 1, Elog(x)) - Elogbeta(α)
 end
 
+################### Dealing with HMMs in factors #####################
+@deffactor LogHMMFactor [z, A, π0] begin
+    dot(E(z)[:, 1], Elog(π0)) + sum(C(z) .* Elog(A))
+end
+
 # define an expectation method on Distributions
 "Calculate the expected value of a Node x."
 E(x) = x
@@ -399,6 +404,7 @@ V(x::Distribution) = var(x)
 C(x) = zero(x)
 C(x::Distribution{Univariate}) = V(x)
 C(x::AbstractMvNormal) = cov(x)
+C(x::HMM) = cov(x)
 C{D <: Distribution}(x::Vector{D}) = diagm(map(V, x))
 H(x) = zero(x)
 H(x::Distribution) = entropy(x)

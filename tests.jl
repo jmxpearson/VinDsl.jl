@@ -3,8 +3,6 @@ using FactCheck
 using VB
 using Distributions
 
-include("HMM.jl")
-
 srand(12345)
 
 facts("Can create basic node types using constructors.") do
@@ -362,6 +360,10 @@ facts("Basic Hidden Markov Model") do
         A ~ MarkovMatrix(pars)
         π0 ~ Dirichlet(d, 1)
         ψ[i, t] ~ Const(rand(d, T))
+
+        f = @factor LogHMMFactor z A π0
+
+        @fact value(f) --> isfinite
 
         # μ[i] ~ MvNormalCanon(zeros(d), diagm(ones(d)))
         # Λ[i, i] ~ Wishart(float(d), diagm(ones(d)))
