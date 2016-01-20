@@ -7,7 +7,7 @@ module VB
 
 using Distributions
 import Base: convert, call, zero
-import Distributions: var, entropy
+import Distributions: var, entropy, cov
 using Base.Cartesian
 
 zero_like(A::Array) = zeros(A)
@@ -15,6 +15,7 @@ zero_like(x::Number) = zero(x)
 
 include("expfam.jl")
 # data types, including VBModel, Factor, and Node
+include("HMM.jl")
 include("types.jl")
 
 export VBModel,
