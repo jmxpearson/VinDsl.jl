@@ -48,6 +48,11 @@ facts("Checking HMM distribution") do
         @fact ξ --> x.ξ
     end
 
+    context("Check two-slice") do
+        Ξ = cov(x)
+        @fact Ξ --> x.Ξ
+    end
+
     context("Check sampling") do
         z = rand(x)
         @fact size(z) --> (K, T)

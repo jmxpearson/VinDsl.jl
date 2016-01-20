@@ -32,6 +32,7 @@ size(d::HMM) = size(d.ψ)
 length(d::HMM) = prod(size(d))
 
 mean(d::HMM) = d.ξ
+cov(d::HMM) = d.Ξ
 
 function rand(d::HMM)
     M, T = size(d)
