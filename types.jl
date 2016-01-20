@@ -407,7 +407,7 @@ macro make_mapped_version(fn)
     esc(:($fn{D <: Distribution}(n::Array{D}) = map($fn, n)))
 end
 
-to_map = [E, V, H, Elog, Eloggamma, Elogdet]
+to_map = [E, V, C, H, Elog, Eloggamma, Elogdet]
 for fn in to_map
     @make_mapped_version fn
 end
