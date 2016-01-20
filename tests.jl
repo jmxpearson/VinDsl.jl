@@ -3,6 +3,8 @@ using FactCheck
 using VB
 using Distributions
 
+include("HMM.jl")
+
 srand(12345)
 
 facts("Can create basic node types using constructors.") do
@@ -343,5 +345,31 @@ facts("Univariate ⟷ multivariate naturals extraction") do
         @fact map(size, naturals(f, τ)[1]) --> ((), ())
         @fact size(naturals(f, x)) --> (N,)
         @fact map(size, naturals(f, x)[1]) --> ((d,), (d, d))
+    end
+end
+
+facts("Basic Hidden Markov Model") do
+    context("Basic model construction") do
+        d = 5
+        T = 100
+        pars = [Dirichlet(d, 1) for i in 1:d]
+
+        A_par = rand(MarkovMatrix(pars))
+        π0_par = rand(Dirichlet(d, 1))
+        ψ_par = rand(d, T)
+
+        z[i, t] ~ HMM(ψ_par, π0_par, A_par)
+        A ~ MarkovMatrix(pars)
+        π0 ~ Dirichlet(d, 1)
+        ψ[i, t] ~ Const(rand(d, T))
+
+        # μ[i] ~ MvNormalCanon(zeros(d), diagm(ones(d)))
+        # Λ[i, i] ~ Wishart(float(d), diagm(ones(d)))
+        # x[i, j] ~ MvNormalCanon([randn(d) for x in 1:20], [diagm(ones(d)) for x in 1:20])
+        # f = @factor LogMvNormalCanonFactor x μ Λ
+        #
+        # @fact value(f) --> isfinite
+        # @fact map(size, naturals(f, μ)[1]) --> ((d,), (d, d))
+        # @fact map(size, naturals(f, Λ)[1]) --> ((d, d), ())
     end
 end

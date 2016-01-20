@@ -36,10 +36,21 @@ end
 RandomNode{D <: Distribution}(name::Symbol, indices::Vector{Symbol}, ::Type{D}, pars...) = begin
     dims = map(size, pars)
 
-    # if all pars have the same size, assume these are arrays of
-    # params to be mapped over, otherwise, assume they are tuples to be
-    # fed directly to D
-    if length(unique(dims)) == 1
+    #=
+    if only one parameter passed, check if there is a matching constructor;
+        if so, feed directly to D
+        if not, assume this is a collection of parameters to be mapped over
+    else if all pars have the same size, assume these are arrays of
+        params to be mapped over;
+    otherwise, assume they are tuples to be fed directly to D
+    =#
+    if length(pars) == 1
+        if method_exists(call, (Type{D}, map(typeof, pars)...))
+            RandomNode{D}(name, indices, [D(pars...)])
+        else
+            RandomNode{D}(name, indices, map(D, pars...))
+        end
+    elseif length(unique(dims)) == 1
         RandomNode{D}(name, indices, map(D, pars...))
     else
         RandomNode{D}(name, indices, [D(pars...)])
