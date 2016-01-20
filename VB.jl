@@ -25,7 +25,7 @@ export VBModel,
     @deffactor,
     Node, RandomNode, ConstantNode, @~,
     register, check_conjugate, update!,
-    E, Elog, Eloggamma, Elogdet, V, H, value, naturals, @defnaturals,
+    E, Elog, Eloggamma, Elogdet, V, H, C, value, naturals, @defnaturals,
     get_node_size, get_name_mapping
 
 end  # module
