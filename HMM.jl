@@ -3,11 +3,12 @@ import Base.size, Base.length, Base.rand, Base.mean, Distributions.logpdf, Distr
 
 ################### Hidden Markov Model distribution #####################
 immutable HMM{N <: Number} <: DiscreteMatrixDistribution
-    ψ::Matrix{N}
+    # convention: Matrices are state x time
+    ψ::Matrix{N}  # matrix of conditional probabilites of symbol emission
     π0::Vector{N}  # vector of initial state probabilities
     A::Matrix{N}  # transition matrix (columns sum to 1)
     ξ::Matrix{N}  # mean of distribution
-    Ξ::Array{N, 3}  # two-slice marginal of distribution
+    Ξ::Array{N, 3}  # two-slice marginal of distribution (state x state x time)
     logZ::N  # log normalization constant for distribution
 
     function HMM(ψ, π0, A)
