@@ -3,6 +3,7 @@ using FactCheck
 using Distributions
 
 include("HMM.jl")
+include("expfam.jl")
 
 srand(12345)
 
@@ -121,6 +122,11 @@ facts("Checking MarkovMatrix distribution") do
         m = mean(x)
         @fact size(m) --> (d, d)
         @fact sum(m, 1) --> roughly(ones(1, d))
+    end
+
+    context("Check Elog") do
+        El = Elog(x)
+        @fact size(El) --> (d, d)
     end
 
     context("Check sampling") do

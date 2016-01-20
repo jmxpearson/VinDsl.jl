@@ -114,6 +114,15 @@ function mean(d::MarkovMatrix)
     m
 end
 
+function Elog(d::MarkovMatrix)
+    p = nstates(d)
+    m = Array{Float64}(p, p)
+    for i in 1:p
+        m[:, i] = Elog(d.cols[i])
+    end
+    m
+end
+
 function rand(d::MarkovMatrix)
     p = nstates(d)
     x = Array{Float64}(p, p)
