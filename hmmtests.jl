@@ -148,6 +148,19 @@ facts("Checking MarkovMatrix distribution") do
         H = sum([entropy(c) for c in x.cols])
         @fact entropy(x) --> roughly(H)
     end
+
+    context("Check natural parameters") do
+        nats = naturals(x)
+        pars = naturals_to_params(nats, typeof(x))
+
+        params = hcat([c.alpha for c in x.cols]...)
+
+        @fact length(nats) --> 1
+        @fact size(nats[1]) --> size(x)
+        @fact length(pars) --> 1
+        @fact size(pars[1]) --> size(x)
+        @fact pars[1] --> roughly(params)
+    end
 end
 
 facts("Checking forward-backward algorithm.") do

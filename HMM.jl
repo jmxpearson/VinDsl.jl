@@ -150,6 +150,25 @@ function entropy(d::MarkovMatrix)
     s
 end
 
+function naturals(d::MarkovMatrix)
+    p = nstates(d)
+    nats = Array{Float64}(p, p)
+    for i in 1:p
+        nats[:, i] = naturals(d.cols[i])[1]  # naturals returns a tuple
+    end
+    (nats,)
+end
+
+function naturals_to_params(η, ::Type{MarkovMatrix})
+    nats = η[1]
+    p, _ = size(nats)
+    pars = similar(nats)
+    for i in 1:p
+        pars[:, i] = naturals_to_params(nats[:, i], Dirichlet)[1]  # n2par returns a tuple
+    end
+    (pars,)
+end
+
 """
 Implement the forward-backward inference algorithm.
 A is a matrix of transition probabilities that acts to the right:
