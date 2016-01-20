@@ -361,17 +361,14 @@ facts("Basic Hidden Markov Model") do
         π0 ~ Dirichlet(d, 1)
         ψ[i, t] ~ Const(rand(d, T))
 
-        f = @factor LogHMMFactor z A π0
+        f = @factor LogHMMFactor z π0 A
+        π_nats = naturals(f, π0)
+        A_nats = naturals(f, A)
+        z_nats = naturals(f, z)
 
         @fact value(f) --> isfinite
-
-        # μ[i] ~ MvNormalCanon(zeros(d), diagm(ones(d)))
-        # Λ[i, i] ~ Wishart(float(d), diagm(ones(d)))
-        # x[i, j] ~ MvNormalCanon([randn(d) for x in 1:20], [diagm(ones(d)) for x in 1:20])
-        # f = @factor LogMvNormalCanonFactor x μ Λ
-        #
-        # @fact value(f) --> isfinite
-        # @fact map(size, naturals(f, μ)[1]) --> ((d,), (d, d))
-        # @fact map(size, naturals(f, Λ)[1]) --> ((d, d), ())
+        @fact map(size, naturals(f, π0)[1]) --> ((d,), )
+        @fact map(size, naturals(f, A)[1]) --> ((d, d), )
+        @fact map(size, naturals(f, z)[1]) --> ((d, T), (d,), (d, d))
     end
 end
