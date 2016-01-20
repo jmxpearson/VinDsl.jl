@@ -77,6 +77,14 @@ function entropy(d::HMM)
     d.logZ -(emission_piece + initial_piece + transition_piece)
 end
 
+function naturals(d::HMM)
+    (log(d.ψ), log(d.π0), log(d.A))
+end
+
+function naturals_to_params{N <: Number}(η, ::Type{HMM{N}})
+    map(exp, η)
+end
+
 ################### Markov Matrix distribution #####################
 immutable MarkovMatrix <: ContinuousMatrixDistribution
     cols::Vector{Dirichlet}  # each column is a Dirichlet distribution

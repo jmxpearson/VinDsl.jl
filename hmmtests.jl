@@ -78,6 +78,22 @@ facts("Checking HMM distribution") do
     context("Check entropy") do
         @fact entropy(x) --> greater_than_or_equal(0)
     end
+
+    context("Check natural parameters") do
+        nats = naturals(x)
+        pars = naturals_to_params(nats, typeof(x))
+
+        @fact length(nats) --> 3
+        @fact size(nats[1]) --> size(x)
+        @fact length(pars) --> 3
+        @fact size(pars[1]) --> size(x)
+        @fact nats[1] --> roughly(log(ψ))
+        @fact nats[2] --> roughly(log(π0))
+        @fact nats[3] --> roughly(log(A))
+        @fact pars[1] --> roughly(ψ)
+        @fact pars[2] --> roughly(π0)
+        @fact pars[3] --> roughly(A)
+    end
 end
 
 facts("Checking MarkovMatrix distribution") do
