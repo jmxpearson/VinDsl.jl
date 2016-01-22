@@ -611,6 +611,65 @@ function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:conjugate}})
     end
 end
 
+function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:bfgs}})
+    # make backup of node
+    pars_old = copy(n.data)
+
+    # use const here so that the closure below can be optimized
+    const fac_list = [f for (f, _) in m.graph[n]]
+
+    x0 = unroll_pars(n)
+
+    # make function that:
+    #   rerolls x back into the node (changing n.data)
+    #   calls value(f) on each factor in fac_list)
+    #   sums
+
+    # feed said function to Optim.jl
+
+    # if optim exits with error, reset data in node
+    # else, reroll x^* back into n.data
+end
+
+function get_par_sizes(d::Distribution)
+    [size(p) for p in params(d)]
+end
+
+flatten(a::Number) = a
+flatten(a::Array) = reshape(a, prod(size(a)))
+flatten(a::AbstractPDMat) = flatten(full(a))
+
+function unroll_pars(n::RandomNode)
+    vcat(map(unroll_pars, n.data)...)
+end
+
+function unroll_pars(d::Distribution)
+    vcat([flatten(par) for par in params(d)]...)
+end
+
+function reroll_pars{D <: Distribution}(d::D, par_sizes, x)
+    ctr = 0
+    pars = []
+    for (i, dims) in enumerate(par_sizes)
+        sz = prod(dims)
+        p = sz == 1 ? x[ctr + 1] : reshape(x[ctr + 1: ctr + sz], dims)
+        push!(pars, p)
+        ctr += sz
+    end
+    D(pars...)
+end
+
+function reroll_pars!(n::RandomNode, x)
+    par_sizes = get_par_sizes(n.data[1])
+    npars = mapreduce(prod, +, par_sizes)
+
+    ctr = 0
+    for i in eachindex(n.data)
+        n.data[i] = reroll_pars(n.data[i], par_sizes, x[ctr + 1: ctr + npars])
+        ctr += npars
+    end
+end
+
 function update!(n::Node, m::VBModel, ::Type{Val{:constant}})
 end
 

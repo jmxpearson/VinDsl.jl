@@ -2,8 +2,12 @@ push!(LOAD_PATH, ".")  # needed if VB not a full module
 using FactCheck
 using VB
 using Distributions
+using PDMats
 
 srand(12345)
+
+# use this for testing purposes
+==(x::PDMat, y::PDMat) = x.mat == y.mat
 
 facts("Can create basic node types using constructors.") do
 
@@ -347,28 +351,50 @@ facts("Univariate ⟷ multivariate naturals extraction") do
 end
 
 facts("Basic Hidden Markov Model") do
-    context("Basic model construction") do
-        d = 5
-        T = 100
-        pars = [Dirichlet(d, 1) for i in 1:d]
+    d = 5
+    T = 100
+    pars = [Dirichlet(d, 1) for i in 1:d]
 
-        A_par = rand(MarkovMatrix(pars))
-        π0_par = rand(Dirichlet(d, 1))
-        ψ_par = rand(d, T)
+    A_par = rand(MarkovMatrix(pars))
+    π0_par = rand(Dirichlet(d, 1))
+    ψ_par = rand(d, T)
 
-        z[i, t] ~ HMM(ψ_par, π0_par, A_par)
-        A ~ MarkovMatrix(pars)
-        π0 ~ Dirichlet(d, 1)
-        ψ[i, t] ~ Const(rand(d, T))
+    z[i, t] ~ HMM(ψ_par, π0_par, A_par)
+    A ~ MarkovMatrix(pars)
+    π0 ~ Dirichlet(d, 1)
+    ψ[i, t] ~ Const(rand(d, T))
 
-        f = @factor LogHMMFactor z π0 A
-        π_nats = naturals(f, π0)
-        A_nats = naturals(f, A)
-        z_nats = naturals(f, z)
+    f = @factor LogHMMFactor z π0 A
+    π_nats = naturals(f, π0)
+    A_nats = naturals(f, A)
+    z_nats = naturals(f, z)
 
-        @fact value(f) --> isfinite
-        @fact map(size, naturals(f, π0)[1]) --> ((d,), )
-        @fact map(size, naturals(f, A)[1]) --> ((d, d), )
-        @fact map(size, naturals(f, z)[1]) --> ((d, T), (d,), (d, d))
+    @fact value(f) --> isfinite
+    @fact map(size, naturals(f, π0)[1]) --> ((d,), )
+    @fact map(size, naturals(f, A)[1]) --> ((d, d), )
+    @fact map(size, naturals(f, z)[1]) --> ((d, T), (d,), (d, d))
+end
+
+facts("Unrolling and rerolling parameters") do
+    context("Distributions") do
+        dists = [Gamma(1.1, 1.), Normal(),
+                 MvNormal(ones(5), eye(5)),
+                 Wishart(5, eye(2)),]
+
+        for d in dists
+            par_sizes = get_par_sizes(d)
+            npars = mapreduce(prod, +, par_sizes)
+            x = unroll_pars(d)
+            dd = reroll_pars(d, par_sizes, x)
+            @fact isa(x, Vector) --> true
+            @fact length(x) --> npars
+            for f in fieldnames(dd)
+                @fact dd.(f) --> d.(f)
+            end
+        end
     end
+    context("Nodes") do
+
+    end
+
 end
