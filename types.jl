@@ -76,6 +76,8 @@ ConstantNode{T}(data::Array{T}, indices::Vector{Symbol}) =
     ConstantNode(gensym("const"), indices, data)
 ConstantNode(x::Number) = ConstantNode(gensym("const"), [:scalar], [x])
 
+size(n::Node) = size(n.data)
+
 """
 Create a node using formula syntax. E.g.,
 x[i, j, k] ~ Normal(μ, σ)
