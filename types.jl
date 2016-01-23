@@ -613,24 +613,35 @@ function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:conjugate}})
     end
 end
 
-function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:bfgs}})
+function update!(n::Node, m::VBModel, ::Type{Val{:constant}})
+end
+
+typealias explicit_opts Union{Val{:l_bfgs}, Val{:cg}}
+function update!{D, S <: explicit_opts}(n::RandomNode{D}, m::VBModel, ::Type{S})
     # make backup of node
     pars_old = copy(n.data)
 
     # use const here so that the closure below can be optimized
     const fac_list = [f for (f, _) in m.graph[n]]
 
-    x0 = unroll_pars(n)
+    const x0 = unroll_pars(n)
+    # TODO: get lower and upper bounds from each variable in x from n
 
-    # make function that:
-    #   rerolls x back into the node (changing n.data)
-    #   calls value(f) on each factor in fac_list)
-    #   sums
+    # make an objective function that sets the parameters of n to x
+    # and sums the values of all factors containing n
+    function objfun(x)
+        update_pars!(n, x)
+        val = 0
+        for f in fac_list
+            val += value(f)
+        end
+        val
+    end
 
-    # feed said function to Optim.jl
-
-    # if optim exits with error, reset data in node
-    # else, reroll x^* back into n.data
+    # since the objective function mutates n as a side effect, no
+    # need to capture output of optimize
+    # TODO: enable autodiff
+    optimize(objfun, x0, method=S.parameters[1])
 end
 
 function get_par_sizes(d::Distribution)
@@ -670,9 +681,6 @@ function update_pars!(n::RandomNode, x)
         n.data[i] = reroll_pars(n.data[i], par_sizes, x[ctr + 1: ctr + npars])
         ctr += npars
     end
-end
-
-function update!(n::Node, m::VBModel, ::Type{Val{:constant}})
 end
 
 function update!(m::VBModel)

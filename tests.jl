@@ -422,5 +422,29 @@ facts("Unrolling and rerolling parameters") do
             @fact n --> n_bak
         end
     end
+end
 
+facts("Updating via explicit optimization") do
+    dims = (20, 6)
+
+    # note: it won't matter much how we initialize here
+    μ[j] ~ Normal(zeros(dims[2]), ones(dims[2]))
+    τ[j] ~ Gamma(1.1 * ones(dims[2]), ones(dims[2]))
+    μ0[j] ~ Const(zeros(dims[2]))
+    τ0[j] ~ Const(2 * ones(dims[2]))
+    a0[j] ~ Const(1.1 * ones(dims[2]))
+    b0[j] ~ Const(ones(dims[2]))
+
+    y[i, j] ~ Const(rand(dims))
+
+    # make factors
+    obs = @factor LogNormalFactor y μ τ
+    μ_prior = @factor LogNormalFactor μ μ0 τ0
+    τ_prior = @factor LogGammaFactor τ a0 b0
+
+    m = VBModel([μ, τ, μ0, τ0, a0, b0, y], [obs, μ_prior, τ_prior])
+
+    context("L-BFGS") do
+        update!(μ, m, Val{:l_bfgs})
+    end
 end
