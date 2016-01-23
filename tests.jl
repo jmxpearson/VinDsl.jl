@@ -3,11 +3,19 @@ using FactCheck
 using VB
 using Distributions
 using PDMats
+import Base: ==
 
 srand(12345)
 
-# use this for testing purposes
+# use these equality definitions for testing purposes
 ==(x::PDMat, y::PDMat) = x.mat == y.mat
+function =={D <: Distribution}(x::D, y::D)
+    checks = [x.(f) == y.(f) for f in fieldnames(x)]
+    all(checks)
+end
+function =={D <: Distribution}(x::RandomNode{D}, y::RandomNode{D})
+    all(Bool[x.(f) == y.(f) for f in fieldnames(x)])
+end
 
 facts("Can create basic node types using constructors.") do
 
@@ -388,13 +396,31 @@ facts("Unrolling and rerolling parameters") do
             dd = reroll_pars(d, par_sizes, x)
             @fact isa(x, Vector) --> true
             @fact length(x) --> npars
-            for f in fieldnames(dd)
-                @fact dd.(f) --> d.(f)
-            end
+            @fact dd --> d
         end
     end
     context("Nodes") do
+        p, d = 5, 7
+        x[i] ~ Gamma(1.1 * ones(p), ones(p))
+        y[i] ~ MvNormalCanon([ones(d) for p in 1:p], [eye(d) for p in 1:p])
 
+        node_list = [x, y]
+
+        for n in node_list
+            # get parameter sizes for single distribution
+            par_sizes = get_par_sizes(n.data[1])
+            npars = mapreduce(prod, +, par_sizes)
+
+            # make a copy of the original node
+            n_bak = deepcopy(n)
+
+            # unroll parameters
+            v = unroll_pars(n)
+            @fact length(v) --> prod(size(n)) * npars
+            @fact isa(v, Vector) --> true
+            update_pars!(n, v)
+            @fact n --> n_bak
+        end
     end
 
 end

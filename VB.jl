@@ -29,7 +29,7 @@ export VBModel,
     LogMvNormalDiagCanonFactor, LogHMMFactor,
     @deffactor,
     Node, RandomNode, ConstantNode, @~,
-    register, check_conjugate, update!, unroll_pars, reroll_pars!, reroll_pars,
+    register, check_conjugate, update!, unroll_pars, update_pars!, reroll_pars,
     get_par_sizes, flatten,
     E, Elog, Eloggamma, Elogdet, V, H, C, value, naturals, @defnaturals,
     get_node_size, get_name_mapping, HMM, MarkovMatrix

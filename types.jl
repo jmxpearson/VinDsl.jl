@@ -661,7 +661,7 @@ function reroll_pars{D <: Distribution}(d::D, par_sizes, x)
     D(pars...)
 end
 
-function reroll_pars!(n::RandomNode, x)
+function update_pars!(n::RandomNode, x)
     par_sizes = get_par_sizes(n.data[1])
     npars = mapreduce(prod, +, par_sizes)
 
