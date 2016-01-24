@@ -94,6 +94,10 @@ facts("Checking HMM distribution") do
         @fact pars[2] --> roughly(π0)
         @fact pars[3] --> roughly(A)
     end
+
+    context("Check params") do
+        @fact params(x) --> (x.ψ, x.π0, x.A)
+    end
 end
 
 facts("Checking MarkovMatrix distribution") do
@@ -169,13 +173,18 @@ facts("Checking MarkovMatrix distribution") do
         nats = naturals(x)
         pars = naturals_to_params(nats, typeof(x))
 
-        params = hcat([c.alpha for c in x.cols]...)
+        pars2 = hcat([c.alpha for c in x.cols]...)
 
         @fact length(nats) --> 1
         @fact size(nats[1]) --> size(x)
         @fact length(pars) --> 1
         @fact size(pars[1]) --> size(x)
-        @fact pars[1] --> roughly(params)
+        @fact pars[1] --> roughly(pars2)
+    end
+
+    context("Check params") do
+        pars = hcat([c.alpha for c in x.cols]...)
+        @fact params(x) --> (pars,)
     end
 end
 

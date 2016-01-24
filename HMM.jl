@@ -1,5 +1,5 @@
 using Distributions
-import Base.size, Base.length, Base.rand, Base.mean, Distributions.logpdf, Distributions.entropy
+import Base.size, Base.length, Base.rand, Base.mean, Distributions.logpdf, Distributions.entropy, Distributions.params
 
 ################### Hidden Markov Model distribution #####################
 immutable HMM{N <: Number} <: DiscreteMatrixDistribution
@@ -34,6 +34,7 @@ length(d::HMM) = prod(size(d))
 
 mean(d::HMM) = d.ξ
 cov(d::HMM) = d.Ξ
+params(d::HMM) = (d.ψ, d.π0, d.A)
 
 function rand(d::HMM)
     M, T = size(d)
@@ -163,6 +164,15 @@ function naturals(d::MarkovMatrix)
     nats = Array{Float64}(p, p)
     for i in 1:p
         nats[:, i] = naturals(d.cols[i])[1]  # naturals returns a tuple
+    end
+    (nats,)
+end
+
+function params(d::MarkovMatrix)
+    p = nstates(d)
+    nats = Array{Float64}(p, p)
+    for i in 1:p
+        nats[:, i] = params(d.cols[i])[1]  # naturals returns a tuple
     end
     (nats,)
 end
