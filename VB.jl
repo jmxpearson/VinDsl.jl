@@ -8,6 +8,7 @@ module VB
 using Distributions
 using PDMats
 using Optim
+using ForwardDiff
 import Base: convert, call, zero
 import Distributions: var, entropy, cov
 using Base.Cartesian

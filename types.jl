@@ -638,10 +638,24 @@ function update!{D, S <: explicit_opts}(n::RandomNode{D}, m::VBModel, ::Type{S})
         val
     end
 
-    # since the objective function mutates n as a side effect, no
-    # need to capture output of optimize
-    # TODO: enable autodiff
-    optimize(objfun, x0, method=S.parameters[1])
+    # use ForwardDiff to get the gradient; autodiff in optimize uses
+    # ReverseDiff, but ForwardDiff only requires args <: Real, but
+    # ReverseDiff needs args <: Number, which Distributions doesn't allow
+    gradf = gradient(objfun)
+
+    # define mutating gradient; store gradient in storage array
+    function objgrad!(x, storage)
+        storage[:] = gradf(x)
+    end
+
+    # try optimization; if it fails, set parameters back to initial guess
+    try
+        optimize(objfun, objgrad!, x0, method=S.parameters[1])
+    catch
+        finalpars = unroll_pars(n)
+        println("Optimization failed at pars:\n$finalpars")
+        update_pars!(n, x0)
+    end
 end
 
 function get_par_sizes(d::Distribution)
