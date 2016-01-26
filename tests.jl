@@ -387,6 +387,8 @@ facts("Basic Hidden Markov Model") do
     @fact map(size, naturals(f, π0)[1]) --> ((d,), )
     @fact map(size, naturals(f, A)[1]) --> ((d, d), )
     @fact map(size, naturals(f, z)[1]) --> ((d, T), (d,), (d, d))
+    @fact map(size, naturals(π_prior, π0)[1]) --> ((d,), )
+    @fact map(size, naturals(A_prior, A)[1]) --> ((d, d), )
 end
 
 facts("Unrolling and rerolling parameters") do
