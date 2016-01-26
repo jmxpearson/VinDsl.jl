@@ -64,7 +64,9 @@ immutable ConstantNode{T} <: Node
     data::Array{T}
 
     function ConstantNode(name, indices, data)
-        @assert ndims(data) == length(indices) "Indices do not match data shape."
+        if !isempty(indices)
+            @assert ndims(data) == length(indices) "Indices do not match data shape."
+        end
         outerinds = indices
         innerinds = Symbol[]
         new(name, innerinds, outerinds, data)
@@ -208,7 +210,12 @@ corresponding to the global range of indices.
 """
 function project(f::Factor, name::Symbol, rangetuple)
     node = getfield(f, name)
-    node.data[project_inds(f, name, rangetuple)...]
+    if length(project_inds(f, name, rangetuple)) > 0
+        out = node.data[project_inds(f, name, rangetuple)...]
+    else
+        out = node.data
+    end
+    out
 end
 
 function project_inds(f::Factor, name::Symbol, rangetuple)
