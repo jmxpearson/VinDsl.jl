@@ -396,13 +396,23 @@ end
 end
 
 @deffactor LogDirichletFactor [x, α] begin
-    dot(E(α) - 1, Elog(x)) - Elogbeta(α)
+    dot(E(α) - 1, Elog(x)) - ElogB(α)
 end
 
 ################### Dealing with HMMs in factors #####################
 @deffactor LogMarkovChainFactor [z, π0, A] begin
     dot(E(z)[:, 1], Elog(π0)) + sum(C(z) .* Elog(A))
 end
+
+@deffactor LogMarkovMatrixFactor [x, A] begin
+    sum((E(A) - 1) .* Elog(x) .- ElogB(A))
+end
+
+
+################### Product-of-Rates Poisson model #####################
+# @deffactor LogProdofRatesPoisson [z, λ, N] begin
+#     dot(Elog(λ), )
+# end
 
 # define an expectation method on Distributions
 "Calculate the expected value of a Node x."
@@ -423,6 +433,7 @@ H(x::Distribution) = entropy(x)
 Elog(x) = log(x)
 Eloggamma(x) = lgamma(x)
 Elogbeta(x) = lbeta(x)
+ElogB(x) = lB(x)
 Elogdet(x) = logdet(x)
 Elogdet{D <: Distribution{Univariate}}(x::Array{D}) = prod(Elog(x))
 Elogdet(x::Distribution{Univariate}) = Elog(x)
@@ -601,6 +612,14 @@ end
 
 @defnaturals LogMarkovChainFactor z HMM begin
     (zero_like(z.ψ), Elog(π0), Elog(A))
+end
+
+@defnaturals LogDirichletFactor x Dirichlet begin
+    (E(α) - 1,)
+end
+
+@defnaturals LogMarkovMatrixFactor x MarkovMatrix begin
+    (E(A) - 1,)
 end
 
 function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:conjugate}})

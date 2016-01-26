@@ -369,15 +369,21 @@ facts("Basic Hidden Markov Model") do
 
     z[i, t] ~ HMM(ψ_par, π0_par, A_par)
     A ~ MarkovMatrix(pars)
-    π0 ~ Dirichlet(d, 1)
+    A_0 ~ Const(A_par)
+    π0 ~ Dirichlet(π0_par)
+    π0_0 ~ Const(π0_par)
     ψ[i, t] ~ Const(rand(d, T))
 
     f = @factor LogMarkovChainFactor z π0 A
+    π_prior = @factor LogDirichletFactor π0 π0_0
+    A_prior = @factor LogMarkovMatrixFactor A A_0
     π_nats = naturals(f, π0)
     A_nats = naturals(f, A)
     z_nats = naturals(f, z)
 
     @fact value(f) --> isfinite
+    @fact value(π_prior) --> isfinite
+    @fact value(A_prior) --> isfinite
     @fact map(size, naturals(f, π0)[1]) --> ((d,), )
     @fact map(size, naturals(f, A)[1]) --> ((d, d), )
     @fact map(size, naturals(f, z)[1]) --> ((d, T), (d,), (d, d))
@@ -447,4 +453,15 @@ facts("Updating via explicit optimization") do
     context("L-BFGS") do
         update!(μ, m, Val{:l_bfgs})
     end
+end
+
+facts("Gamma-Poisson model") do
+    U = 10  # units
+    T = 50  # time points
+    K = 3  # HMM factors
+
+    A_0[k] ~ Const([[0.95 0.03 ; 0.05 0.97] for k in 1:K])
+    π0_0[k] ~ Const([[0.5 0.5] for k in 1:K])
+
+
 end
