@@ -372,7 +372,7 @@ facts("Basic Hidden Markov Model") do
     π0 ~ Dirichlet(d, 1)
     ψ[i, t] ~ Const(rand(d, T))
 
-    f = @factor LogHMMFactor z π0 A
+    f = @factor LogMarkovChainFactor z π0 A
     π_nats = naturals(f, π0)
     A_nats = naturals(f, A)
     z_nats = naturals(f, z)

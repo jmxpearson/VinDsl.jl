@@ -28,7 +28,7 @@ include("types.jl")
 export VBModel,
     Factor, FactorInds, @factor, get_structure, project, project_inds, @wrapvars, value,
     EntropyFactor, LogNormalFactor, LogGammaFactor, LogMvNormalCanonFactor,
-    LogMvNormalDiagCanonFactor, LogHMMFactor,
+    LogMvNormalDiagCanonFactor, LogMarkovChainFactor,
     @deffactor,
     Node, RandomNode, ConstantNode, @~,
     register, check_conjugate, update!, unroll_pars, update_pars!, reroll_pars,

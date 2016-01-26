@@ -393,7 +393,7 @@ end
 end
 
 ################### Dealing with HMMs in factors #####################
-@deffactor LogHMMFactor [z, π0, A] begin
+@deffactor LogMarkovChainFactor [z, π0, A] begin
     dot(E(z)[:, 1], Elog(π0)) + sum(C(z) .* Elog(A))
 end
 
@@ -584,15 +584,15 @@ end
     nats_mvn(v, τ)
 end
 
-@defnaturals LogHMMFactor π0 Dirichlet begin
+@defnaturals LogMarkovChainFactor π0 Dirichlet begin
     (E(z)[:, 1], )
 end
 
-@defnaturals LogHMMFactor A MarkovMatrix begin
+@defnaturals LogMarkovChainFactor A MarkovMatrix begin
     (slice(sum(C(z), 3), :, :), )
 end
 
-@defnaturals LogHMMFactor z HMM begin
+@defnaturals LogMarkovChainFactor z HMM begin
     (zero_like(z.ψ), Elog(π0), Elog(A))
 end
 
