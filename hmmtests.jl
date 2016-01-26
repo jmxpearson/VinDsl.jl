@@ -100,6 +100,87 @@ facts("Checking HMM distribution") do
     end
 end
 
+facts("Checking MarkovChain distribution") do
+    K = 4
+    T = 50
+    pars = Dirichlet(K, 1)
+    A = Array{Float64}(K, K)
+    π0 = rand(pars)
+    for k in 1:K
+        A[:, k] = rand(pars)
+    end
+
+    x = MarkovChain(π0, A, T)
+
+    context("Constructors") do
+        @fact isa(x, MarkovChain) --> true
+        @fact isa(x, DiscreteMatrixDistribution) --> true
+        @fact isa(x, Distribution) --> true
+        @fact x.A --> A
+        @fact x.π0 --> π0
+    end
+
+    context("Bad constructor inputs throw errors") do
+        @fact_throws ErrorException MarkovChain(π0, A, 5.5)
+        @fact_throws ErrorException MarkovChain(π0[2:end], A, T)
+        @fact_throws ErrorException MarkovChain(π0, A[2:end, :], T)
+        @fact_throws ErrorException MarkovChain(π0, A[:, 2:end], T)
+    end
+
+    context("Check basic interface") do
+        @fact nstates(x) --> K
+        @fact size(x) --> (K, T)
+        @fact length(x) --> K * T
+    end
+
+    context("Check mean") do
+        ξ = mean(x)
+        @fact ξ[:, 1] --> π0
+        @fact ξ[:, 2] --> A * π0
+    end
+
+    context("Check sampling") do
+        z = rand(x)
+        @fact size(z) --> (K, T)
+        @fact length(find(z)) --> T
+        @fact sum(z .!= 0, 1) --> ones(1, T)
+    end
+
+    context("Check logpdf") do
+        # draw a chain of states
+        z = zeros(K, T)
+        init_state = rand(Categorical(π0))
+        z[init_state, 1] = 1
+        for t in 2:T
+            newstate = rand(Categorical(A * z[:, t - 1]))
+            z[newstate, t] = 1
+        end
+        lpdf = logpdf(x, z)
+
+        @fact lpdf --> less_than_or_equal(0)
+    end
+
+    context("Check entropy") do
+        @fact entropy(x) --> greater_than_or_equal(0)
+    end
+
+    context("Check natural parameters") do
+        nats = naturals(x)
+        pars = naturals_to_params(nats, typeof(x))
+
+        @fact length(nats) --> 2
+        @fact length(pars) --> 2
+        @fact nats[1] --> roughly(log(π0))
+        @fact nats[2] --> roughly(log(A))
+        @fact pars[1] --> roughly(π0)
+        @fact pars[2] --> roughly(A)
+    end
+
+    context("Check params") do
+        @fact params(x) --> (x.π0, x.A)
+    end
+end
+
 facts("Checking MarkovMatrix distribution") do
     d = 5
 
@@ -173,13 +254,13 @@ facts("Checking MarkovMatrix distribution") do
         nats = naturals(x)
         pars = naturals_to_params(nats, typeof(x))
 
-        pars2 = hcat([c.alpha for c in x.cols]...)
+        params = hcat([c.alpha for c in x.cols]...)
 
         @fact length(nats) --> 1
         @fact size(nats[1]) --> size(x)
         @fact length(pars) --> 1
         @fact size(pars[1]) --> size(x)
-        @fact pars[1] --> roughly(pars2)
+        @fact pars[1] --> roughly(params)
     end
 
     context("Check params") do

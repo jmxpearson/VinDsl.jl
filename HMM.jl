@@ -86,6 +86,89 @@ function naturals_to_params{N <: Number}(η, ::Type{HMM{N}})
     map(exp, η)
 end
 
+################### Markov Chain distribution #####################
+immutable MarkovChain{N <: Number, T} <: DiscreteMatrixDistribution
+    # convention: Matrices are state x time
+    π0::Vector{N}  # vector of initial state probabilities
+    A::Matrix{N}  # transition matrix (columns sum to 1)
+
+    function MarkovChain(π0, A)
+        isa(T, Int) || error("Chain length must be an integer")
+        length(π0) == size(A, 1) == size(A, 2) || error("A and π0 have incompatible shapes")
+
+        sum(π0) ≈ 1 || error("Entries of π0 do not sum to 1.")
+
+        sum(A, 1) ≈ ones(1, size(A, 1)) || error("Columns of A do not sum to 1.")
+
+        new(π0, A)
+    end
+end
+
+MarkovChain{N <: Number}(π0::Vector{N}, A::Matrix{N}, T) = MarkovChain{N, T}(π0, A)
+
+nstates(d::MarkovChain) = length(d.π0)
+size{N <: Number, T}(d::MarkovChain{N, T}) = (nstates(d), T)
+length(d::MarkovChain) = prod(size(d))
+
+function mean(d::MarkovChain)
+    M, T = size(d)
+    m = zeros(M, T)
+    m[:, 1] = d.π0
+    for i in 2:T
+        m[:, i] = d.A * m[:, i - 1]
+    end
+    m
+end
+
+params(d::MarkovChain) = (d.π0, d.A)
+
+function rand(d::MarkovChain)
+    M, T = size(d)
+    z = zeros(M, T)
+    init_state = rand(Categorical(d.π0))
+    z[init_state, 1] = 1
+    for t in 2:T
+        pvec = d.A * z[:, t - 1]
+        pvec /= sum(pvec)  # normalize, since Ξ is joint, not conditional
+        newstate = rand(Categorical(pvec))
+        z[newstate, t] = 1
+    end
+    z
+end
+
+function logpdf{N <: Number}(d::MarkovChain{N}, x::Matrix{N})
+    size(x) == size(d) || error("Input matrix x has wrong size.")
+
+    T = size(x, 2)
+
+    initial_piece = sum(x[:, 1] .* log(d.π0))
+    transition_piece = 0.
+    for t in 1:(T - 1)
+        transition_piece += (x[:, t + 1]' * log(d.A) * x[:, t])[1]
+    end
+
+    initial_piece + transition_piece
+end
+
+function entropy(d::MarkovChain)
+    _, T = size(d)
+
+    initial_piece = sum(d.π0 .* log(d.π0))
+    transition_piece = 0.
+    for t in 1:(T - 1)
+        transition_piece += sum(d.A .* log(d.A))
+    end
+
+    -(initial_piece + transition_piece)
+end
+
+function naturals(d::MarkovChain)
+    (log(d.π0), log(d.A))
+end
+
+function naturals_to_params{N <: Number, T}(η, ::Type{MarkovChain{N, T}})
+    map(exp, η)
+end
 ################### Markov Matrix distribution #####################
 immutable MarkovMatrix <: ContinuousMatrixDistribution
     cols::Vector{Dirichlet}  # each column is a Dirichlet distribution
