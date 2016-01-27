@@ -281,10 +281,11 @@ function _expandE(ex::Expr)
         rest = ex.args[2:end]  # factors
 
         # symbol factors
-        syms = filter(s -> isa(s, Symbol), rest)
+        symsets = [_get_all_syms(r) for r in rest]
 
-        # are symbols repeated?
-        repeats = length(syms) > length(unique(syms))
+        # are symbols repeated across arguments?
+        pairwise_intersections = map(x -> intersect(x[1], x[2]), combinations(symsets, 2))
+        repeats = any(x -> !isempty(x), pairwise_intersections)
 
         out_expr = ex
         if !repeats
@@ -295,29 +296,45 @@ function _expandE(ex::Expr)
             # some variables are repeated, and we can't assume * is
             # commutative, so don't rearrange factors
 
-            repeated_syms = unique(filter(s -> length(findin(syms, [s])) > 1, syms))
-
-            out_expr.args = [op]  # we'll build this up from scratch
+            repeated_syms = union(pairwise_intersections...)
 
             # which positions contain repeated symbols?
-            syminds = findin(rest, repeated_syms)
-
-            # expand everything up to first repeated symbol
-            if syminds[1] > 1
-                for arg in rest[1:(syminds[1] - 1)]
-                    push!(out_expr.args, _expandE(arg))
+            syminds = []
+            for i in eachindex(rest)
+                if !isempty(intersect(symsets[i], repeated_syms))
+                    push!(syminds, i)
                 end
             end
 
-            # clump everything between repeated symbols together
-            base_expr = Expr(:call, op, rest[syminds[1]:syminds[end]]...)
-            E_expr = Expr(:call, :E, base_expr)
-            push!(out_expr.args, E_expr)
+            # check to see whether we can do any rewriting:
+            if (syminds[1] == 1 && syminds[end] == length(rest))
+                # first and last expressions contain shared symbols:
+                # no rewriting possible
 
-            # expand everything after last repeated symbol
-            if syminds[end] < length(rest)
-                for arg in rest[(syminds[end] + 1):end]
-                    push!(out_expr.args, _expandE(arg))
+                # wrap in E(⋅) and output
+                out_expr = Expr(:call, :E, out_expr)
+
+            else
+                # we can rewrite arguments of Expr
+                out_expr.args = [op]
+
+                # expand everything up to first repeated symbol
+                if syminds[1] > 1
+                    for arg in rest[1:(syminds[1] - 1)]
+                        push!(out_expr.args, _expandE(arg))
+                    end
+                end
+
+                # clump everything between repeated symbols together
+                base_expr = Expr(:call, op, rest[syminds[1]:syminds[end]]...)
+                E_expr = Expr(:call, :E, base_expr)
+                push!(out_expr.args, E_expr)
+
+                # expand everything after last repeated symbol
+                if syminds[end] < length(rest)
+                    for arg in rest[(syminds[end] + 1):end]
+                        push!(out_expr.args, _expandE(arg))
+                    end
                 end
             end
         end
@@ -331,6 +348,8 @@ end
 """
 Recursively make a list of all symbols used as arguments in a given expression.
 """
+_get_all_syms(x) = Set(Symbol[])
+_get_all_syms(s::Symbol) = Set(Symbol[s])
 function _get_all_syms(ex::Expr)
     symset = Set{Symbol}()
     _get_all_syms(ex, symset)
