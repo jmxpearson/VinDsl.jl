@@ -458,6 +458,13 @@ facts("Updating via explicit optimization") do
 end
 
 facts("E calculus") do
+    context("Get symbols in expression") do
+        @fact _get_all_syms(:(x + 1)) --> Set([:x])
+        @fact _get_all_syms(:(x + y)) --> Set([:x, :y])
+        @fact _get_all_syms(:(x + (y * x))) --> Set([:x, :y])
+        @fact _get_all_syms(:(2x + (y * x))) --> Set([:x, :y])
+    end
+
     @fact _expandE(1) --> 1
     @fact _expandE(ones(5)) --> ones(5)
     @fact _expandE(:x) --> :(E(x))

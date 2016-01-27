@@ -328,6 +328,23 @@ function _expandE(ex::Expr)
     out_expr
 end
 
+"""
+Recursively make a list of all symbols used as arguments in a given expression.
+"""
+function _get_all_syms(ex::Expr)
+    symset = Set{Symbol}()
+    _get_all_syms(ex, symset)
+    symset
+end
+function _get_all_syms(ex::Expr, symset)
+    for arg in ex.args[2:end]  # assume first arg is called symbol
+        if isa(arg, Symbol)
+            push!(symset, arg)
+        elseif isa(arg, Expr)
+            _get_all_syms(arg, symset)
+        end
+    end
+end
 
 """
 Recursively wrap variables in an expression so that in the new expression,
