@@ -78,7 +78,34 @@ ConstantNode{T}(data::Array{T}, indices::Vector{Symbol}) =
     ConstantNode(gensym("const"), indices, data)
 ConstantNode(x::Number) = ConstantNode(gensym("const"), [:scalar], [x])
 
+immutable ExprNode <: Node
+    name::Symbol
+    ex::Expr  # expression defining node
+    nodelist::Vector{Symbol}  # nodes in the expression
+    innerinds::Vector{Symbol}
+    outerinds::Vector{Symbol}
+    dims::Vector{Int}
+end
+
+function ExprNode(name::Symbol, ex::Expr)
+    nodelist = collect(get_all_syms(ex))
+
+    @eval begin
+        fi = get_structure($(nodelist...))
+        inners = union([$n.innerinds for n in nodelist]...)
+        outers = union([$n.outerinds for n in nodelist]...)
+        allinds = union(inners, outers)
+    end
+    outerinds = fi.indices  # fully outer inds
+    dims = fi.maxvals  # size of each fully outer index
+    innerinds = setdiff(allinds, outerinds)
+
+    ExprNode(name, ex, nodelist, innerinds, outerinds, dims)
+end
+
+
 size(n::Node) = size(n.data)
+size(n::ExprNode) = tuple(n.dims...)
 
 """
 Create a node using formula syntax. E.g.,
