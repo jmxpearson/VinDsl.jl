@@ -259,6 +259,75 @@ function _wrapvars(vars::Vector{Symbol}, s::Symbol, indtup)
     end
 end
 
+################# macros/functions to generalize E(⋅) to expressions ##########
+_expandE(x) = x  # all terminal expressions not otherwise specified
+_expandE(x::Symbol) = :(E($x))
+function _expandE(ex::Expr)
+    if ex.head == :call && ex.args[1] == :E  # E call
+        out_expr = _expandE(ex.args[2])
+
+    # linearity of E over +, -
+    elseif ex.head == :call && ex.args[1] in [:+, :-, :.+, :.-]
+        out_expr = ex
+        rest = ex.args[2:end]
+        for (i, arg) in enumerate(rest)
+            out_expr.args[i + 1] = _expandE(arg)
+        end
+
+    # linearity of E for *
+    # STRONG ASSUMPTION: different symbols/nodes are INDEPENDENT
+    elseif ex.head == :call && ex.args[1] in [:*]
+        op = ex.args[1]  # operator
+        rest = ex.args[2:end]  # factors
+
+        # symbol factors
+        syms = filter(s -> isa(s, Symbol), rest)
+
+        # are symbols repeated?
+        repeats = length(syms) > length(unique(syms))
+
+        out_expr = ex
+        if !repeats
+            for (i, arg) in enumerate(rest)
+                out_expr.args[i + 1] = _expandE(arg)
+            end
+        else
+            # some variables are repeated, and we can't assume * is
+            # commutative, so don't rearrange factors
+
+            repeated_syms = unique(filter(s -> length(findin(syms, [s])) > 1, syms))
+
+            out_expr.args = [op]  # we'll build this up from scratch
+
+            # which positions contain repeated symbols?
+            syminds = findin(rest, repeated_syms)
+
+            # expand everything up to first repeated symbol
+            if syminds[1] > 1
+                for arg in rest[1:(syminds[1] - 1)]
+                    push!(out_expr.args, _expandE(arg))
+                end
+            end
+
+            # clump everything between repeated symbols together
+            base_expr = Expr(:call, op, rest[syminds[1]:syminds[end]]...)
+            E_expr = Expr(:call, :E, base_expr)
+            push!(out_expr.args, E_expr)
+
+            # expand everything after last repeated symbol
+            if syminds[end] < length(rest)
+                for arg in rest[(syminds[end] + 1):end]
+                    push!(out_expr.args, _expandE(arg))
+                end
+            end
+        end
+
+    else
+        out_expr = ex
+    end
+    out_expr
+end
+
 
 """
 Recursively wrap variables in an expression so that in the new expression,

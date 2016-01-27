@@ -457,6 +457,24 @@ facts("Updating via explicit optimization") do
     end
 end
 
+facts("E calculus") do
+    @fact _expandE(1) --> 1
+    @fact _expandE(ones(5)) --> ones(5)
+    @fact _expandE(:x) --> :(E(x))
+    @fact _expandE(:(E(x))) --> :(E(x))
+    @fact _expandE(:(E(x + y))) --> :(E(x) + E(y))
+    @fact _expandE(:(E(x + y + z))) --> :(E(x) + E(y) + E(z))
+    @fact _expandE(:(E(x - y))) --> :(E(x) - E(y))
+    @fact _expandE(:(E(x - y + z))) --> :(E(x) - E(y) + E(z))
+    @fact _expandE(:(E(x .+ y))) --> :(E(x) .+ E(y))
+    @fact _expandE(:(E(2x))) --> :(2 * E(x))
+    @fact _expandE(:(E(2x * 3))) --> :((2 * E(x)) * 3)
+    @fact _expandE(:(E(2x * y))) --> :((2 * E(x)) * E(y))
+    @fact _expandE(:(E(2 * x * y))) --> :(2 * E(x) * E(y))
+    @fact _expandE(:(E(2 * x * y * x))) --> :(2 * E(x * y * x))
+    @fact _expandE(:(E(2 * x * y * x * z))) --> :(2 * E(x * y * x) * E(z))
+end
+
 facts("Gamma-Poisson model") do
     U = 10  # units
     T = 50  # time points
