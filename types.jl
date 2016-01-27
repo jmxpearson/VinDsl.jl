@@ -281,7 +281,7 @@ function _expandE(ex::Expr)
         rest = ex.args[2:end]  # factors
 
         # symbol factors
-        symsets = [_get_all_syms(r) for r in rest]
+        symsets = [get_all_syms(r) for r in rest]
 
         # are symbols repeated across arguments?
         pairwise_intersections = map(x -> intersect(x[1], x[2]), combinations(symsets, 2))
@@ -348,9 +348,9 @@ end
 """
 Recursively make a list of all symbols used as arguments in a given expression.
 """
-_get_all_syms(x) = Set(Symbol[])
-_get_all_syms(s::Symbol) = Set(Symbol[s])
-function _get_all_syms(ex::Expr)
+get_all_syms(x) = Set(Symbol[])
+get_all_syms(s::Symbol) = Set(Symbol[s])
+function get_all_syms(ex::Expr)
     symset = Set{Symbol}()
     _get_all_syms(ex, symset)
     symset

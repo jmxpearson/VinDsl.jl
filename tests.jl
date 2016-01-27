@@ -459,12 +459,12 @@ end
 
 facts("E calculus") do
     context("Get symbols in expression") do
-        @fact _get_all_syms(5) --> Set{Symbol}([])
-        @fact _get_all_syms(:x) --> Set([:x])
-        @fact _get_all_syms(:(x + 1)) --> Set([:x])
-        @fact _get_all_syms(:(x + y)) --> Set([:x, :y])
-        @fact _get_all_syms(:(x + (y * x))) --> Set([:x, :y])
-        @fact _get_all_syms(:(2x + (y * x))) --> Set([:x, :y])
+        @fact get_all_syms(5) --> Set{Symbol}([])
+        @fact get_all_syms(:x) --> Set([:x])
+        @fact get_all_syms(:(x + 1)) --> Set([:x])
+        @fact get_all_syms(:(x + y)) --> Set([:x, :y])
+        @fact get_all_syms(:(x + (y * x))) --> Set([:x, :y])
+        @fact get_all_syms(:(2x + (y * x))) --> Set([:x, :y])
     end
 
     context("Basic identities") do
