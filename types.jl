@@ -81,28 +81,38 @@ ConstantNode(x::Number) = ConstantNode(gensym("const"), [:scalar], [x])
 immutable ExprNode <: Node
     name::Symbol
     ex::Expr  # expression defining node
-    nodelist::Vector{Symbol}  # nodes in the expression
+    nodelist::Vector{Node}  # nodes in the expression
     innerinds::Vector{Symbol}
     outerinds::Vector{Symbol}
     dims::Vector{Int}
 end
 
-function ExprNode(name::Symbol, ex::Expr)
-    nodelist = collect(get_all_syms(ex))
-
-    @eval begin
-        fi = get_structure($(nodelist...))
-        inners = union([$n.innerinds for n in nodelist]...)
-        outers = union([$n.outerinds for n in nodelist]...)
-        allinds = union(inners, outers)
-    end
+function ExprNode(name::Symbol, ex::Expr, nodelist::Vector{Node})
+    fi = get_structure(nodelist...)
+    inners = union([n.innerinds for n in nodelist]...)
+    outers = union([n.outerinds for n in nodelist]...)
+    allinds = union(inners, outers)
     outerinds = fi.indices  # fully outer inds
-    dims = fi.maxvals  # size of each fully outer index
     innerinds = setdiff(allinds, outerinds)
+    dims = fi.maxvals  # size of each fully outer index
+
+    # now get rid of :scalar index (if it's not the only one)
+    scalar_inds = findin(outerinds, [:scalar])
+    if !isempty(scalar_inds) && length(outerinds) > 1
+        scalar_index = scalar_inds[1]  # should only have 1 or 0 entries
+        splice!(outerinds, scalar_index)
+        splice!(dims, scalar_index)
+    end
 
     ExprNode(name, ex, nodelist, innerinds, outerinds, dims)
 end
 
+macro exprnode(name, ex)
+    nodelist = collect(get_all_syms(ex))
+    qname = Expr(:quote, name)
+    qex = Expr(:quote, ex)
+    esc(:($name = ExprNode($qname, $qex, Node[$(nodelist...)])))
+end
 
 size(n::Node) = size(n.data)
 size(n::ExprNode) = tuple(n.dims...)

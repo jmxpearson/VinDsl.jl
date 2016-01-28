@@ -95,6 +95,52 @@ facts("Can create basic node types using constructors.") do
 
 end
 
+facts("Expression nodes") do
+    p = 5
+    q = 8
+    x[i] ~ Normal(zeros(p), ones(p))
+    y[i] ~ Gamma(1.1 * ones(p), ones(p))
+    m[j] ~ MvNormal(ones(q), eye(q))
+    c ~ Const(rand(5, 5))
+    d[k] ~ Dirichlet(5, 1)
+
+    context("Outer constructor") do
+        ex = :(x + 5 * y)
+        z = ExprNode(:z, ex, Node[x, y])
+        w = ExprNode(:w, :(x + m * y), Node[x, y, m])
+        v = ExprNode(:v, :(c * d), Node[c, d])
+
+        @fact isa(z, Node) --> true
+        @fact isa(z, ExprNode) --> true
+        @fact z.name --> :z
+        @fact z.outerinds --> [:i]
+        @fact z.innerinds --> []
+        @fact z.dims --> [p]
+        @fact size(z) --> (p,)
+
+        @fact w.innerinds --> [:j]
+        @fact w.outerinds --> [:i]
+        @fact size(w) --> (p,)
+
+        @fact v.outerinds --> [:scalar]
+        @fact v.innerinds --> [:k]
+    end
+
+    context("Macro constructor") do
+        @exprnode z (x + 5y * m)
+        @fact isa(z, Node) --> true
+        @fact isa(z, ExprNode) --> true
+        @fact z.name --> :z
+        @fact z.outerinds --> [:i]
+        @fact z.innerinds --> [:j]
+        @fact z.dims --> [p]
+        @fact size(z) --> (p,)
+    end
+
+
+
+end
+
 facts("Inferring Factor structure") do
 
     context("All indices outer") do
