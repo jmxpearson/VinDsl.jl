@@ -545,6 +545,17 @@ facts("E calculus") do
         @fact _expandE(:(E((x * y) * x))) --> :(E((x * y) * x))
         @fact _expandE(:(E((x * y) * x * (w * z)))) --> :(E((x * y) * x) * (E(w) * E(z)))
     end
+
+    context("macro expansion") do
+        x ~ Normal(rand(), rand())
+        y ~ Normal(rand(), rand())
+
+        xy = @expandE E(x.data[1] + y.data[1])
+        @fact xy --> E(x.data[1]) + E(y.data[1])
+
+        xy = @expandE E(x.data[1] * y.data[1] + 5)
+        @fact xy --> E(x.data[1]) * E(y.data[1]) + 5
+    end
 end
 
 facts("Gamma-Poisson model") do

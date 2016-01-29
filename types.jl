@@ -111,7 +111,8 @@ macro exprnode(name, ex)
     nodelist = collect(get_all_syms(ex))
     qname = Expr(:quote, name)
     qex = Expr(:quote, ex)
-    esc(:($name = ExprNode($qname, $qex, Node[$(nodelist...)])))
+    out_expr = :($name = ExprNode($qname, $qex, Node[$(nodelist...)]))
+    esc(out_expr)
 end
 
 size(n::Node) = size(n.data)
