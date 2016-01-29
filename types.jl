@@ -131,11 +131,19 @@ macro exprnode(name, ex)
     esc(out_expr)
 end
 
+immutable ExprDist{V <: Val} <: Distribution
+    nodedict::Dict{Symbol, Distribution}
+end
+
 size(n::Node) = size(n.data)
 size(n::ExprNode) = tuple(n.dims...)
 ndims(n::Node) = length(size(n))
 
 getindex(n::Node, inds...) = n.data[inds...]
+function getindex(n::ExprNode, inds...)
+    nd = Dict([(s => project(n, s, inds)) for (s, _) in n.nodedict])
+    ExprDist{Val{n.name}}(nd)
+end
 setindex!(n::Node, val, inds...) = setindex!(n.data, val, inds...)
 
 """

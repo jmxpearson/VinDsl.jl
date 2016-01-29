@@ -147,6 +147,16 @@ facts("Expression nodes") do
         @fact project(u, :a, (2, 3)) --> a[3]
     end
 
+    context("getindex") do
+        u = ExprNode(:u, :(x + a), Node[x, a])
+        u23 = u[2, 3]
+
+        @fact isa(u23, Distribution) --> true
+        @fact isa(u23, ExprDist{Val{:u}}) --> true
+        @fact Set(keys(u23.nodedict)) --> Set([:x, :a])
+        @fact all(x -> isa(x, Distribution), values(u23.nodedict)) --> true
+
+    end
 end
 
 facts("Inferring Factor structure") do
