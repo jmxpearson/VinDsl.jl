@@ -118,6 +118,9 @@ end
 size(n::Node) = size(n.data)
 size(n::ExprNode) = tuple(n.dims...)
 
+getindex(n::Node, inds...) = n.data[inds...]
+setindex!(n::Node, val, inds...) = setindex!(n.data, val, inds...)
+
 """
 Create a node using formula syntax. E.g.,
 x[i, j, k] ~ Normal(μ, σ)
@@ -250,7 +253,7 @@ corresponding to the global range of indices.
 function project(f::Factor, name::Symbol, rangetuple)
     node = getfield(f, name)
     if length(project_inds(f, name, rangetuple)) > 0
-        out = node.data[project_inds(f, name, rangetuple)...]
+        out = node[project_inds(f, name, rangetuple)...]
     else
         out = node.data
     end
@@ -627,9 +630,9 @@ end
         # should have the same dimension as fsym
         # get the type of the naturals by calling the
         # function on the first element of the array
-        nats = naturals(n.data[1])
+        nats = naturals(n[1])
         η_type = typeof(nats)
-        η = Array{η_type}(size(n.data)...)
+        η = Array{η_type}(size(n)...)
         for i in eachindex(η)
             η[i] = map(zero_like, nats)
         end
@@ -796,7 +799,7 @@ function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:conjugate}})
         natpars = map(x -> +(x...), this_messages)
 
         # convert natural parameters to Distributions.jl parameters
-        n.data[idx] = D(naturals_to_params(natpars, D)...)
+        n[idx] = D(naturals_to_params(natpars, D)...)
     end
 end
 
@@ -872,12 +875,12 @@ function reroll_pars{D <: Distribution}(d::D, par_sizes, x)
 end
 
 function update_pars!(n::RandomNode, x)
-    par_sizes = get_par_sizes(n.data[1])
+    par_sizes = get_par_sizes(n[1])
     npars = mapreduce(prod, +, par_sizes)
 
     ctr = 0
     for i in eachindex(n.data)
-        n.data[i] = reroll_pars(n.data[i], par_sizes, x[ctr + 1: ctr + npars])
+        n[i] = reroll_pars(n[i], par_sizes, x[ctr + 1: ctr + npars])
         ctr += npars
     end
 end
