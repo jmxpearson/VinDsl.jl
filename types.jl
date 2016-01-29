@@ -95,7 +95,7 @@ end
 immutable ExprNode <: Node
     name::Symbol
     ex::Expr  # expression defining node
-    nodelist::Vector{Node}  # nodes in the expression
+    nodelist::Dict{Symbol, Node}  # nodes in the expression
     inds::FactorInds  # so we can treat this like a factor
     innerinds::Vector{Symbol}
     outerinds::Vector{Symbol}
@@ -104,6 +104,7 @@ end
 
 function ExprNode(name::Symbol, ex::Expr, nodelist::Vector{Node})
     fi = get_structure(nodelist...)
+    nodedict = Dict([n.name => n for n in nodelist])
     inners = union([n.innerinds for n in nodelist]...)
     outers = union([n.outerinds for n in nodelist]...)
     allinds = union(inners, outers)
@@ -119,7 +120,7 @@ function ExprNode(name::Symbol, ex::Expr, nodelist::Vector{Node})
         splice!(dims, scalar_index)
     end
 
-    ExprNode(name, ex, nodelist, fi, innerinds, outerinds, dims)
+    ExprNode(name, ex, nodedict, fi, innerinds, outerinds, dims)
 end
 
 macro exprnode(name, ex)
