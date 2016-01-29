@@ -95,7 +95,7 @@ end
 immutable ExprNode <: Node
     name::Symbol
     ex::Expr  # expression defining node
-    nodelist::Dict{Symbol, Node}  # nodes in the expression
+    nodedict::Dict{Symbol, Node}  # nodes in the expression
     inds::FactorInds  # so we can treat this like a factor
     innerinds::Vector{Symbol}
     outerinds::Vector{Symbol}
@@ -253,8 +253,8 @@ Given a factor, a symbol naming a variable in that factor, and a tuple of
 index ranges for the factor as a whole, return the elements of node
 corresponding to the global range of indices.
 """
-function project(f::Factor, name::Symbol, rangetuple)
-    node = getfield(f, name)
+function project(f, name::Symbol, rangetuple)
+    node = node_from_name(f, name)
     if length(project_inds(f, name, rangetuple)) > 0
         out = node[project_inds(f, name, rangetuple)...]
     else
@@ -264,8 +264,8 @@ function project(f::Factor, name::Symbol, rangetuple)
     out
 end
 
-function project_inds(f::Factor, name::Symbol, rangetuple)
-    node = getfield(f, name)
+function project_inds(f, name::Symbol, rangetuple)
+    node = node_from_name(f, name)
     factor_inds = f.inds.inds_in_factor[node.name]
     node_inds = f.inds.inds_in_node[node.name]
     ninds = length(node.outerinds)
@@ -279,6 +279,8 @@ function project_inds(f::Factor, name::Symbol, rangetuple)
     outtuple
 end
 
+node_from_name(f::Factor, name::Symbol) = getfield(f, name)
+node_from_name(f::ExprNode, name::Symbol) = f.nodedict[name]
 
 _wrapvars(vars, x, y) = x
 

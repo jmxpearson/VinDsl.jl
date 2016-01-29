@@ -97,11 +97,12 @@ end
 facts("Expression nodes") do
     p = 5
     q = 8
-    x[i] ~ Normal(zeros(p), ones(p))
+    x[i] ~ Normal(rand(p), ones(p))
     y[i] ~ Gamma(1.1 * ones(p), ones(p))
     m[j] ~ MvNormal(ones(q), eye(q))
+    a[k] ~ Normal(rand(q), ones(q))
     c ~ Const(rand(5, 5))
-    d[k] ~ Dirichlet(5, 1)
+    d[k] ~ Dirichlet(q, 1)
 
     context("Outer constructor") do
         ex = :(x + 5 * y)
@@ -136,7 +137,15 @@ facts("Expression nodes") do
         @fact size(z) --> (p,)
     end
 
+    context("Projection") do
+        u = ExprNode(:u, :(x + a), Node[x, a])
 
+        @fact u.outerinds --> [:i, :k]
+        @fact u.innerinds --> []
+        @fact size(u) --> (p, q)
+        @fact project(u, :x, (2, 3)) --> x[2]
+        @fact project(u, :a, (2, 3)) --> a[3]
+    end
 
 end
 
