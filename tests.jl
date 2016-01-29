@@ -10,11 +10,10 @@ srand(12345)
 # use these equality definitions for testing purposes
 ==(x::PDMat, y::PDMat) = x.mat == y.mat
 function =={D <: Distribution}(x::D, y::D)
-    checks = [x.(f) == y.(f) for f in fieldnames(x)]
-    all(checks)
+    all(f -> x.(f) == y.(f), fieldnames(x))
 end
 function =={D <: Distribution}(x::RandomNode{D}, y::RandomNode{D})
-    all(Bool[x.(f) == y.(f) for f in fieldnames(x)])
+    all(f -> x.(f) == y.(f), fieldnames(x))
 end
 
 facts("Can create basic node types using constructors.") do
@@ -516,8 +515,15 @@ facts("E calculus") do
     context("Basic identities") do
         @fact _expandE(1) --> 1
         @fact _expandE(ones(5)) --> ones(5)
-        @fact _expandE(:x) --> :(E(x))
+        @fact _expandE(:x) --> :(x)
         @fact _expandE(:(E(x))) --> :(E(x))
+        @fact _expandE(:(x + y)) --> :(x + y)
+
+        @fact _expand_wrapE(1) --> 1
+        @fact _expand_wrapE(ones(5)) --> ones(5)
+        @fact _expand_wrapE(:x) --> :(E(x))
+        @fact _expand_wrapE(:(E(x))) --> :(E(x))
+        @fact _expand_wrapE(:(x + y)) --> :(E(x) + E(y))
     end
 
     context("+ and -") do

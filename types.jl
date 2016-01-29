@@ -297,18 +297,31 @@ function _wrapvars(vars::Vector{Symbol}, s::Symbol, indtup)
 end
 
 ################# macros/functions to generalize E(⋅) to expressions ##########
+# _expandE expands the expectations in an arbitrary expression
+# _expand_wrapE expands the expression inside an E(⋅) and wraps the result in E
 _expandE(x) = x  # all terminal expressions not otherwise specified
-_expandE(x::Symbol) = :(E($x))
+_expandE(x::Symbol) = x
 function _expandE(ex::Expr)
     if ex.head == :call && ex.args[1] == :E  # E call
-        out_expr = _expandE(ex.args[2])
+        out_expr = _expand_wrapE(ex.args[2])
+    else
+        out_expr = ex
+    end
+    out_expr
+end
+
+_expand_wrapE(x) = x
+_expand_wrapE(x::Symbol) = :(E($x))
+function _expand_wrapE(ex::Expr)
+    if ex.head == :call && ex.args[1] == :E  # E call
+        out_expr = _expand_wrapE(ex.args[2])
 
     # linearity of E over +, -
     elseif ex.head == :call && ex.args[1] in [:+, :-, :.+, :.-]
         out_expr = ex
         rest = ex.args[2:end]
         for (i, arg) in enumerate(rest)
-            out_expr.args[i + 1] = _expandE(arg)
+            out_expr.args[i + 1] = _expand_wrapE(arg)
         end
 
     # linearity of E for *
@@ -327,7 +340,7 @@ function _expandE(ex::Expr)
         out_expr = ex
         if !repeats
             for (i, arg) in enumerate(rest)
-                out_expr.args[i + 1] = _expandE(arg)
+                out_expr.args[i + 1] = _expand_wrapE(arg)
             end
         else
             # some variables are repeated, and we can't assume * is
@@ -358,7 +371,7 @@ function _expandE(ex::Expr)
                 # expand everything up to first repeated symbol
                 if syminds[1] > 1
                     for arg in rest[1:(syminds[1] - 1)]
-                        push!(out_expr.args, _expandE(arg))
+                        push!(out_expr.args, _expand_wrapE(arg))
                     end
                 end
 
@@ -370,16 +383,20 @@ function _expandE(ex::Expr)
                 # expand everything after last repeated symbol
                 if syminds[end] < length(rest)
                     for arg in rest[(syminds[end] + 1):end]
-                        push!(out_expr.args, _expandE(arg))
+                        push!(out_expr.args, _expand_wrapE(arg))
                     end
                 end
             end
         end
 
     else
-        out_expr = ex
+        out_expr = :(E($ex))
     end
     out_expr
+end
+
+macro expandE(ex)
+    esc(_expandE(ex))
 end
 
 """
