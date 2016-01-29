@@ -166,17 +166,30 @@ immutable FactorInds
 end
 
 macro factor(ftype, nodes...)
-    local ex = quote
-        fi = get_structure($(nodes...))
-        symdict = get_name_mapping($ftype, $(nodes...))
-        $ftype{length(fi.indices)}($(nodes...), fi, symdict)
+    ex = quote
+        allnodes = get_all_nodes($(nodes...))
+        fi = get_structure(allnodes...)
+        symdict = get_name_mapping($ftype, allnodes...)
+        $ftype{length(fi.indices)}(allnodes..., fi, symdict)
     end
     esc(ex)
 end
 
+
 ###################################################
 # Functions to deal with factor structure
 ###################################################
+"""
+Given a list of nodes, recursively search them to make sure all ExprNodes
+are broken into constituent parts, so that only actual nodes remain.
+Return a list of symbols corresponding to node names.
+"""
+function get_all_nodes(nodelist...)
+    union([_subnodes(n) for n in nodelist]...)
+end
+_subnodes(n::Node) = [n]
+_subnodes(n::ExprNode) = get_all_nodes(n.nodelist...)
+
 """
 Given a list of nodes, return a FactorInds type variable that calculates
 the unique indices in the nodes, their ranges, and the map from node symbols
