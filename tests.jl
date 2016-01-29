@@ -229,17 +229,6 @@ facts("Inferring Factor structure") do
         @fact Set(inds) --> Set([:j])
     end
 
-    context("Getting all nodes") do
-        a[i, j] ~ Normal(rand(5, 5), rand(5, 5))
-        b[j, k] ~ Gamma(rand(5, 3), rand(5, 3))
-        x[j, k] ~ Gamma(rand(5, 3), rand(5, 3))
-        y[j, k] ~ Gamma(rand(5, 3), rand(5, 3))
-        @exprnode z (x + 5y)
-        @exprnode w (a + b * x)
-
-        @fact Set(get_all_nodes(a, b)) --> Set([a, b])
-        @fact Set(get_all_nodes(a, w)) --> Set([a, x, b])
-    end
 end
 
 facts("Basic factor construction") do
