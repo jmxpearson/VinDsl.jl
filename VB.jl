@@ -9,7 +9,7 @@ using Distributions
 using PDMats
 using Optim
 using ForwardDiff
-import Base: convert, call, zero
+import Base: convert, call, zero, getindex, setindex!, ndims
 import Distributions: var, entropy, cov
 using Base.Cartesian
 
@@ -36,7 +36,7 @@ export VBModel,
     @deffactor,
     Node, RandomNode, ConstantNode, ExprNode, @~, @expandE,
     register, check_conjugate, update!, unroll_pars, update_pars!, reroll_pars,
-    get_par_sizes, flatten, 
+    get_par_sizes, flatten,
     E, Elog, Eloggamma, Elogdet, V, H, C, value, naturals, @defnaturals,
     get_node_size, get_name_mapping, HMM, MarkovChain, MarkovMatrix
 

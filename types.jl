@@ -132,6 +132,7 @@ end
 
 size(n::Node) = size(n.data)
 size(n::ExprNode) = tuple(n.dims...)
+ndims(n::Node) = length(size(n))
 
 getindex(n::Node, inds...) = n.data[inds...]
 setindex!(n::Node, val, inds...) = setindex!(n.data, val, inds...)
@@ -256,7 +257,8 @@ function project(f::Factor, name::Symbol, rangetuple)
     if length(project_inds(f, name, rangetuple)) > 0
         out = node[project_inds(f, name, rangetuple)...]
     else
-        out = node.data
+        alltuple = [Colon() for _ in 1:ndims(node)]
+        out = node[alltuple...]
     end
     out
 end
