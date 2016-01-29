@@ -78,10 +78,25 @@ ConstantNode{T}(data::Array{T}, indices::Vector{Symbol}) =
     ConstantNode(gensym("const"), indices, data)
 ConstantNode(x::Number) = ConstantNode(gensym("const"), [:scalar], [x])
 
+immutable FactorInds
+    indices::Vector{Symbol}  # all fully outer indices
+    maxvals::Vector{Int}  # maximum value of each index
+    #=
+    The next two dicts take care of a pair of necessary mappings:
+    - inds_in_factor maps a node symbol to the (integer) subset of factor
+        indices involving this node
+    - inds_in_node maps a node symbol to the (integer) subset of node indices
+        involved in this factor
+    =#
+    inds_in_factor::Dict{Symbol, Vector{Int}}
+    inds_in_node::Dict{Symbol, Vector{Int}}
+end
+
 immutable ExprNode <: Node
     name::Symbol
     ex::Expr  # expression defining node
     nodelist::Vector{Node}  # nodes in the expression
+    inds::FactorInds  # so we can treat this like a factor
     innerinds::Vector{Symbol}
     outerinds::Vector{Symbol}
     dims::Vector{Int}
@@ -104,7 +119,7 @@ function ExprNode(name::Symbol, ex::Expr, nodelist::Vector{Node})
         splice!(dims, scalar_index)
     end
 
-    ExprNode(name, ex, nodelist, innerinds, outerinds, dims)
+    ExprNode(name, ex, nodelist, fi, innerinds, outerinds, dims)
 end
 
 macro exprnode(name, ex)
@@ -154,20 +169,6 @@ end
 #################### Factor #######################
 "Defines a factor, a term in the variational objective."
 abstract Factor{N}
-
-immutable FactorInds
-    indices::Vector{Symbol}  # all fully outer indices
-    maxvals::Vector{Int}  # maximum value of each index
-    #=
-    The next two dicts take care of a pair of necessary mappings:
-    - inds_in_factor maps a node symbol to the (integer) subset of factor
-        indices involving this node
-    - inds_in_node maps a node symbol to the (integer) subset of node indices
-        involved in this factor
-    =#
-    inds_in_factor::Dict{Symbol, Vector{Int}}
-    inds_in_node::Dict{Symbol, Vector{Int}}
-end
 
 macro factor(ftype, nodes...)
     ex = quote
