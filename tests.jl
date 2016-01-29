@@ -155,7 +155,6 @@ facts("Expression nodes") do
         @fact isa(u23, ExprDist{Val{:u}}) --> true
         @fact Set(keys(u23.nodedict)) --> Set([:x, :a])
         @fact all(x -> isa(x, Distribution), values(u23.nodedict)) --> true
-
     end
 end
 

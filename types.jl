@@ -429,7 +429,14 @@ function get_all_syms(ex::Expr)
     symset
 end
 function _get_all_syms(ex::Expr, symset)
-    for arg in ex.args[2:end]  # assume first arg is called symbol
+    if ex.head == :call || ex.head == :quote
+        arglist = ex.args[2:end]
+    elseif ex.head == :ref || ex.head == :.
+        arglist = ex.args
+    else
+        error("Some Expr.head type unhandled in _get_all_syms")
+    end
+    for arg in arglist
         if isa(arg, Symbol)
             push!(symset, arg)
         elseif isa(arg, Expr)
