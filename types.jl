@@ -123,14 +123,19 @@ function ExprNode(name::Symbol, ex::Expr, nodelist::Vector{Node})
     ExprNode(name, ex, nodedict, fi, innerinds, outerinds, dims)
 end
 
+nodeextract(key, node) = node.nodedict[key]
+
 macro exprnode(name, ex)
     nodelist = collect(get_all_syms(ex))
     qname = Expr(:quote, name)
     qex = Expr(:quote, ex)
+    Eex = :(E($ex))
     out_expr = quote
         $name = ExprNode($qname, $qex, Node[$(nodelist...)])
 
-        # E(d::ExprDist{Val{$qname}}) = @wrapvars nodelist $ex
+        # need to fully qualify E, else running @exprnode
+        # outside the module will not extend, but overwrite
+        VB.E(d::ExprDist{Val{$qname}}) = @wrapvars $nodelist (@expandE $Eex) nodeextract d
     end
     esc(out_expr)
 end

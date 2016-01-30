@@ -156,6 +156,12 @@ facts("Expression nodes") do
         @fact Set(keys(u23.nodedict)) --> Set([:x, :a])
         @fact all(x -> isa(x, Distribution), values(u23.nodedict)) --> true
     end
+
+    context("Expectation") do
+        @exprnode u (x + 3a)
+
+        @fact E(u[2, 3]) --> E(x[2]) + 3 * E(a[3])
+    end
 end
 
 facts("Inferring Factor structure") do
