@@ -162,6 +162,17 @@ facts("Expression nodes") do
 
         @fact E(u[2, 3]) --> E(x[2]) + 3 * E(a[3])
     end
+
+    context("Factors involving ExprNode") do
+        v[i, k] ~ Const(rand(p, q))
+        w[i] ~ Const(rand(p))
+        @exprnode z (x + 3a)
+
+        f = @factor LogGammaFactor v w z
+
+        @fact Set(f.inds.indices) --> Set([:i, :k])
+        @fact value(f) --> isfinite
+    end
 end
 
 facts("Inferring Factor structure") do
@@ -264,7 +275,7 @@ facts("Basic factor construction") do
         b ~ Gamma(1, 1)
         y[i, j] ~ Normal(rand(dims), ones(dims))
 
-        f = @factor LogNormalFactor y a b;
+        f = @factor LogNormalFactor y a b
         inds = f.inds.indices
         maxvals = f.inds.maxvals
 
@@ -544,11 +555,11 @@ facts("E calculus") do
         @fact _expandE(:(E(x))) --> :(E(x))
         @fact _expandE(:(x + y)) --> :(x + y)
 
-        @fact _expand_wrapE(1) --> 1
-        @fact _expand_wrapE(ones(5)) --> ones(5)
-        @fact _expand_wrapE(:x) --> :(E(x))
-        @fact _expand_wrapE(:(E(x))) --> :(E(x))
-        @fact _expand_wrapE(:(x + y)) --> :(E(x) + E(y))
+        @fact _expand_wrapE(1, :E) --> 1
+        @fact _expand_wrapE(ones(5), :E) --> ones(5)
+        @fact _expand_wrapE(:x, :E) --> :(E(x))
+        @fact _expand_wrapE(:(E(x)), :E) --> :(E(x))
+        @fact _expand_wrapE(:(x + y), :E) --> :(E(x) + E(y))
     end
 
     context("+ and -") do

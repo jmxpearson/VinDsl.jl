@@ -238,7 +238,7 @@ function get_structure(nodes...)
         for (d, idx) in enumerate(n.outerinds)
             # if this outer index is to be summed over...
             if idx in allinds
-                push!(idxdict[idx], size(n.data, d))
+                push!(idxdict[idx], size(n)[d])
                 push!(inds_in_factor[n.name], idx_to_int[idx])
                 push!(inds_in_node[n.name], indexin([idx], n.outerinds)[1])
             end
@@ -331,26 +331,26 @@ end
 _expandE(x) = x  # all terminal expressions not otherwise specified
 _expandE(x::Symbol) = x
 function _expandE(ex::Expr)
-    if ex.head == :call && ex.args[1] == :E  # E call
-        out_expr = _expand_wrapE(ex.args[2])
+    if ex.head == :call && ex.args[1] in [:E]  # E call
+        out_expr = _expand_wrapE(ex.args[2], ex.args[1])
     else
         out_expr = ex
     end
     out_expr
 end
 
-_expand_wrapE(x) = x
-_expand_wrapE(x::Symbol) = :(E($x))
-function _expand_wrapE(ex::Expr)
-    if ex.head == :call && ex.args[1] == :E  # E call
-        out_expr = _expand_wrapE(ex.args[2])
+_expand_wrapE(x, f) = x
+_expand_wrapE(x::Symbol, f::Symbol) = :($f($x))
+function _expand_wrapE(ex::Expr, f::Symbol)
+    if ex.head == :call && ex.args[1] in [:E]  # E call
+        out_expr = _expand_wrapE(ex.args[2], ex.args[1])
 
     # linearity of E over +, -
     elseif ex.head == :call && ex.args[1] in [:+, :-, :.+, :.-]
         out_expr = ex
         rest = ex.args[2:end]
         for (i, arg) in enumerate(rest)
-            out_expr.args[i + 1] = _expand_wrapE(arg)
+            out_expr.args[i + 1] = _expand_wrapE(arg, f)
         end
 
     # linearity of E for *
@@ -369,7 +369,7 @@ function _expand_wrapE(ex::Expr)
         out_expr = ex
         if !repeats
             for (i, arg) in enumerate(rest)
-                out_expr.args[i + 1] = _expand_wrapE(arg)
+                out_expr.args[i + 1] = _expand_wrapE(arg, f)
             end
         else
             # some variables are repeated, and we can't assume * is
@@ -400,7 +400,7 @@ function _expand_wrapE(ex::Expr)
                 # expand everything up to first repeated symbol
                 if syminds[1] > 1
                     for arg in rest[1:(syminds[1] - 1)]
-                        push!(out_expr.args, _expand_wrapE(arg))
+                        push!(out_expr.args, _expand_wrapE(arg, f))
                     end
                 end
 
@@ -412,14 +412,14 @@ function _expand_wrapE(ex::Expr)
                 # expand everything after last repeated symbol
                 if syminds[end] < length(rest)
                     for arg in rest[(syminds[end] + 1):end]
-                        push!(out_expr.args, _expand_wrapE(arg))
+                        push!(out_expr.args, _expand_wrapE(arg, f))
                     end
                 end
             end
         end
 
     else
-        out_expr = :(E($ex))
+        out_expr = :($f($ex))
     end
     out_expr
 end
