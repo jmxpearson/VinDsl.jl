@@ -143,8 +143,8 @@ facts("Expression nodes") do
         @fact u.outerinds --> [:i, :k]
         @fact u.innerinds --> []
         @fact size(u) --> (p, q)
-        @fact project(u, :x, (2, 3)) --> x[2]
-        @fact project(u, :a, (2, 3)) --> a[3]
+        @fact project(:x, u, (2, 3)) --> x[2]
+        @fact project(:a, u, (2, 3)) --> a[3]
     end
 
     context("getindex") do
@@ -265,12 +265,12 @@ facts("Basic factor construction") do
         @fact Set(inds) --> Set([:i, :j, :scalar])
 
         # internals use names defined for factor type, not node names
-        @fact project_inds(f, :x, inds) --> [:i, :j]
-        @fact project_inds(f, :μ, inds) --> [:j]
-        @fact project_inds(f, :τ, inds) --> [:scalar]
-        @fact isa(project(f, :x, maxvals), Normal) --> true
-        @fact isa(project(f, :μ, maxvals), Normal) --> true
-        @fact isa(project(f, :τ, maxvals), Gamma) --> true
+        @fact project_inds(:x, f, inds) --> [:i, :j]
+        @fact project_inds(:μ, f, inds) --> [:j]
+        @fact project_inds(:τ, f, inds) --> [:scalar]
+        @fact isa(project(:x, f, maxvals), Normal) --> true
+        @fact isa(project(:μ, f, maxvals), Normal) --> true
+        @fact isa(project(:τ, f, maxvals), Gamma) --> true
         @fact value(f) --> isfinite
     end
 
@@ -288,12 +288,12 @@ facts("Basic factor construction") do
         maxvals = f.inds.maxvals
 
         @fact Set(inds) --> Set([:j])
-        @fact project_inds(f, :x, inds) --> [:j]
-        @fact project_inds(f, :μ, inds) --> [Colon()]
-        @fact project_inds(f, :Λ, inds) --> [:j]
-        @fact isa(project(f, :x, maxvals), MvNormal) --> true
-        @fact isa(project(f, :μ, maxvals), Vector{Normal}) --> true
-        @fact isa(project(f, :Λ, maxvals), Matrix{Float64}) --> true
+        @fact project_inds(:x, f, inds) --> [:j]
+        @fact project_inds(:μ, f, inds) --> [Colon()]
+        @fact project_inds(:Λ, f, inds) --> [:j]
+        @fact isa(project(:x, f, maxvals), MvNormal) --> true
+        @fact isa(project(:μ, f, maxvals), Vector{Normal}) --> true
+        @fact isa(project(:Λ, f, maxvals), Matrix{Float64}) --> true
         @fact value(f) --> isfinite
     end
 

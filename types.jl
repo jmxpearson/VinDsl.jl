@@ -127,7 +127,11 @@ macro exprnode(name, ex)
     nodelist = collect(get_all_syms(ex))
     qname = Expr(:quote, name)
     qex = Expr(:quote, ex)
-    out_expr = :($name = ExprNode($qname, $qex, Node[$(nodelist...)]))
+    out_expr = quote
+        $name = ExprNode($qname, $qex, Node[$(nodelist...)])
+
+        # E(d::ExprDist{Val{$qname}}) = @wrapvars nodelist $ex
+    end
     esc(out_expr)
 end
 
@@ -141,7 +145,7 @@ ndims(n::Node) = length(size(n))
 
 getindex(n::Node, inds...) = n.data[inds...]
 function getindex(n::ExprNode, inds...)
-    nd = Dict([(s => project(n, s, inds)) for (s, _) in n.nodedict])
+    nd = Dict([(s => project(s, n, inds)) for (s, _) in n.nodedict])
     ExprDist{Val{n.name}}(nd)
 end
 setindex!(n::Node, val, inds...) = setindex!(n.data, val, inds...)
@@ -261,10 +265,10 @@ Given a factor, a symbol naming a variable in that factor, and a tuple of
 index ranges for the factor as a whole, return the elements of node
 corresponding to the global range of indices.
 """
-function project(f, name::Symbol, rangetuple)
+function project(name::Symbol, f, rangetuple)
     node = node_from_name(f, name)
-    if length(project_inds(f, name, rangetuple)) > 0
-        out = node[project_inds(f, name, rangetuple)...]
+    if length(project_inds(name, f, rangetuple)) > 0
+        out = node[project_inds(name, f, rangetuple)...]
     else
         alltuple = [Colon() for _ in 1:ndims(node)]
         out = node[alltuple...]
@@ -272,7 +276,7 @@ function project(f, name::Symbol, rangetuple)
     out
 end
 
-function project_inds(f, name::Symbol, rangetuple)
+function project_inds(name::Symbol, f, rangetuple)
     node = node_from_name(f, name)
     factor_inds = f.inds.inds_in_factor[node.name]
     node_inds = f.inds.inds_in_node[node.name]
@@ -290,26 +294,27 @@ end
 node_from_name(f::Factor, name::Symbol) = getfield(f, name)
 node_from_name(f::ExprNode, name::Symbol) = f.nodedict[name]
 
-_wrapvars(vars, x, y) = x
+_wrapvars(vars, ex, wrapper, varargs...) = ex
 
-function _wrapvars(vars::Vector{Symbol}, ex::Expr, indtup)
+function _wrapvars(vars::Vector{Symbol}, ex::Expr, wrapper, varargs...)
     # copy AST
     new_ex = copy(ex)
 
     # recursively wrap variables
     for i in eachindex(ex.args)
-        new_ex.args[i] = _wrapvars(vars, ex.args[i], indtup)
+        new_ex.args[i] = _wrapvars(vars, ex.args[i], wrapper, varargs...)
     end
 
     # return new expression
     new_ex
 end
 
-function _wrapvars(vars::Vector{Symbol}, s::Symbol, indtup)
+function _wrapvars(vars::Vector{Symbol}, s::Symbol, wrapper, varargs...)
     # if s is a variable in the approved list of vars
     if s in vars
         sym = Expr(:quote, s)
-        :(project(f, $sym, $indtup))
+        # :(project(f, $sym, $indtup))
+        :($wrapper($sym, $(varargs...)))
     else
         s
     end
@@ -429,12 +434,10 @@ function get_all_syms(ex::Expr)
     symset
 end
 function _get_all_syms(ex::Expr, symset)
-    if ex.head == :call || ex.head == :quote
+    if ex.head in [:call, :quote]
         arglist = ex.args[2:end]
-    elseif ex.head == :ref || ex.head == :.
-        arglist = ex.args
     else
-        error("Some Expr.head type unhandled in _get_all_syms")
+        arglist = ex.args
     end
     for arg in arglist
         if isa(arg, Symbol)
@@ -450,8 +453,8 @@ Recursively wrap variables in an expression so that in the new expression,
 they are projected down to their index tuples in a factor with variables
 given in vars.
 """
-macro wrapvars(vars, ex, indtup)
-    esc(_wrapvars(vars, ex, indtup))
+macro wrapvars(vars, ex, wrapper, varargs...)
+    esc(_wrapvars(vars, ex, wrapper, varargs...))
 end
 
 """
@@ -464,7 +467,7 @@ types as arguments.
     quote
         v = 0
         @nloops $N i d -> 1:f.inds.maxvals[d] begin
-            v += @wrapvars $vars $val_expr (@ntuple $N i)
+            v += @wrapvars $vars $val_expr project f (@ntuple $N i)
         end
         v
     end
@@ -659,8 +662,8 @@ end
         end
 
         @nloops $N i d -> 1:f.inds.maxvals[d] begin
-            nats = @wrapvars $vars $nat_expr (@ntuple $N i)
-            nat_tup = project_inds(f, S, (@ntuple $N i))
+            nats = @wrapvars $vars $nat_expr project f (@ntuple $N i)
+            nat_tup = project_inds(S, f, (@ntuple $N i))
             η[nat_tup...] = add_nats(η[nat_tup...], nats)
         end
         η
