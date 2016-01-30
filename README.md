@@ -13,7 +13,7 @@ This is what we need to get the *Neuron's eye view* models running:
     - [ ] gamma priors with linked shape/rate
     - [ ] pieces of Poisson with binarized exponent
     - [ ] BFGS optimization piece
-        - right now, hard to do automatic differentiation until [this](https://github.com/JuliaStats/Distributions.jl/pull/430) is resolved
+        - right now, hard to do automatic differentiation until [this](https://github.com/JuliaStats/Distributions.jl/pull/430) is resolved ([more background](https://github.com/JuliaStats/Distributions.jl/issues/432))
 - Log-Normal Model
     - [ ] **Jacobian of λ ⟶ η**
     - [ ] ExprNode that's a linear combo of pieces
