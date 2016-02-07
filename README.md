@@ -10,6 +10,7 @@ This is what we need to get the *Neuron's eye view* models running:
 - Poisson Model:
     - [ ] factors where we take a product over some index, rather than a sum?
         - could have a function that makes an outer node in a factor inner, but this seems like a hack, and breaks the DSL facade
+        - could look for `:ref`-headed `Expr`s and get all symbols used as indices; make these inner
     - [ ] gamma priors with linked shape/rate
     - [ ] pieces of Poisson with binarized exponent
     - [ ] BFGS optimization piece
@@ -42,6 +43,7 @@ This is what we need to get the *Neuron's eye view* models running:
 - these statements are reparsed, replacing ~ with @factor and changing, e.g., Normal -> LogNormalFactor
 - factors are made, then model is built from them
 - `:=` defines ExprNode
+- if a node definition contains an expression instead of a symbol in one of its arguments, gensym a new ExprNode and pass this to constructor
 - implement Base.show for new types
 - better error reporting for mismatched indices, etc.
 - profile naturals using .+ vs + (probably bad) vs a custom in-place update for speed
