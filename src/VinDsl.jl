@@ -13,19 +13,16 @@ import Base: convert, call, zero, getindex, setindex!, ndims
 import Distributions: var, entropy, cov
 using Base.Cartesian
 
-zero_like(A::Array) = zeros(A)
-zero_like(x::Number) = zero(x)
-lB(x::Vector) = sum(lgamma(x)) - lgamma(sum(x))
-lB(x::Matrix) = sum(lgamma(x), 1) - lgamma(sum(x, 1))  # columnwise
-
-# define a convert method for Arrays to PDMats (positive definite matrices)
-# if the array is not posdef, this will throw an exception
-convert{T <: Number}(::Type{PDMat}, arr::Array{T}) = PDMat(arr)
-
-include("expfam.jl")
-# data types, including VBModel, Factor, and Node
-include("HMM.jl")
+include("utils.jl")
+include("distributions.jl")
 include("types.jl")
+include("structure.jl")
+include("expectations.jl")
+include("expressions.jl")
+include("dsl.jl")
+include("conjugacy.jl")
+include("factors.jl")
+include("factornaturals.jl")
 
 export VBModel,
     Factor, FactorInds, @factor, get_structure, project, project_inds, @wrapvars, value,
