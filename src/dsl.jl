@@ -30,6 +30,45 @@ macro ~(varex, distex)
     esc(out)
 end
 
+"""
+Define a node by an expression involving other nodes.
+"""
+macro exprnode(name, ex)
+    nodelist = collect(get_all_syms(ex))
+    qname = Expr(:quote, name)
+    qex = Expr(:quote, ex)
+    Eex = :(E($ex))
+    out_expr = quote
+        $name = ExprNode($qname, $qex, Node[$(nodelist...)])
+
+        # need to fully qualify E, else running @exprnode
+        # outside the module will not extend, but overwrite
+        VinDsl.E(d::ExprDist{Val{$qname}}) = @wrapvars $nodelist (@expandE $Eex) nodeextract d
+    end
+    esc(out_expr)
+end
+
+###################################################
+# Macro to define a factor
+###################################################
+macro deffactor(typename, vars, valexpr)
+    varlist = [:($v::Node) for v in vars.args]
+    varblock = Expr(:block, varlist...)
+    value_formula = Expr(:quote, valexpr)
+
+    ex = quote
+        immutable ($typename){N} <: Factor{N}
+            $varblock
+            inds::FactorInds
+            namemap::Dict{Symbol, Symbol}
+        end
+
+        value{N}(::Type{($typename){N}}) = $value_formula
+    end
+    esc(ex)
+end
+
+
 ################# macros/functions to generalize E(⋅) to expressions ##########
 macro expandE(ex)
     esc(_expandE(ex))

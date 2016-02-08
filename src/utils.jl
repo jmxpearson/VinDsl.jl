@@ -8,3 +8,7 @@ lB(x::Matrix) = sum(lgamma(x), 1) - lgamma(sum(x, 1))  # columnwise
 # define a convert method for Arrays to PDMats (positive definite matrices)
 # if the array is not posdef, this will throw an exception
 convert{T <: Number}(::Type{PDMat}, arr::Array{T}) = PDMat(arr)
+
+flatten(a::Number) = a
+flatten(a::Array) = reshape(a, prod(size(a)))
+flatten(a::AbstractPDMat) = flatten(full(a))

@@ -11,6 +11,22 @@ macro factor(ftype, nodes...)
     esc(ex)
 end
 
+"""
+Calculate the value of a factor. Relies on value methods taking factor
+types as arguments.
+"""
+@generated function value{N}(f::Factor{N})
+    vars = fieldnames(f)
+    val_expr = value(f)
+    quote
+        v = 0
+        @nloops $N i d -> 1:f.inds.maxvals[d] begin
+            v += @wrapvars $vars $val_expr project f (@ntuple $N i)
+        end
+        v
+    end
+end
+
 ###################################################
 # Functions to deal with factor structure
 ###################################################
@@ -108,25 +124,46 @@ function project_inds(name::Symbol, f, rangetuple)
     outtuple
 end
 
+###################################################
+# helper functions on nodes
+###################################################
 node_from_name(f::Factor, name::Symbol) = getfield(f, name)
 node_from_name(f::ExprNode, name::Symbol) = f.nodedict[name]
 
-###################################################
-# Macro to define a factor
-###################################################
-macro deffactor(typename, vars, valexpr)
-    varlist = [:($v::Node) for v in vars.args]
-    varblock = Expr(:block, varlist...)
-    value_formula = Expr(:quote, valexpr)
+nodeextract(key, node) = node.nodedict[key]
 
-    ex = quote
-        immutable ($typename){N} <: Factor{N}
-            $varblock
-            inds::FactorInds
-            namemap::Dict{Symbol, Symbol}
-        end
+size(n::Node) = size(n.data)
+size(n::ExprNode) = tuple(n.dims...)
+ndims(n::Node) = length(size(n))
 
-        value{N}(::Type{($typename){N}}) = $value_formula
+getindex(n::Node, inds...) = n.data[inds...]
+
+function getindex(n::ExprNode, inds...)
+    nd = Dict([(s => project(s, n, inds)) for (s, _) in n.nodedict])
+    ExprDist{Val{n.name}}(nd)
+end
+setindex!(n::Node, val, inds...) = setindex!(n.data, val, inds...)
+
+function get_par_sizes(d::Distribution)
+    [size(p) for p in params(d)]
+end
+
+function unroll_pars(n::RandomNode)
+    vcat(map(unroll_pars, n.data)...)
+end
+
+function unroll_pars(d::Distribution)
+    vcat([flatten(par) for par in params(d)]...)
+end
+
+function reroll_pars{D <: Distribution}(d::D, par_sizes, x)
+    ctr = 0
+    pars = []
+    for (i, dims) in enumerate(par_sizes)
+        sz = prod(dims)
+        p = sz == 1 ? x[ctr + 1] : reshape(x[ctr + 1: ctr + sz], dims)
+        push!(pars, p)
+        ctr += sz
     end
-    esc(ex)
+    D(pars...)
 end

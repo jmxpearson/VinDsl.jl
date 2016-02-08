@@ -13,16 +13,35 @@ import Base: convert, call, zero, getindex, setindex!, ndims
 import Distributions: var, entropy, cov
 using Base.Cartesian
 
+# general helper functions
 include("utils.jl")
+
+# new distributions and extended functionality
 include("distributions.jl")
+
+# type system
 include("types.jl")
+
+# operations and structure on types
 include("structure.jl")
-include("expectations.jl")
+
+# inference methods in models
+include("inference.jl")
+
+# tools for working with expressions
 include("expressions.jl")
+
+# random variable calculus
+include("expectations.jl")
+
+# language macros
 include("dsl.jl")
-include("conjugacy.jl")
+
+# predefined factors
 include("factors.jl")
-include("factornaturals.jl")
+
+# predefined conjugate updates
+include("conjugate_relations.jl")
 
 export VBModel,
     Factor, FactorInds, @factor, get_structure, project, project_inds, @wrapvars, value,
