@@ -1,5 +1,10 @@
 # VinDsl.jl: Fast and furious variational inference
 
+# TO DO:
+- [ ] Get factor macros correctly finding indices
+- [ ] make sure said indices can be passes as optional inner args to get_structure
+- [ ] Implement V so that mulitvariate normal works
+
 # Roadmap
 
 ## Short term:
