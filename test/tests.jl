@@ -1,6 +1,5 @@
-push!(LOAD_PATH, ".")  # needed if VB not a full module
 using FactCheck
-using VB
+using VinDsl
 using Distributions
 using PDMats
 import Base: ==
@@ -337,7 +336,7 @@ facts("Conjugate Normal model") do
     m = VBModel([μ, τ, μ0, τ0, a0, b0, y], [obs, μ_prior, τ_prior])
 
     @fact Set([n.name for n in m.nodes]) --> Set([:μ, :τ, :μ0, :τ0, :a0, :b0, :y])
-    @fact Set([typeof(f) for f in m.factors]) --> Set([VB.LogNormalFactor{2}, VB.LogNormalFactor{1}, VB.LogGammaFactor{1}])
+    @fact Set([typeof(f) for f in m.factors]) --> Set([VinDsl.LogNormalFactor{2}, VinDsl.LogNormalFactor{1}, VinDsl.LogGammaFactor{1}])
     @fact length(m.graph) --> 7
     @fact check_conjugate(τ, m) --> true
     @fact check_conjugate(μ, m) --> true

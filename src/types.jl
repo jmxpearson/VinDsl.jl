@@ -135,7 +135,7 @@ macro exprnode(name, ex)
 
         # need to fully qualify E, else running @exprnode
         # outside the module will not extend, but overwrite
-        VB.E(d::ExprDist{Val{$qname}}) = @wrapvars $nodelist (@expandE $Eex) nodeextract d
+        VinDsl.E(d::ExprDist{Val{$qname}}) = @wrapvars $nodelist (@expandE $Eex) nodeextract d
     end
     esc(out_expr)
 end

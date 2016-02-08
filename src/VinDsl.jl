@@ -3,7 +3,7 @@ A Variational Bayesian modeling approach. Models are defined by
 bipartite graphs in which factors defining terms in the variational
 objective are connected to nodes defining variables.
 """
-module VB
+module VinDsl
 
 using Distributions
 using PDMats
@@ -38,6 +38,7 @@ export VBModel,
     register, check_conjugate, update!, unroll_pars, update_pars!, reroll_pars,
     get_par_sizes, flatten,
     E, Elog, Eloggamma, Elogdet, V, H, C, value, naturals, @defnaturals,
-    get_node_size, get_name_mapping, HMM, MarkovChain, MarkovMatrix
+    get_node_size, get_name_mapping, HMM, MarkovChain, MarkovMatrix,
+    nstates, naturals, naturals_to_params, forwardbackward
 
 end  # module

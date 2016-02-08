@@ -1,9 +1,8 @@
-push!(LOAD_PATH, ".")  # needed if VB not a full module
 using FactCheck
 using Distributions
 
-include("HMM.jl")
-include("expfam.jl")
+# include("HMM.jl")
+# include("expfam.jl")
 
 srand(12345)
 
