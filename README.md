@@ -53,6 +53,7 @@ This is what we need to get the *Neuron's eye view* models running:
 - better error reporting for mismatched indices, etc.
 - profile naturals using .+ vs + (probably bad) vs a custom in-place update for speed
 - make sure project and project_inds return slices, not copies
+- use CartesianRange instead of generated functions to define value(f::Factor)
 - turn project and project_ind into macros that take x -> x[i_1, i_2] , etc. so as to avoid recurring project function call
 - implement caching of expected values, etc. in RandomNodes (node can still be immutable if cache is a dict that gets cleared whenever data is updated); functions like E, Elog, V, etc. would need to be decorated to search cache first, then calculate, then update cache
 - implement caching in ExprNodes of things like E(n)
