@@ -4,6 +4,7 @@
 - [ ] Get factor macros correctly finding indices
 - [ ] make sure said indices can be passes as optional inner args to get_structure
 - [ ] Implement V so that mulitvariate normal works
+- [ ] Implement parameterized distributions &agrave; la [here](https://github.com/JuliaStats/Distributions.jl/pull/430)
 
 # Roadmap
 
