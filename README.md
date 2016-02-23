@@ -1,9 +1,14 @@
 # VinDsl.jl: Fast and furious variational inference
 
 # TO DO:
+- [ ] Set up as proper package
 - [ ] Get factor macros correctly finding indices
-- [ ] make sure said indices can be passes as optional inner args to get_structure
-- [ ] Implement V so that mulitvariate normal works
+- [ ] make sure said indices can be passed as optional inner args to get_structure
+- [ ] Implement V so that multivariate normal works
+- [ ] Set up Travis
+- [ ] update README/docs see [this](http://maurow.bitbucket.org/notes/documenting-a-julia-package.html) blog post
+- [ ] release to contributors
+- [ ] state space models from Beal thesis
 - [ ] Implement parameterized distributions &agrave; la [here](https://github.com/JuliaStats/Distributions.jl/pull/430)
 
 # Roadmap
