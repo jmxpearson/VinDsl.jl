@@ -38,11 +38,13 @@ to integer indices.
 TODO: Example showing how inner and outer indices get parsed and what the
 inds_in_* mappings are.
 """
-function get_structure(nodes...)
+get_structure(nodes...) = get_structure(Symbol[], nodes...)
+
+function get_structure(forced_inners::Vector{Symbol}, nodes...)
     # first, get all indices that are not inner for any node
     # these will be the nodes that need explicit summing
     outers = union([n.outerinds for n in nodes]...)
-    inners = union([n.innerinds for n in nodes]...)
+    inners = union(forced_inners, [n.innerinds for n in nodes]...)
     allinds = setdiff(outers, intersect(outers, inners))
 
     # now, map these indices to consecutive integers

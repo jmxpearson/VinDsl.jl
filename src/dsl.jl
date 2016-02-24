@@ -34,7 +34,7 @@ end
 Define a node by an expression involving other nodes.
 """
 macro exprnode(name, ex)
-    nodelist = collect(get_all_syms(ex))
+    nodelist = collect(setdiff(get_all_syms(ex), get_all_inds(ex)))
     qname = Expr(:quote, name)
     qex = Expr(:quote, ex)
     Eex = :(E($ex))

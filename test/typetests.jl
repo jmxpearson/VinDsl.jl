@@ -120,6 +120,17 @@ facts("Expression nodes") do
         @fact size(z) --> (p,)
     end
 
+    context("RHS indices made internal") do
+        @exprnode z (x + 5y * a[k])
+        @fact isa(z, Node) --> true
+        @fact isa(z, ExprNode) --> true
+        @fact z.name --> :z
+        @fact z.outerinds --> [:i]
+        @fact z.innerinds --> [:k]
+        @fact z.dims --> [p]
+        @fact size(z) --> (p,)
+    end
+
     context("Projection") do
         u = ExprNode(:u, :(x + a), Node[x, a])
 

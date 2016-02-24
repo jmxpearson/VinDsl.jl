@@ -9,6 +9,22 @@ facts("E calculus") do
         @fact get_all_syms(:(2x + (y * x))) --> Set([:x, :y])
     end
 
+    context("Get indices in expression") do
+        @fact get_all_inds(5) --> Set{Symbol}([])
+        @fact get_all_inds(:x) --> Set{Symbol}([])
+        @fact get_all_inds(:(x[i] + 1)) --> Set([:i])
+        @fact get_all_inds(:(x[i] + y[j, k])) --> Set([:i, :j, :k])
+        @fact get_all_inds(:(log(x[i]) + y[j, k])) --> Set([:i, :j, :k])
+    end
+
+    context("Strip indexing from expression") do
+        @fact strip_inds(5) --> 5
+        @fact strip_inds(:x) --> :x
+        @fact strip_inds(:(x[i] + 1)) --> :(x + 1)
+        @fact strip_inds(:(x[i] + y[j, k])) --> :(x + y)
+        @fact strip_inds(:(log(x[i]) + y[j, k])) --> :(log(x) + y)
+    end
+
     context("Basic identities") do
         @fact _expandE(1) --> 1
         @fact _expandE(ones(5)) --> ones(5)

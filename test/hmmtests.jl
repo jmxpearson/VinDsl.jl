@@ -1,10 +1,7 @@
 using FactCheck
 using Distributions
 
-# include("HMM.jl")
-# include("expfam.jl")
-
-srand(12345)
+srand(12347)
 
 facts("Checking HMM distribution") do
     K = 4

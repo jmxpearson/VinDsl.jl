@@ -63,3 +63,48 @@ function _get_all_syms(ex::Expr, symset)
         end
     end
 end
+
+"""
+Recursively get a list of all index symbols used in a given expression.
+"""
+get_all_inds(x) = Set(Symbol[])
+get_all_inds(s::Symbol) = Set(Symbol[])
+function get_all_inds(ex::Expr)
+    indset = Set{Symbol}()
+    _get_all_inds(ex, indset)
+    indset
+end
+function _get_all_inds(ex::Expr, indset)
+    if ex.head == :ref
+        for arg in ex.args[2:end]
+            if isa(arg, Symbol)
+                push!(indset, arg)
+            end
+        end
+    else
+        for arg in ex.args
+            if isa(arg, Expr)
+                _get_all_inds(arg, indset)
+            end
+        end
+    end
+end
+
+"""
+Remove all indexing from an expression.
+"""
+strip_inds(x) = x
+strip_inds(s::Symbol) = s
+function strip_inds(ex::Expr)
+    _strip_inds(ex)
+end
+_strip_inds(x) = x
+function _strip_inds(ex::Expr)
+    if ex.head == :ref
+        out = ex.args[1]
+    else
+        out = copy(ex)
+        out.args = map(_strip_inds, ex.args)
+    end
+    out
+end

@@ -124,7 +124,9 @@ immutable ExprNode <: Node
 end
 
 function ExprNode(name::Symbol, ex::Expr, nodelist::Vector{Node})
-    fi = get_structure(nodelist...)
+    explicit_inners = collect(get_all_inds(ex))
+    stripped_ex = strip_inds(ex)
+    fi = get_structure(explicit_inners, nodelist...)
     nodedict = Dict([n.name => n for n in nodelist])
     inners = union([n.innerinds for n in nodelist]...)
     outers = union([n.outerinds for n in nodelist]...)
@@ -141,7 +143,7 @@ function ExprNode(name::Symbol, ex::Expr, nodelist::Vector{Node})
         splice!(dims, scalar_index)
     end
 
-    ExprNode(name, ex, nodedict, fi, innerinds, outerinds, dims)
+    ExprNode(name, stripped_ex, nodedict, fi, innerinds, outerinds, dims)
 end
 
 

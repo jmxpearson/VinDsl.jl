@@ -89,6 +89,18 @@ facts("Inferring Factor structure") do
         @fact Set(inds) --> Set([:j])
     end
 
+    context("Some inner indices forced") do
+        a[i, j] ~ Normal(rand(5, 5), rand(5, 5))
+        b[j, k] ~ Gamma(rand(5, 3), rand(5, 3))
+
+        nodes = Node[a, b]
+        fi = get_structure([:j], nodes...)
+
+        # order should not be important, so compare Sets
+        # index j should be missing
+        @fact Set(fi.indices) --> Set([:i, :k])
+    end
+
 end
 
 facts("Basic factor construction") do
