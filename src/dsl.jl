@@ -74,31 +74,34 @@ macro simplify(ex)
     esc(_simplify(ex))
 end
 
-# _simplify expands the expectations in an arbitrary expression
-# _wrap_and_simplify expands the expression inside an E(⋅) and wraps the result in E
+#=
+_simplify expands the expectations in an arbitrary expression
+_simplify_and_wrap expands the expression inside some expectation function
+(E, V, C, etc.) and then simplifies the expectation of that expression
+=#
 _simplify(x) = x  # all terminal expressions not otherwise specified
 _simplify(x::Symbol) = x
 function _simplify(ex::Expr)
     if ex.head == :call && ex.args[1] in [:E]  # E call
-        out_expr = _wrap_and_simplify(ex.args[2], ex.args[1])
+        out_expr = _simplify_and_wrap(ex.args[2], ex.args[1])
     else
         out_expr = ex
     end
     out_expr
 end
 
-_wrap_and_simplify(x, f) = x
-_wrap_and_simplify(x::Symbol, f::Symbol) = :($f($x))
-function _wrap_and_simplify(ex::Expr, f::Symbol)
+_simplify_and_wrap(x, f) = x
+_simplify_and_wrap(x::Symbol, f::Symbol) = :($f($x))
+function _simplify_and_wrap(ex::Expr, f::Symbol)
     if ex.head == :call && ex.args[1] in [:E]  # E call
-        out_expr = _wrap_and_simplify(ex.args[2], ex.args[1])
+        out_expr = _simplify_and_wrap(ex.args[2], ex.args[1])
 
     # linearity of E over +, -
     elseif ex.head == :call && ex.args[1] in [:+, :-, :.+, :.-]
         out_expr = ex
         rest = ex.args[2:end]
         for (i, arg) in enumerate(rest)
-            out_expr.args[i + 1] = _wrap_and_simplify(arg, f)
+            out_expr.args[i + 1] = _simplify_and_wrap(arg, f)
         end
 
     # linearity of E for *
@@ -117,7 +120,7 @@ function _wrap_and_simplify(ex::Expr, f::Symbol)
         out_expr = ex
         if !repeats
             for (i, arg) in enumerate(rest)
-                out_expr.args[i + 1] = _wrap_and_simplify(arg, f)
+                out_expr.args[i + 1] = _simplify_and_wrap(arg, f)
             end
         else
             # some variables are repeated, and we can't assume * is
@@ -148,7 +151,7 @@ function _wrap_and_simplify(ex::Expr, f::Symbol)
                 # expand everything up to first repeated symbol
                 if syminds[1] > 1
                     for arg in rest[1:(syminds[1] - 1)]
-                        push!(out_expr.args, _wrap_and_simplify(arg, f))
+                        push!(out_expr.args, _simplify_and_wrap(arg, f))
                     end
                 end
 
@@ -160,7 +163,7 @@ function _wrap_and_simplify(ex::Expr, f::Symbol)
                 # expand everything after last repeated symbol
                 if syminds[end] < length(rest)
                     for arg in rest[(syminds[end] + 1):end]
-                        push!(out_expr.args, _wrap_and_simplify(arg, f))
+                        push!(out_expr.args, _simplify_and_wrap(arg, f))
                     end
                 end
             end

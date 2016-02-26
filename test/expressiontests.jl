@@ -32,11 +32,11 @@ facts("E calculus") do
         @fact _simplify(:(E(x))) --> :(E(x))
         @fact _simplify(:(x + y)) --> :(x + y)
 
-        @fact _wrap_and_simplify(1, :E) --> 1
-        @fact _wrap_and_simplify(ones(5), :E) --> ones(5)
-        @fact _wrap_and_simplify(:x, :E) --> :(E(x))
-        @fact _wrap_and_simplify(:(E(x)), :E) --> :(E(x))
-        @fact _wrap_and_simplify(:(x + y), :E) --> :(E(x) + E(y))
+        @fact _simplify_and_wrap(1, :E) --> 1
+        @fact _simplify_and_wrap(ones(5), :E) --> ones(5)
+        @fact _simplify_and_wrap(:x, :E) --> :(E(x))
+        @fact _simplify_and_wrap(:(E(x)), :E) --> :(E(x))
+        @fact _simplify_and_wrap(:(x + y), :E) --> :(E(x) + E(y))
     end
 
     context("+ and -") do
