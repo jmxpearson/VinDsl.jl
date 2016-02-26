@@ -39,6 +39,9 @@ facts("E calculus") do
         @fact _simplify_compose(Val{:E}, Val{:E}, [:x, :y, :z]) --> :(E(x, y, z))
         @fact _simplify_compose(Val{:E}, Val{:+}, [:x, :y, :z]) --> :(E(x) + E(y) + E(z))
         @fact _simplify_compose(Val{:E}, Val{:*}, [:x, :y, :z]) --> :(E(x) * E(y) * E(z))
+
+        @fact _simplify_inside(Val{Symbol("'")}, [:x]) --> :(x')
+        @fact _simplify_inside(Val{Symbol("'")}, [:(E(x + y))]) --> :((E(x) + E(y))')
     end
 
     context("+ and -") do
@@ -47,6 +50,9 @@ facts("E calculus") do
         @fact _simplify(:(E(x - y))) --> :(E(x) - E(y))
         @fact _simplify(:(E(x - y + z))) --> :(E(x) - E(y) + E(z))
         @fact _simplify(:(E(x .+ y))) --> :(E(x) .+ E(y))
+        @fact _simplify(:(C(x + y))) --> :(C(x) + C(y))
+        @fact _simplify(:(V(x + y))) --> :(V(x) + V(y))
+        @fact _simplify(:(H(x + y))) --> :(H(x) + H(y))
     end
 
     context("*") do
@@ -58,6 +64,12 @@ facts("E calculus") do
         @fact _simplify(:(E(2 * x * y * x * z))) --> :(2 * E(x * y * x) * E(z))
         @fact _simplify(:(E((x * y) * x))) --> :(E((x * y) * x))
         @fact _simplify(:(E((x * y) * x * (w * z)))) --> :(E((x * y) * x) * (E(w) * E(z)))
+    end
+
+    context("^") do
+        @fact _simplify(:(E(x^2))) --> :(C(x) + E(x) * E(x)')
+        @fact _simplify(:(E((x + y)^2))) --> :((C(x) + C(y)) + (E(x) + E(y)) * (E(x) + E(y))') 
+
     end
 
     context("macro expansion") do

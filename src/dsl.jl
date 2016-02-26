@@ -74,6 +74,17 @@ macro simplify(ex)
     esc(_simplify(ex))
 end
 
+# define some useful typealiases: Expectation-like functions, linear
+# Expectation-like functions, and linear operators
+valify(s::Symbol) = :(Type{Val{$(Expr(:quote, s))}})
+
+linops = [:+, :-, :.+, :.*]
+eval(:(typealias LinearOpType Union{$([valify(op) for op in linops]...)}))
+
+elike_funs = [:E, :V, :C, :H, :Elog, :ElogB, :Eloggamma, :Elogdet]
+eval(:(typealias Elike Union{$([valify(fn) for fn in elike_funs]...)}))
+eval(:(typealias Elin Union{$([valify(fn) for fn in elike_funs[1:4]]...)}))
+
 #=
 _simplify expands the expectations in an arbitrary expression
 _simplify_and_wrap expands the expression inside some expectation function
@@ -84,10 +95,17 @@ _simplify(x::Symbol) = x
 function _simplify(ex::Expr)
     if ex.head == :call
         out_expr = _simplify_call(Val{ex.args[1]}, ex.args[2:end])
+    elseif ex.head in [Symbol("'")]
+        out_expr = _simplify_inside(Val{ex.head}, ex.args)
     else
         out_expr = ex
     end
     out_expr
+end
+
+function _simplify_inside{F}(::Type{Val{F}}, args)
+    newargs = [_simplify(a) for a in args]
+    Expr(F, newargs...)
 end
 
 function _simplify_call{F}(::Type{Val{F}}, args)
@@ -95,33 +113,34 @@ function _simplify_call{F}(::Type{Val{F}}, args)
         ex = args[1]
         out = _simplify_compose(Val{F}, Val{ex.args[1]}, ex.args[2:end])
     else
-        newargs = map(_simplify, args)
+        newargs = [_simplify(a) for a in args]
         out = :($F($(newargs...)))
     end
     out
 end
 
-_simplify_call(::Type{Val{:E}}, x) = x
-_simplify_call(::Type{Val{:E}}, s::Symbol) = :(E($s))
-function _simplify_call(::Type{Val{:E}}, ex::Expr)
+_simplify_call(opval::Elike, x) = :($(opval.parameters[1])($x))
+_simplify_call(opval::Elike, x::Vector) = :($(opval.parameters[1])($(x...)))
+_simplify_call(::Type{Val{:E}}, x::Number) = x
+function _simplify_call(Eopval::Elike, ex::Expr)
+    Eop = Eopval.parameters[1]
     if ex.head == :call
-        out = _simplify_compose(Val{:E}, Val{ex.args[1]}, ex.args[2:end])
+        out = _simplify_compose(Eopval, Val{ex.args[1]}, ex.args[2:end])
     else
-        out = :(E($ex))
+        out = :($Eop($ex))
     end
     out
 end
-function _simplify_call(::Type{Val{:E}}, args::Vector)
+function _simplify_call(Eopval::Elike, args::Vector)
+    Eop = Eopval.parameters[1]
     if length(args) == 1
-        out = _simplify_call(Val{:E}, args[1])
+        out = _simplify_call(Eopval, args[1])
     else
         newargs = map(_simplify, args)
-        out = :(E($(newargs...)))
+        out = :($Eop($(newargs...)))
     end
     out
 end
-
-typealias LinearOpType Union{Type{Val{:+}}, Type{Val{:-}}, Type{Val{:.+}}, Type{Val{:.-}}}
 
 function _simplify_compose{F, G}(::Type{Val{F}}, ::Type{Val{G}}, args)
     simplified_exprs = map(_simplify, args)
@@ -130,10 +149,20 @@ end
 function _simplify_compose(::Type{Val{:E}}, ::Type{Val{:E}}, args)
     _simplify_call(Val{:E}, args)
 end
-function _simplify_compose(::Type{Val{:E}}, opval::LinearOpType, args)
+function _simplify_compose(Eopval::Elin, opval::LinearOpType, args)
     op = opval.parameters[1]
-    newargs = [:(E($a)) for a in args]
+    Eop = Eopval.parameters[1]
+    newargs = [:($Eop($a)) for a in args]
     _simplify_call(opval, newargs)
+end
+function _simplify_compose(::Type{Val{:E}}, opval::Type{Val{:^}}, args)
+    x, p = args
+    if p == 2
+        out = _simplify(:(C($x) + E($x) * E($x)'))
+    else
+        out = :(E($x^$p))
+    end
+    out
 end
 
 function _simplify_compose(::Type{Val{:E}}, opval::Type{Val{:*}}, args)

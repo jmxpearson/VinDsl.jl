@@ -4,7 +4,10 @@
 - [x] Set up as proper package
 - [x] Get factor macros correctly finding indices
 - [x] make sure said indices can be passed as optional inner args to get_structure
-- [ ] Implement V so that multivariate normal works
+- [ ] Implement V/C so that multivariate normal works
+    - [x] +
+    - [x] ^
+    - [ ] *
 - [ ] Set up Travis
 - [ ] update README/docs see [this](http://maurow.bitbucket.org/notes/documenting-a-julia-package.html) blog post
 - [ ] release to contributors
