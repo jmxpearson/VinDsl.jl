@@ -43,7 +43,7 @@ macro exprnode(name, ex)
 
         # need to fully qualify E, else running @exprnode
         # outside the module will not extend, but overwrite
-        VinDsl.E(d::ExprDist{Val{$qname}}) = @wrapvars $nodelist (@expandE $Eex) nodeextract d
+        VinDsl.E(d::ExprDist{Val{$qname}}) = @wrapvars $nodelist (@simplify $Eex) nodeextract d
     end
     esc(out_expr)
 end
@@ -69,36 +69,36 @@ macro deffactor(typename, vars, valexpr)
 end
 
 
-################# macros/functions to generalize E(⋅) to expressions ##########
-macro expandE(ex)
-    esc(_expandE(ex))
+######### macros/functions to generalize expectations of expressions ##########
+macro simplify(ex)
+    esc(_simplify(ex))
 end
 
-# _expandE expands the expectations in an arbitrary expression
-# _expand_wrapE expands the expression inside an E(⋅) and wraps the result in E
-_expandE(x) = x  # all terminal expressions not otherwise specified
-_expandE(x::Symbol) = x
-function _expandE(ex::Expr)
+# _simplify expands the expectations in an arbitrary expression
+# _wrap_and_simplify expands the expression inside an E(⋅) and wraps the result in E
+_simplify(x) = x  # all terminal expressions not otherwise specified
+_simplify(x::Symbol) = x
+function _simplify(ex::Expr)
     if ex.head == :call && ex.args[1] in [:E]  # E call
-        out_expr = _expand_wrapE(ex.args[2], ex.args[1])
+        out_expr = _wrap_and_simplify(ex.args[2], ex.args[1])
     else
         out_expr = ex
     end
     out_expr
 end
 
-_expand_wrapE(x, f) = x
-_expand_wrapE(x::Symbol, f::Symbol) = :($f($x))
-function _expand_wrapE(ex::Expr, f::Symbol)
+_wrap_and_simplify(x, f) = x
+_wrap_and_simplify(x::Symbol, f::Symbol) = :($f($x))
+function _wrap_and_simplify(ex::Expr, f::Symbol)
     if ex.head == :call && ex.args[1] in [:E]  # E call
-        out_expr = _expand_wrapE(ex.args[2], ex.args[1])
+        out_expr = _wrap_and_simplify(ex.args[2], ex.args[1])
 
     # linearity of E over +, -
     elseif ex.head == :call && ex.args[1] in [:+, :-, :.+, :.-]
         out_expr = ex
         rest = ex.args[2:end]
         for (i, arg) in enumerate(rest)
-            out_expr.args[i + 1] = _expand_wrapE(arg, f)
+            out_expr.args[i + 1] = _wrap_and_simplify(arg, f)
         end
 
     # linearity of E for *
@@ -117,7 +117,7 @@ function _expand_wrapE(ex::Expr, f::Symbol)
         out_expr = ex
         if !repeats
             for (i, arg) in enumerate(rest)
-                out_expr.args[i + 1] = _expand_wrapE(arg, f)
+                out_expr.args[i + 1] = _wrap_and_simplify(arg, f)
             end
         else
             # some variables are repeated, and we can't assume * is
@@ -148,7 +148,7 @@ function _expand_wrapE(ex::Expr, f::Symbol)
                 # expand everything up to first repeated symbol
                 if syminds[1] > 1
                     for arg in rest[1:(syminds[1] - 1)]
-                        push!(out_expr.args, _expand_wrapE(arg, f))
+                        push!(out_expr.args, _wrap_and_simplify(arg, f))
                     end
                 end
 
@@ -160,7 +160,7 @@ function _expand_wrapE(ex::Expr, f::Symbol)
                 # expand everything after last repeated symbol
                 if syminds[end] < length(rest)
                     for arg in rest[(syminds[end] + 1):end]
-                        push!(out_expr.args, _expand_wrapE(arg, f))
+                        push!(out_expr.args, _wrap_and_simplify(arg, f))
                     end
                 end
             end
