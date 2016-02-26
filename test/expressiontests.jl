@@ -32,11 +32,13 @@ facts("E calculus") do
         @fact _simplify(:(E(x))) --> :(E(x))
         @fact _simplify(:(x + y)) --> :(x + y)
 
-        @fact _simplify_and_wrap(1, :E) --> 1
-        @fact _simplify_and_wrap(ones(5), :E) --> ones(5)
-        @fact _simplify_and_wrap(:x, :E) --> :(E(x))
-        @fact _simplify_and_wrap(:(E(x)), :E) --> :(E(x))
-        @fact _simplify_and_wrap(:(x + y), :E) --> :(E(x) + E(y))
+        @fact _simplify_call(Val{:f}, [:(x + y + z)]) --> :(f(x + y + z))
+        @fact _simplify_call(Val{:f}, [:(log(x))]) --> :(f(log(x)))
+        @fact _simplify_call(Val{:f}, [:(log(x)), :y, 5]) --> :(f(log(x), y, 5))
+        @fact _simplify_compose(Val{:f}, Val{:g}, [:(x + y + z)]) --> :(f(g(x + y + z)))
+        @fact _simplify_compose(Val{:E}, Val{:E}, [:x, :y, :z]) --> :(E(x, y, z))
+        @fact _simplify_compose(Val{:E}, Val{:+}, [:x, :y, :z]) --> :(E(x) + E(y) + E(z))
+        @fact _simplify_compose(Val{:E}, Val{:*}, [:x, :y, :z]) --> :(E(x) * E(y) * E(z))
     end
 
     context("+ and -") do
