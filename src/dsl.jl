@@ -86,6 +86,7 @@ eval(:(typealias Elike Union{$([valify(fn) for fn in elike_funs]...)}))
 eval(:(typealias Elin Union{$([valify(fn) for fn in elike_funs[1:4]]...)}))
 
 commuting_operators = [Symbol("'")]
+
 #=
 _simplify expands the expectations in an arbitrary expression
 _simplify_and_wrap expands the expression inside some expectation function
@@ -96,10 +97,8 @@ _simplify(x::Symbol) = x
 function _simplify(ex::Expr)
     if ex.head == :call
         out_expr = _simplify_call(Val{ex.args[1]}, ex.args[2:end])
-    elseif ex.head in commuting_operators
-        out_expr = _simplify_inside(Val{ex.head}, ex.args)
     else
-        out_expr = ex
+        out_expr = _simplify_inside(Val{ex.head}, ex.args)
     end
     out_expr
 end

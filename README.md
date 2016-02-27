@@ -7,7 +7,8 @@
 - [ ] Implement V/C so that multivariate normal works
     - [x] +
     - [x] ^
-    - [ ] *
+    - [x] *
+    - [ ] sum and product
 - [ ] Set up Travis
 - [ ] update README/docs see [this](http://maurow.bitbucket.org/notes/documenting-a-julia-package.html) blog post
 - [ ] release to contributors
