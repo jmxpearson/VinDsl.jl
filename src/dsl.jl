@@ -147,6 +147,7 @@ function _simplify_compose{F, G}(::Type{Val{F}}, ::Type{Val{G}}, args)
     simplified_exprs = map(_simplify, args)
     :($F($G($(simplified_exprs...))))
 end
+
 function _simplify_compose(::Type{Val{:E}}, ::Type{Val{:E}}, args)
     _simplify_call(Val{:E}, args)
 end
@@ -164,6 +165,9 @@ function _simplify_compose(::Type{Val{:E}}, opval::Type{Val{:^}}, args)
         out = :(E($x^$p))
     end
     out
+end
+function _simplify_compose(::Type{Val{:E}}, opval::Type{Val{:log}}, args)
+    _simplify_call(Val{:Elog}, args)
 end
 
 function _simplify_compose(::Type{Val{:E}}, opval::Type{Val{:*}}, args)
