@@ -119,9 +119,7 @@ function _simplify_call{F}(::Type{Val{F}}, args)
     out
 end
 
-_simplify_call(opval::Elike, x) = :($(opval.parameters[1])($x))
-_simplify_call(opval::Elike, x::Vector) = :($(opval.parameters[1])($(x...)))
-_simplify_call(::Type{Val{:E}}, x::Number) = x
+_simplify_call(Eopval::Elike, x) = :($(Eopval.parameters[1])($x))
 function _simplify_call(Eopval::Elike, ex::Expr)
     Eop = Eopval.parameters[1]
     if ex.head == :call
@@ -141,6 +139,7 @@ function _simplify_call(Eopval::Elike, args::Vector)
     end
     out
 end
+_simplify_call(::Type{Val{:E}}, x::Number) = x
 
 function _simplify_compose{F, G}(::Type{Val{F}}, ::Type{Val{G}}, args)
     simplified_exprs = map(_simplify, args)
