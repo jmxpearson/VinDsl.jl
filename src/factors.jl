@@ -13,13 +13,13 @@ end
 @deffactor LogMvNormalCanonFactor [x, μ, Λ] begin
     δ = E(x) - E(μ)
     EΛ = E(Λ)
-    -(1/2) * (trace(EΛ * (V(x) .+ V(μ) .+ δ * δ')) + length(x) * log(2π) - Elogdet(Λ))
+    -(1/2) * (trace(EΛ * (C(x) .+ C(μ) .+ δ * δ')) + length(x) * log(2π) - Elogdet(Λ))
 end
 
 @deffactor LogMvNormalDiagCanonFactor [x, μ, τ] begin
     δ = E(x) - E(μ)
     Eτ = E(τ)
-    -(1/2) * (sum(Eτ .* (V(x) .+ V(μ) .+ δ * δ')) + length(x) * log(2π) - Elogdet(τ))
+    -(1/2) * (sum(Eτ .* (V(x) .+ V(μ) .+ δ.^2 )) + length(x) * log(2π) - Elogdet(τ))
 end
 
 @deffactor LogDirichletFactor [x, α] begin
