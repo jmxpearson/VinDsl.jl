@@ -30,7 +30,6 @@ facts("E calculus") do
         @fact _simplify(ones(5)) --> ones(5)
         @fact _simplify(:x) --> :(x)
         @fact _simplify(:(E(x))) --> :(E(x))
-        @fact _simplify(:(E(x'))) --> :(E(x)')
         @fact _simplify(:(x + y)) --> :(x + y)
 
         @fact _simplify_call(Val{:f}, [:(x + y + z)]) --> :(f(x + y + z))
@@ -45,6 +44,14 @@ facts("E calculus") do
         @fact _simplify_inside(Val{Symbol("'")}, [:(E(x + y))]) --> :((E(x) + E(y))')
     end
 
+    context("Commutative operations") do
+        @fact _simplify(:(E(x'))) --> :(E(x)')
+        @fact _simplify(:(E(sum(x)))) --> :(sum(E(x)))
+        @fact _simplify(:(E(prod(x)))) --> :(prod(E(x)))
+        @fact _simplify(:(C(sum(x)))) --> :(sum(C(x)))
+        @fact _simplify(:(V(sum(x)))) --> :(sum(V(x)))
+    end
+
     context("+ and -") do
         @fact _simplify(:(E(x + y))) --> :(E(x) + E(y))
         @fact _simplify(:(E(x + y + z))) --> :(E(x) + E(y) + E(z))
@@ -53,7 +60,6 @@ facts("E calculus") do
         @fact _simplify(:(E(x .+ y))) --> :(E(x) .+ E(y))
         @fact _simplify(:(C(x + y))) --> _simplify(:(C(x) + C(y)))
         @fact _simplify(:(V(x + y))) --> _simplify(:(V(x) + V(y)))
-        @fact _simplify(:(H(x + y))) --> :(H(x) + H(y))
     end
 
     context("*") do
@@ -77,6 +83,14 @@ facts("E calculus") do
 
     context("Other special cases") do
         @fact _simplify(:(E(log(x)))) --> :(Elog(x))
+    end
+
+    context("Matrix linear combinations") do
+        @fact _simplify(:(E(B[k]))) --> :(E(B[k]))
+        @fact _simplify(:(E(B[k] * C[k]))) --> :(E(B[k]) * E(C[k]))
+        @fact _simplify(:(E(sum(B[k] * C[k])))) --> :(sum(E(B[k]) * E(C[k])))
+        @fact _simplify(:(E(A + sum(B[k] * C[k])))) --> :(E(A) + sum(E(B[k]) * E(C[k])))
+        @fact _simplify(:(E(prod(B[k] * C[k])))) --> :(prod(E(B[k]) * E(C[k])))
     end
 
     context("macro expansion") do

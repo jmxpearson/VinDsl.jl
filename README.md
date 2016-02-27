@@ -8,7 +8,8 @@
     - [x] +
     - [x] ^
     - [x] *
-    - [ ] sum and product
+    - [x] sum and product
+    - [ ] integration tests
 - [ ] Set up Travis
 - [ ] update README/docs see [this](http://maurow.bitbucket.org/notes/documenting-a-julia-package.html) blog post
 - [ ] release to contributors

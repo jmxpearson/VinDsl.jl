@@ -83,9 +83,11 @@ eval(:(typealias LinearOpType Union{$([valify(op) for op in linops]...)}))
 
 elike_funs = [:E, :V, :C, :H, :Elog, :ElogB, :Eloggamma, :Elogdet]
 eval(:(typealias Elike Union{$([valify(fn) for fn in elike_funs]...)}))
-eval(:(typealias Elin Union{$([valify(fn) for fn in elike_funs[1:4]]...)}))
+eval(:(typealias Elin Union{$([valify(fn) for fn in elike_funs[1:3]]...)}))
 
 commuting_operators = [Symbol("'")]
+commuting_fns = [:sum, :prod]
+eval(:(typealias Commuters Union{$([valify(fn) for fn in commuting_fns]...)}))
 
 #=
 _simplify expands the expectations in an arbitrary expression
@@ -156,6 +158,18 @@ function _simplify_compose(Eopval::Elin, opval::LinearOpType, args)
     Eop = Eopval.parameters[1]
     newargs = [:($Eop($a)) for a in args]
     _simplify_call(opval, newargs)
+end
+function _simplify_compose(Eopval::Elin, opval::Type{Val{:sum}}, args)
+    op = opval.parameters[1]
+    Eop = Eopval.parameters[1]
+    sub_ex = _simplify(:($Eop($(args...))))
+    _simplify(:($op($sub_ex)))
+end
+function _simplify_compose(Eopval::Type{Val{:E}}, opval::Type{Val{:prod}}, args)
+    op = opval.parameters[1]
+    Eop = Eopval.parameters[1]
+    sub_ex = _simplify(:($Eop($(args...))))
+    _simplify(:($op($sub_ex)))
 end
 function _simplify_compose(::Type{Val{:E}}, opval::Type{Val{:^}}, args)
     x, p = args
