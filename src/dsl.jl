@@ -251,10 +251,11 @@ end
 
 function _simplify_compose(::Type{Val{:C}}, opval::Type{Val{:*}}, args)
     op = opval.parameters[1]
-    primes = [:($a') for a in reverse(args)]
-    squares = Expr(:call, op, args..., primes...)
-    means = Expr(:call, op, [:(E($a)) for a in [args ; primes]]...)
-    _simplify(:(E($squares) - $means))
+    # assume we want the covariance of the tensor product of arguments
+    covs = [:(C($a) + E($a) * E($a')) for a in args]
+    squares = Expr(:call, op, covs...)
+    means = Expr(:call, op, [:(E($a) * E($a)') for a in args]...)
+    _simplify(:($squares - $means))
 end
 
 function _simplify_compose(::Type{Val{:V}}, opval::Type{Val{:*}}, args)
