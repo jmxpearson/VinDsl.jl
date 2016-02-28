@@ -11,6 +11,8 @@
     - [x] sum and product
     - [ ] integration tests
 - [ ] Set up Travis
+    - does FactCheck correctly fail?
+- [ ] basic `pmodel` and `qmodel` macros?
 - [ ] update README/docs see [this](http://maurow.bitbucket.org/notes/documenting-a-julia-package.html) blog post
 - [ ] release to contributors
 - [ ] state space models from Beal thesis

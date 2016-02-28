@@ -79,6 +79,7 @@ facts("E calculus") do
     context("^") do
         @fact _simplify(:(E(x^2))) --> :(V(x) + E(x)^2)
         @fact _simplify(:(E((x + y)^2))) --> :((V(x) + V(y)) + (E(x) + E(y))^2)
+        @fact _simplify(:((E(x + y)^2))) --> :((E(x) + E(y))^2)
     end
 
     context("Other special cases") do

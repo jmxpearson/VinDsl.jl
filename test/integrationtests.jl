@@ -156,6 +156,34 @@ facts("Basic Hidden Markov Model") do
     @fact map(size, naturals(A_prior, A)[1]) --> ((d, d), )
 end
 
+facts("Linear combination expression node") do
+    context("Univariate") do
+        dims = (20, 6)
+        μ[j] ~ Normal(zeros(dims[2]), ones(dims[2]))
+        ν[j] ~ Normal(zeros(dims[2]), ones(dims[2]))
+        τ[j] ~ Gamma(1.1 * ones(dims[2]), ones(dims[2]))
+        @exprnode w (μ + ν)
+
+        y[i, j] ~ Const(rand(dims))
+
+        # make factors
+        obs = @factor LogNormalFactor y w τ
+        @fact value(obs) --> isfinite
+    end
+
+    context("Multivariate") do
+        d = 5
+        μ[i] ~ MvNormalCanon(zeros(d), diagm(ones(d)))
+        ν[i] ~ MvNormalCanon(zeros(d), diagm(ones(d)))
+        Λ[i, i] ~ Wishart(float(d), diagm(ones(d)))
+        x[i, j] ~ MvNormalCanon([randn(d) for x in 1:20], [diagm(ones(d)) for x in 1:20])
+        @exprnode w (μ + ν)
+        f = @factor LogMvNormalCanonFactor x w Λ
+
+        @fact value(f) --> isfinite
+    end
+
+end
 
 facts("Updating via explicit optimization") do
     dims = (20, 6)
@@ -180,16 +208,4 @@ facts("Updating via explicit optimization") do
     context("L-BFGS") do
         update!(μ, m, Val{:l_bfgs})
     end
-end
-
-
-facts("Gamma-Poisson model") do
-    U = 10  # units
-    T = 50  # time points
-    K = 3  # HMM factors
-
-    A_0[k] ~ Const([[0.95 0.03 ; 0.05 0.97] for k in 1:K])
-    π0_0[k] ~ Const([[0.5 0.5] for k in 1:K])
-
-
 end

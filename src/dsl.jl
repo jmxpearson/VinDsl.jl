@@ -38,12 +38,18 @@ macro exprnode(name, ex)
     qname = Expr(:quote, name)
     qex = Expr(:quote, ex)
     Eex = :(E($ex))
+    Vex = :(V($ex))
+    Cex = :(C($ex))
+    Hex = :(H($ex))
     out_expr = quote
         $name = ExprNode($qname, $qex, Node[$(nodelist...)])
 
         # need to fully qualify E, else running @exprnode
         # outside the module will not extend, but overwrite
         VinDsl.E(d::ExprDist{Val{$qname}}) = @wrapvars $nodelist (@simplify $Eex) nodeextract d
+        VinDsl.V(d::ExprDist{Val{$qname}}) = @wrapvars $nodelist (@simplify $Vex) nodeextract d
+        VinDsl.C(d::ExprDist{Val{$qname}}) = @wrapvars $nodelist (@simplify $Cex) nodeextract d
+        VinDsl.H(d::ExprDist{Val{$qname}}) = @wrapvars $nodelist (@simplify $Hex) nodeextract d
     end
     esc(out_expr)
 end

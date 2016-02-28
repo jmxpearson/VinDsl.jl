@@ -155,6 +155,7 @@ facts("Expression nodes") do
         @exprnode u (x + 3a)
 
         @fact E(u[2, 3]) --> E(x[2]) + 3 * E(a[3])
+        @fact V(u[2, 3]) --> V(x[2]) + 9 * V(a[3])
     end
 
     context("Factors involving ExprNode") do
