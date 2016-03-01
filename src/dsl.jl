@@ -92,7 +92,7 @@ eval(:(typealias Elike Union{$([valify(fn) for fn in elike_funs]...)}))
 eval(:(typealias Elin Union{$([valify(fn) for fn in elike_funs[1:3]]...)}))
 
 commuting_operators = [Symbol("'")]
-commuting_fns = [:sum, :prod]
+commuting_fns = [:sum, :prod, :dot]
 eval(:(typealias Commuters Union{$([valify(fn) for fn in commuting_fns]...)}))
 
 #=
@@ -186,6 +186,12 @@ function _simplify_compose(::Type{Val{:E}}, opval::Type{Val{:^}}, args)
     end
     out
 end
+function _simplify_compose(::Type{Val{:E}}, opval::Type{Val{:dot}}, args)
+    x, y = args
+    Ex = _simplify(:(E($x)))
+    Ey = _simplify(:(E($y)))
+    :(dot($Ex, $Ey))
+end
 function _simplify_compose(::Type{Val{:E}}, opval::Type{Val{:log}}, args)
     _simplify_call(Val{:Elog}, args)
 end
@@ -249,13 +255,10 @@ function _simplify_compose(::Type{Val{:E}}, opval::Type{Val{:*}}, args)
     out
 end
 
-function _simplify_compose(::Type{Val{:C}}, opval::Type{Val{:*}}, args)
+function _simplify_compose(::Type{Val{:V}}, opval::Type{Val{:dot}}, args)
     op = opval.parameters[1]
-    # assume we want the covariance of the tensor product of arguments
-    covs = [:(C($a) + E($a) * E($a')) for a in args]
-    squares = Expr(:call, op, covs...)
-    means = Expr(:call, op, [:(E($a) * E($a)') for a in args]...)
-    _simplify(:($squares - $means))
+    x, y = args
+    _simplify(:(sum(C($x) .* C($y)) + E($y)' * C($x) * E($y) + E($x)' * C($y) * E($x)))
 end
 
 function _simplify_compose(::Type{Val{:V}}, opval::Type{Val{:*}}, args)

@@ -183,6 +183,18 @@ facts("Linear combination expression node") do
         @fact value(f) --> isfinite
     end
 
+    context("Matrix linear combination") do
+        d = 5
+        q = 7
+        μ[i, k] ~ MvNormalCanon([zeros(d) for _ in 1:q], [diagm(ones(d)) for _ in 1:q])
+        ν[k] ~ MvNormalCanon(zeros(q), diagm(ones(q)))
+        Λ[i, i] ~ Wishart(float(d), diagm(ones(d)))
+        x[i, j] ~ MvNormalCanon([randn(d) for _ in 1:20], [diagm(ones(d)) for _ in 1:20])
+        @exprnode w (dot(μ[k], ν[k]))
+        f = @factor LogMvNormalCanonFactor x w Λ
+
+        @fact value(f) --> isfinite
+    end
 end
 
 facts("Updating via explicit optimization") do

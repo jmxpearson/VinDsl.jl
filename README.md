@@ -9,7 +9,7 @@
     - [x] ^
     - [x] *
     - [x] sum and product
-    - [ ] integration tests
+    - [ ] ~~integration tests~~
 - [ ] Set up Travis
     - does FactCheck correctly fail?
 - [ ] basic `pmodel` and `qmodel` macros?

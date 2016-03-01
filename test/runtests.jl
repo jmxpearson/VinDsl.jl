@@ -38,3 +38,4 @@ for t in tests
     print_with_color(:green, "* $test_fn\n")
     include(test_fn)
 end
+FactCheck.exitstatus()

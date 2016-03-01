@@ -47,6 +47,7 @@ facts("E calculus") do
     context("Commutative operations") do
         @fact _simplify(:(E(x'))) --> :(E(x)')
         @fact _simplify(:(E(sum(x)))) --> :(sum(E(x)))
+        @fact _simplify(:(E(dot(x, y)))) --> :(dot(E(x), E(y)))
         @fact _simplify(:(E(prod(x)))) --> :(prod(E(x)))
         @fact _simplify(:(C(sum(x)))) --> :(sum(C(x)))
         @fact _simplify(:(V(sum(x)))) --> :(sum(V(x)))
@@ -73,6 +74,7 @@ facts("E calculus") do
         @fact _simplify(:(E((x * y) * x * (w * z)))) --> :(E((x * y) * x) * (E(w) * E(z)))
 
         @fact _simplify(:(C(x * y))) --> :((C(x) + E(x) * E(x)') * (C(y) + E(y) * E(y)') - (E(x) * E(x)') * (E(y) * E(y)'))
+        @fact _simplify(:(V(dot(x, y)))) --> :(sum(C(x) .* C(y)) + E(y)' * C(x) * E(y) + E(x)' * C(y) * E(x))
         @fact _simplify(:(V(x * y))) --> :((V(x) + E(x)^2) * (V(y) + E(y)^2) - E(x)^2 * E(y)^2)
     end
 
