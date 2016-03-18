@@ -1,22 +1,27 @@
 # VinDsl.jl: Fast and furious variational inference
 
-# TO DO:
-- [x] Set up as proper package
-- [x] Get factor macros correctly finding indices
-- [x] make sure said indices can be passed as optional inner args to get_structure
-- [ ] Implement V/C so that multivariate normal works
-    - [x] +
-    - [x] ^
-    - [x] *
-    - [x] sum and product
-    - [ ] ~~integration tests~~
-- [ ] Set up Travis
-    - does FactCheck correctly fail?
-- [ ] basic `pmodel` and `qmodel` macros?
-- [ ] update README/docs see [this](http://maurow.bitbucket.org/notes/documenting-a-julia-package.html) blog post
-- [ ] release to contributors
-- [ ] state space models from Beal thesis
-- [ ] Implement parameterized distributions &agrave; la [here](https://github.com/JuliaStats/Distributions.jl/pull/430)
+## **WARNING**:
+VinDsl.jl is a work in progress. Not quite alpha, but watch this space!
+
+## A Variational Inference Domain-Specific Language
+
+[Variational inference](https://en.wikipedia.org/wiki/Variational_Bayesian_methods) is an approximate method of statistical inference based on optimization. Unlike conventional Bayesian methods based on [Markov Chain Monte Carlo](https://en.wikipedia.org/wiki/Markov_chain_Monte_Carlo) (MCMC), it scales well to large and streaming datasets, making it a competitive technique for machine learning applications.  
+
+However, coding variational inference models by hand traditionally involves lots of tedious algebra and careful index accounting. New techniques like [black-box variational inference](http://www.cs.columbia.edu/~blei/papers/RanganathGerrishBlei2014.pdf) and [local expectation gradients](http://papers.nips.cc/paper/5678-local-expectation-gradients-for-black-box-variational-inference) allow much of this to be avoided, and implementations for some models are already possible in [Stan](http://mc-stan.org/), but no current framework allows these rapidly developing techniques to be mixed and matched by researchers.
+
+The goal of VinDsl.jl is to provide a set of data abstractions and macros that take the pain out of coding variational inference models. In particular, because the syntactic sugar for defining models is implemented in the same language as the underlying building blocks, the entire framework is easily extensible and hackable.
+
+### Things we have:
+- Intelligent index handling: you define the model structure, VinDsl handles the sum over indices automatically
+- A set of macros for coding conjugate models and updates
+- Limited support for automatic expectation-taking
+- built-in support for Hidden Markov Models
+
+### On our hit list:
+- Automatic differentiation ([it's coming](https://github.com/jmxpearson/DiffableDistributions.jl))
+- support for state-space models
+- variational deep networks
+- GPU support
 
 # Roadmap
 
