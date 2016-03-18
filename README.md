@@ -11,6 +11,10 @@ However, coding variational inference models by hand traditionally involves lots
 
 The goal of VinDsl.jl is to provide a set of data abstractions and macros that take the pain out of coding variational inference models. In particular, because the syntactic sugar for defining models is implemented in the same language as the underlying building blocks, the entire framework is easily extensible and hackable.
 
+### Further reading:
+
+See [this presentation](https://github.com/jmxpearson/VinDsl.jl/blob/master/doc/dukeML_feb_18_2016.ipynb)
+
 ### Things we have:
 - Intelligent index handling: you define the model structure, VinDsl handles the sum over indices automatically
 - A set of macros for coding conjugate models and updates
