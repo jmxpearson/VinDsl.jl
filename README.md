@@ -3,6 +3,8 @@
 ## **WARNING**:
 VinDsl.jl is a work in progress. Not quite alpha, but watch this space!
 
+For contributors: documentation of design, internals, and todos [here](http://vindsljl.readthedocs.org/en/latest/)
+
 ## A Variational Inference Domain-Specific Language
 
 [Variational inference](https://en.wikipedia.org/wiki/Variational_Bayesian_methods) is an approximate method of statistical inference based on optimization. Unlike conventional Bayesian methods based on [Markov Chain Monte Carlo](https://en.wikipedia.org/wiki/Markov_chain_Monte_Carlo) (MCMC), it scales well to large and streaming datasets, making it a competitive technique for machine learning applications.  
