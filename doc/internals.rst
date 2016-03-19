@@ -12,3 +12,30 @@ Mathematical framework
 While nothing in the Variational Inference framework require that the underlying model be a graphical model, many models are. So VinDsl aims to make it easy to construct such models by organizing many of its underlying data structures around `factor graphs <https://en.wikipedia.org/wiki/Factor_graph>`_, as suggested by `this talk <http://people.csail.mit.edu/dhlin/jubayes/julia_bayes_inference.pdf>`_.
 
 A factor graph can be thought of as a bipartite graph in which random variables form nodes and nodes connect to factors. In the case of variational inference, factors then represent terms in the optimization objective, also known as the evidence lower bound (ELBO).
+
+Basic types
+-----------
+
+Nodes
+-------
+
+Factors
+-------
+
+Factor Structure and Indices
+----------------------------
+
+Defining new factors
+--------------------
+
+Expression Nodes (experimental!)
+--------------------------------
+
+Models
+------
+
+Conjugate updates
+-----------------
+
+Automatic differentiation
+-------------------------
