@@ -1,5 +1,5 @@
 # VinDsl.jl: Fast and furious variational inference
-
+<img src="http://vindsljl.readthedocs.org/en/latest/?badge=latest">
 ## **WARNING**:
 VinDsl.jl is a work in progress. Not quite alpha, but watch this space!
 
