@@ -3,7 +3,7 @@
 ## **WARNING**:
 VinDsl.jl is a work in progress. Not quite alpha, but watch this space!
 
-For contributors: documentation of design, internals, and todos [here](http://vindsljl.readthedocs.org/en/latest/)
+For contributors: documentation of design, internals, and todos, see [here](http://vindsljl.readthedocs.org/en/latest/)
 
 ## A Variational Inference Domain-Specific Language
 

@@ -13,9 +13,6 @@ While nothing in the Variational Inference framework require that the underlying
 
 A factor graph can be thought of as a bipartite graph in which random variables form nodes and nodes connect to factors. In the case of variational inference, factors then represent terms in the optimization objective, also known as the evidence lower bound (ELBO).
 
-Basic types
------------
-
 Nodes
 -------
 
