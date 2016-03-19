@@ -1,4 +1,6 @@
 # VinDsl.jl: Fast and furious variational inference
+![](http://www.duke.edu/~jmp33/assets/vindsl.png)
+
 [![Documentation Status](https://readthedocs.org/projects/vindsljl/badge/?version=latest)](http://vindsljl.readthedocs.org/en/latest/?badge=latest)
 ## **WARNING**:
 VinDsl.jl is a work in progress. Not quite alpha, but watch this space!
