@@ -81,6 +81,65 @@ A few points to note about the value formula:
 
 Factor Structure and Indices
 ----------------------------
+VinDsl's handling of indices through ``FactorInds`` structure objects represents both one of its principal advantages (in facilitating model definitions) and one of its largest sources of complexity under the hood. This stems at least in part from the fact that not all distributions in the `Distributions.jl <https://github.com/JuliaStats/Distributions.jl>`_ package are univariate, and so there is an intrinsic difficulty in handling the distinct between indices *within* multivariate distributions and indices for *replicates* of distributions. In VinDsl, this is captured by the distinction between *inner* and *outer* indices:
+
+inner indices
+    Vector-valued distributions like the Dirichlet or multivariate Normal are treated as having a single inner index. Matrix-valued distributions like the Wishart are treated as having two inner indices. These indices **must** be listed first in the definitions of ``Node`` objects when constructed through the ``~`` macro.
+
+    Two notes:
+
+    - Inner indices are not strictly required, if they do not need to be matched across nodes. However, for clarity, they should be included.
+
+    - Somewhat counterintuitively, the covariance/precision matrices for multivariate Normal distributions should have only a *single* index. That is, you want to write
+
+        .. code-block:: julia
+
+            Λ[i, i] ~ Wishart(...)
+
+      so that *both* dimensions of the matrix are appropriately matched with other variables, as explained below.
+
+outer indices
+    Are everything else. These indices correspond to the dimensions of arrays containing the distribution variables. These indices are checked for consistent sizing across arguments to node definitions and across nodes within factors.
+
+**Factor Structure**:
+
+Put simply, the goal of determining the factor structure is to ensure that the ``value`` function defined on each factor correctly sums over all node indices to produce a scalar value. Specifically, this process specifies how to take the value formula from the definition of the factor and supply all the indices in a way that transforms it into legitimate Julia code to go inside a loop.
+
+For the case of scalar variables only, this is trivial: just use `Base.Cartesian <http://docs.julialang.org/en/release-0.4/devdocs/cartesian/>`_ to define a nested loop over the union of all indices and use the VinDsl functions ``project`` and ``project_inds`` to transform the nodes in their elemental distributions. But this process is significantly complicated in the case of inner indices, where we would like to be able to define, as VinDsl does, factors like
+
+.. code-block:: julia
+
+    @deffactor LogMvNormalCanonFactor [x, μ, Λ] begin
+        δ = E(x) - E(μ)
+        EΛ = E(Λ)
+        -(1/2) * (trace(EΛ * (C(x) .+ C(μ) .+ δ * δ')) + length(x) * log(2π) - Elogdet(Λ))
+    end
+
+which (implicitly) treats x and μ as vectors. But what if x is ``MvNormal`` and μ is ``Array{Normal, 1}``? This dilemma is solved by the inner constructor of the factor.
+
+When a factor is defined, the ``get_structure`` function is called. It takes the list of nodes provided for the factor and
+
+1. Figures out which indices are "fully outer." These indices are not inner for *any* node in the factor. In effect, these are all the indices we can trivially sum over.
+
+2. Figure out the maximum values of every index and make sure these are consistent across nodes. This defines the limits of the sums over indices in ``value``.
+
+3. Define a mapping (``inds_in_factor``) mapping the name of each node to the (integer) indices within the *factor's* total set that index it.
+
+4. Define another mapping (``inds_in_node``) mapping the name of each node to the (integer) indices within *that node's* total set that are involved in the factor.
+
+These last two mappings are then used by functions like ``project`` and ``project_inds`` to take a tuple of all fully outer indices and select from that the appropriate element of a node with fewer dimensions. That is, VinDsl takes a value formula like
+
+.. code-block:: julia
+
+    -(1/2) * (trace(EΛ * (C(x) .+ C(μ) .+ δ * δ')) + length(x) * log(2π) - Elogdet(Λ))
+
+wraps each variable in a call to ``project``, and evaluates the (scalar) result. The final trick needed to understand all this is that functions like ``E`` and ``C`` (the covariance) transform distributions into scalars, vectors, and matrices (for scalar, vector-, and matrix-valued random variables, respectively) but also map over ``Arrays``, so that nodes that are not fully indexed still end up as multidimensional arrays in a way that makes sense.
+
+More explicitly, in the model mentioned above with ``x[i]`` an ``MvNormal`` node and ``μ[i]`` an ``Array{Normal, 1}``, the end result is:
+
+- ``i`` is an outer index for ``μ`` but an inner index for ``x``. It is thus not fully outer and treated as an inner index for all the nodes in the factor.
+
+- As a result, ``i`` is not explicitly summed over. In the value formula, once nodes are projected down to their "atomic" distribution components, ``x`` is an ``MvNormal`` distribution so that ``E(x)`` is a vector and ``C(x)`` a matrix. However, ``μ`` is *not* a distribution, but a (vector) slice of an array of distributions. Yet the expectation functions also work elementwise on arrays so that ``E(μ)`` is a vector and ``C(μ)`` a diagonal matrix. As a result, the formula obviates the need to worry about all "trivial" (fully outer indices), requiring only that the programmer define the kernel of the computation.
 
 Expression Nodes
 --------------------------------
