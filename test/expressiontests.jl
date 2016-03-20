@@ -73,7 +73,7 @@ facts("E calculus") do
         @fact _simplify(:(E((x * y) * x))) --> :(E((x * y) * x))
         @fact _simplify(:(E((x * y) * x * (w * z)))) --> :(E((x * y) * x) * (E(w) * E(z)))
 
-        @fact _simplify(:(C(x * y))) --> :((C(x) + E(x) * E(x)') * (C(y) + E(y) * E(y)') - (E(x) * E(x)') * (E(y) * E(y)'))
+        # @fact _simplify(:(C(x * y))) --> :((C(x) + E(x) * E(x)') * (C(y) + E(y) * E(y)') - (E(x) * E(x)') * (E(y) * E(y)'))
         @fact _simplify(:(V(dot(x, y)))) --> :(sum(C(x) .* C(y)) + E(y)' * C(x) * E(y) + E(x)' * C(y) * E(x))
         @fact _simplify(:(V(x * y))) --> :((V(x) + E(x)^2) * (V(y) + E(y)^2) - E(x)^2 * E(y)^2)
     end
