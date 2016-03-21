@@ -193,6 +193,15 @@ but providing an entire computer algebra system is beyond the scope of the proje
 
 Models
 ------
+Models are currently pretty primitive. Models can be defined by
+
+.. code-block:: julia
+
+    m = VBModel(<list of nodes>, <list of factors>)
+
+The ``VBModel`` constructor then constructs a factor graph (essentially a dictionary linking nodes to the factors that contain them) and performs some simple checks. Currently, the check is whether any given node is conjugate to all its factors, so that `conjugate updates`_ are possible. Each node in the graph is then supplied with an ``update_strategy``, which determines what algorithm is used to update the parameters of the node's posterior. The ``update!`` function then dispatches on the value of this strategy.
+
+Update strategies are loaded in ``inference.jl``, which loads files from the ``inference`` folder.
 
 Conjugate updates
 -----------------
