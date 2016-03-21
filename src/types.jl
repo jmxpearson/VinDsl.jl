@@ -148,7 +148,7 @@ end
 
 
 ###################################################
-# ExprDist <: Node
+# ExprDist <: Distribution
 ###################################################
 immutable ExprDist{V <: Val} <: Distribution
     nodedict::Dict{Symbol, Distribution}
