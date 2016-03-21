@@ -145,6 +145,52 @@ Expression Nodes
 --------------------------------
 **EXPERIMENTAL!**
 
+In many models, it is convenient to define new random variables as deterministic functions of other nodes in the model. For instance, we might want to define a new variable x as a linear transformation of variables z: :math:`x = a + B \cdot z`. In the language of factor graphs, we could think of this as a "Lagrange multiplier factor" that ties the variables x and z, enforcing the constraint, but VinDsl uses a hybrid "expression node" to define x in terms of z:
+
+.. code-block:: julia
+
+    x := a + B * z
+
+Note that this doesn't currently work. Instead, one must use the ``@exprnode`` macro:
+
+.. code-block:: julia
+
+    @exprnode x (a + B * z)
+
+which translates (in part) to the constructor call:
+
+.. code-block:: julia
+
+    x = ExprNode(:x, :(a + B * z), Node[a, B, z])
+
+Given this code, VinDsl constructs an ``ExprNode``, which calls ``get_structure`` (just like a factor) to determine the appropriate relationships among the indices for the constituent nodes.
+
+What's more important (and trickier) is how ``@exprnode`` uses the supplied expression to calculate various expectations (``E``, ``V``, etc.) of the node x. Automating this calculation involves several steps:
+
+1. For every expression node, a new ``ExprDist{V <: Val} <: Distribution`` is defined.
+
+2. The macro defines node-specific versions of ``E``, ``V``, etc. that dispatch on this distribution type. These versions call several other macros that:
+
+    - Wrap the expression defining the node in the appropriate expectation call (e.g., ``E``).
+
+    - Wrap each symbol in a call to ``nodeextract``, which translates the symbol to the node variable.
+
+    - Call ``@simplify`` on the result and use the resulting formula expression to define the function.
+
+Of these steps, the most difficult is the definition of ``@simplify``. The macro does know some things. For instance[1]_:
+
+.. code-block:: julia
+
+    @simplify E(x.data[1] + y.data[1])
+    E(x.data[1]) + E(y.data[1])
+
+    @simplify E(x.data[1] * y.data[1] + 5)
+    E(x.data[1]) * E(y.data[1]) + 5
+
+but providing an entire computer algebra system is beyond the scope of the project, and it's unclear at present how much functionality will be supported. The details are in ``dsl.jl`` and involve the ``_simplify*`` functions that manipulate the AST. As always the tests (``expressiontests.jl``) are currently the best documentation for what works and what doesn't.
+
+.. [1] Note that ``@simplify`` assumes that nodes are independent, so that expectations of products are products of expectations.
+
 Models
 ------
 
