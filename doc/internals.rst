@@ -205,6 +205,21 @@ Update strategies are loaded in ``inference.jl``, which loads files from the ``i
 
 Conjugate updates
 -----------------
+VinDsl does not currently have the power to determine conjugacy on its own. Rather, it relies on checking against possible conjugate updates provided with the ``@defnaturals`` macro:
+
+.. code-block:: julia
+
+    @defnaturals LogNormalFactor μ Normal begin
+        Ex, Eτ = E(x), E(τ)
+        (Ex * Eτ, -Eτ/2)
+    end
+
+This macro takes as its arguments a factor, a node within that factor (the name given to the variable in that factor's value formula, not the node), a distribution conjugate to that variable in that factor, and a formula specifying how to calculate the natural parameter updates for the given distribution from the factor. Much like the ``@deffactor`` macro, ``@defnaturals`` requires only that the formula defining the natural parameters be defined for a kernel of the calculation. VinDsl handles all the appropriate index summations through the ``naturals`` function in ``conjugacy.jl``. In addition, this machinery relies on definitions of natural parameters provided in the ``distributions`` folder for canonical exponential family forms. Conventions are as `here <https://en.wikipedia.org/wiki/Exponential_family#Table_of_distributions>`_.
+
+When the ``update!`` function is called on a node that is conjugate to all factors connected with it, VinDsl calls ``naturals`` on each of these factors, which in return provide tuples of natural parameter "messages". These messages are then summed elementwise and used to update the node.
 
 Automatic differentiation
 -------------------------
+Coming soon!
+
+Automatic forward-mode differentiation will be handled through `ForwardDiff.jl <https://github.com/JuliaDiff/ForwardDiff.jl>`_. When the elbo is a sum over ``value(f)`` for all factors ``f``, the idea will be to create a wrapper function that takes as its lone argument an "unrolled" vector ``x``, "re-rolls" it into parameters for each of the nodes, and sums the value of each factor in the model. This ELBO function will then be differentiated as a function of ``x`` and the corresponding derivatives "re-rolled" and used to update the individual node parameters. 
