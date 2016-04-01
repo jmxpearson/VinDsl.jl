@@ -5,7 +5,7 @@
 
 VinDsl.jl: Fast and Furious Variational Inference
 =================================================
-VinDsl.jl is a Julia package that aims to provide a fast, flexible, thoroughly hackable domain-specific language (DSL) for variational Bayesian inference.
+`VinDsl.jl <https://github.com/jmxpearson/VinDsl.jl>`_ is a Julia package that aims to provide a fast, flexible, thoroughly hackable domain-specific language (DSL) for variational Bayesian inference.
 
 In particular VinDsl features:
 

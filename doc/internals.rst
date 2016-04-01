@@ -167,7 +167,7 @@ Given this code, VinDsl constructs an ``ExprNode``, which calls ``get_structure`
 
 What's more important (and trickier) is how ``@exprnode`` uses the supplied expression to calculate various expectations (``E``, ``V``, etc.) of the node x. Automating this calculation involves several steps:
 
-1. For every expression node, a new ``ExprDist{V <: Val} <: Distribution`` is defined.
+1. For every expression node, a new ``ExprDist{V <: Val} <: Distribution`` is defined [#]_.
 
 2. The macro defines node-specific versions of ``E``, ``V``, etc. that dispatch on this distribution type. These versions call several other macros that:
 
@@ -177,7 +177,7 @@ What's more important (and trickier) is how ``@exprnode`` uses the supplied expr
 
     - Call ``@simplify`` on the result and use the resulting formula expression to define the function.
 
-Of these steps, the most difficult is the definition of ``@simplify``. The macro does know some things. For instance[1]_:
+Of these steps, the most difficult is the definition of ``@simplify``. The macro does know some things. For instance [#]_:
 
 .. code-block:: julia
 
@@ -189,7 +189,8 @@ Of these steps, the most difficult is the definition of ``@simplify``. The macro
 
 but providing an entire computer algebra system is beyond the scope of the project, and it's unclear at present how much functionality will be supported. The details are in ``dsl.jl`` and involve the ``_simplify*`` functions that manipulate the AST. As always the tests (``expressiontests.jl``) are currently the best documentation for what works and what doesn't.
 
-.. [1] Note that ``@simplify`` assumes that nodes are independent, so that expectations of products are products of expectations.
+.. [#] This definition may be disastrous for performance, though, and is subject to change. Cf. `here <https://github.com/jmxpearson/VinDsl.jl/issues/3>`_.
+.. [#] Note that ``@simplify`` assumes that nodes are independent, so that expectations of products are products of expectations.
 
 Models
 ------
@@ -222,4 +223,4 @@ Automatic differentiation
 -------------------------
 Coming soon!
 
-Automatic forward-mode differentiation will be handled through `ForwardDiff.jl <https://github.com/JuliaDiff/ForwardDiff.jl>`_. When the elbo is a sum over ``value(f)`` for all factors ``f``, the idea will be to create a wrapper function that takes as its lone argument an "unrolled" vector ``x``, "re-rolls" it into parameters for each of the nodes, and sums the value of each factor in the model. This ELBO function will then be differentiated as a function of ``x`` and the corresponding derivatives "re-rolled" and used to update the individual node parameters. 
+Automatic forward-mode differentiation will be handled through `ForwardDiff.jl <https://github.com/JuliaDiff/ForwardDiff.jl>`_. When the elbo is a sum over ``value(f)`` for all factors ``f``, the idea will be to create a wrapper function that takes as its lone argument an "unrolled" vector ``x``, "re-rolls" it into parameters for each of the nodes, and sums the value of each factor in the model. This ELBO function will then be differentiated as a function of ``x`` and the corresponding derivatives "re-rolled" and used to update the individual node parameters.
