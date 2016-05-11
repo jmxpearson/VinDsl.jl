@@ -82,7 +82,7 @@ function naturals(d::HMM)
     (log(d.ψ), log(d.π0), log(d.A))
 end
 
-function naturals_to_params{N <: Number}(η, ::Type{HMM{N}})
+function naturals_to_params{D <: HMM}(η, ::Type{D})
     map(exp, η)
 end
 
@@ -166,7 +166,7 @@ function naturals(d::MarkovChain)
     (log(d.π0), log(d.A))
 end
 
-function naturals_to_params{N <: Number, T}(η, ::Type{MarkovChain{N, T}})
+function naturals_to_params{D <: MarkovChain}(η, ::Type{D})
     map(exp, η)
 end
 ################### Markov Matrix distribution #####################
@@ -260,7 +260,7 @@ function params(d::MarkovMatrix)
     (nats,)
 end
 
-function naturals_to_params(η, ::Type{MarkovMatrix})
+function naturals_to_params{D <: MarkovMatrix}(η, ::Type{D})
     nats = η[1]
     p, _ = size(nats)
     pars = similar(nats)
