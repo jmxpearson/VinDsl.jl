@@ -10,7 +10,7 @@ function naturals(d::Normal)
     (μ/σ^2, -1/(2σ^2))
 end
 
-function naturals_to_params(η, ::Type{Normal})
+function naturals_to_params{D <: Normal}(η, ::Type{D})
     σ = sqrt(-1/(2η[2]))
     (η[1] * σ, σ)
 end
@@ -21,7 +21,7 @@ function naturals(d::Gamma)
     (a, 1/θ)
 end
 
-function naturals_to_params(η, ::Type{Gamma})
+function naturals_to_params{D <: Gamma}(η, ::Type{D})
     (η[1] + 1, -η[2])
 end
 
@@ -35,7 +35,7 @@ function naturals(d::Dirichlet)
     (d.alpha - 1,)
 end
 
-function naturals_to_params(η, ::Type{Dirichlet})
+function naturals_to_params{D <: Dirichlet}(η, ::Type{D})
     (η + 1,)
 end
 
@@ -52,7 +52,7 @@ function naturals(d::MvNormalCanon)
     (d.h, -d.J.mat/2)
 end
 
-function naturals_to_params(η, ::Type{MvNormalCanon})
+function naturals_to_params{D <: MvNormalCanon}(η, ::Type{D})
     # since the parameterization is already exponential family,
     # no need to convert
     (η[1], -2η[2])
@@ -63,7 +63,7 @@ function naturals(d::Wishart)
     (-inv(d.S).mat/2, (d.df - size(d)[1] - 1)/2)
 end
 
-function naturals_to_params(η, ::Type{Wishart})
+function naturals_to_params{D <: Wishart}(η, ::Type{D})
     (-inv(η[1])/2, 2η[2] + size(eta[1], 1) + 1)
 end
 
