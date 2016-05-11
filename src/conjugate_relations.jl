@@ -35,16 +35,16 @@ nats_mvn{T <: Number}(μ::Vector{T}, Λ::Matrix{T}, x::Normal) =
     (sum(Λ * μ), -sum(Λ)/2)
 nats_mvn{T <: Number}(μ::Number, Λ::Matrix{T}, x::Normal) =
     (μ * sum(Λ), -sum(Λ)/2)
-nats_mvn{T <: Number, S <: Normal}(μ::Vector{T}, τ::Vector{T}, x::Vector{S}) =
+nats_mvn{T <: Number, D <: Normal}(μ::Vector{T}, τ::Vector{T}, x::Vector{D}) =
     [nats_mvn(m, t) for (m, t) in zip(μ, τ)]
-nats_mvn{T <: Number, S <: Normal}(μ::Vector{T}, τ::Number, x::Vector{S}) =
+nats_mvn{T <: Number, D <: Normal}(μ::Vector{T}, τ::Number, x::Vector{D}) =
     [nats_mvn(m, τ) for m in μ]
-nats_mvn{T <: Number, S <: Normal}(μ::Number, τ::Vector{T}, x::Vector{S}) =
+nats_mvn{T <: Number, D <: Normal}(μ::Number, τ::Vector{T}, x::Vector{D}) =
     [nats_mvn(μ, t) for t in τ]
 nats_mvn(μ, τ, x::Normal) =
     reduce(add_nats, nats_mvn(μ, τ, [x]))
 nats_mvn(μ::Number, τ::Number) = (μ * τ, -τ/2)
-nats_mvn{T <: Gamma}(v::Vector, x::Vector{T}) =
+nats_mvn{D <: Gamma}(v::Vector, x::Vector{D}) =
     Tuple{Float64, Float64}[(1/2, vv/2) for vv in v]
 nats_mvn(v::Vector, x::Gamma) =
     reduce(add_nats, nats_mvn(v, [x]))
@@ -91,12 +91,6 @@ end
     δ = E(x) - E(μ)
     v = V(x) + V(μ) + δ.^2
     nats_mvn(v, τ)
-end
-
-@defnaturals LogWishartFactor Λ Wishart begin
-    EinvV = Einv(V)
-    p = size(EinvV, 1)
-    (-EinvV/2, (E(ν) - p - 1)/2)
 end
 
 @defnaturals LogMarkovChainFactor π0 Dirichlet begin
