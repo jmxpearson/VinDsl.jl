@@ -1,5 +1,5 @@
 using Distributions
-import Base.size, Base.length, Base.rand, Base.mean, Distributions.logpdf, Distributions.entropy, Distributions.params
+import Base.size, Base.length, Base.rand, Base.mean, Base.convert, Distributions.logpdf, Distributions.entropy, Distributions.params
 
 ################### Hidden Markov Model distribution #####################
 immutable HMM{N <: Number} <: DiscreteMatrixDistribution
@@ -87,10 +87,10 @@ function naturals_to_params{D <: HMM}(η, ::Type{D})
 end
 
 ################### Markov Chain distribution #####################
-immutable MarkovChain{N <: Number, T} <: DiscreteMatrixDistribution
+immutable MarkovChain{S <: Real, T} <: DiscreteMatrixDistribution
     # convention: Matrices are state x time
-    π0::Vector{N}  # vector of initial state probabilities
-    A::Matrix{N}  # transition matrix (columns sum to 1)
+    π0::Vector{S}  # vector of initial state probabilities
+    A::Matrix{S}  # transition matrix (columns sum to 1)
 
     function MarkovChain(π0, A)
         isa(T, Int) || error("Chain length must be an integer")
@@ -104,10 +104,18 @@ immutable MarkovChain{N <: Number, T} <: DiscreteMatrixDistribution
     end
 end
 
-MarkovChain{N <: Number}(π0::Vector{N}, A::Matrix{N}, T) = MarkovChain{N, T}(π0, A)
+MarkovChain{S <: Real}(π0::Vector{S}, A::Matrix{S}, T) = MarkovChain{S, T}(π0, A)
+function MarkovChain{S <: Real, V <: Real}(π0::Vector{S}, A::Matrix{V}, T)
+    W = promote_type(eltype(π0), eltype(A))
+    MarkovChain(convert(Vector{W}, π0), convert(Matrix{W}, A), T)
+end
+
+#### Conversions
+convert{S <: Real, V <: Real, T}(::Type{MarkovChain{S, T}}, π0::Vector{V}, A::Matrix{V}) = MarkovChain(convert(Vector{S}, π0), convert(Matrix{S}, A), T)
+convert{S <: Real, V <: Real, T}(::Type{MarkovChain{S, T}}, d::MarkovChain{V, T}) = MarkovChain(convert(Vector{S}, d.π0), convert(Matrix{S}, d.A), T)
 
 nstates(d::MarkovChain) = length(d.π0)
-size{N <: Number, T}(d::MarkovChain{N, T}) = (nstates(d), T)
+size{S <: Real, T}(d::MarkovChain{S, T}) = (nstates(d), T)
 length(d::MarkovChain) = prod(size(d))
 
 function mean(d::MarkovChain)
@@ -136,7 +144,7 @@ function rand(d::MarkovChain)
     z
 end
 
-function logpdf{N <: Number}(d::MarkovChain{N}, x::Matrix{N})
+function logpdf{S <: Real}(d::MarkovChain{S}, x::Matrix{S})
     size(x) == size(d) || error("Input matrix x has wrong size.")
 
     T = size(x, 2)
@@ -170,8 +178,8 @@ function naturals_to_params{D <: MarkovChain}(η, ::Type{D})
     map(exp, η)
 end
 ################### Markov Matrix distribution #####################
-immutable MarkovMatrix <: ContinuousMatrixDistribution
-    cols::Vector{Dirichlet}  # each column is a Dirichlet distribution
+immutable MarkovMatrix{T <: Real} <: ContinuousMatrixDistribution
+    cols::Vector{Dirichlet{T}}  # each column is a Dirichlet distribution
 
     function MarkovMatrix(cols)
         length(cols) == length(cols[1]) || error("Input is not a square matrix.")
@@ -180,19 +188,27 @@ immutable MarkovMatrix <: ContinuousMatrixDistribution
     end
 end
 
-function MarkovMatrix{N <: Number}(A::Matrix{N})
+MarkovMatrix{T <: Real}(cols::Vector{Dirichlet{T}}) = MarkovMatrix{T}(cols)
+
+function MarkovMatrix{T <: Real}(A::Matrix{T})
     r, c = size(A)
     r == c || error("Input matrix must be square.")
 
     MarkovMatrix([Dirichlet(A[:, i]) for i in 1:c])
 end
 
-function MarkovMatrix{N <: Number}(cols::Vector{Vector{N}})
+function MarkovMatrix{T <: Real}(cols::Vector{Vector{T}})
     p = length(cols)
     all(x -> length(x) == p, cols) || error("Probability vector lengths do not match.")
 
     MarkovMatrix([Dirichlet(c) for c in cols])
 end
+
+#### Conversions
+convert{T <: Real, S <: Real}(::Type{MarkovMatrix{T}}, cols::Vector{Dirichlet{S}}) = MarkovMatrix([convert(Dirichlet{T}, c) for c in cols])
+convert{T <: Real, S <: Real}(::Type{MarkovMatrix{T}}, A::Matrix{S}) = MarkovMatrix(convert(Matrix{T}, A))
+convert{T <: Real, S <: Real}(::Type{MarkovMatrix{T}}, cols::Vector{Vector{S}}) = MarkovMatrix([convert(Vector{T}, c) for c in cols])
+convert{T <: Real, S <: Real}(::Type{MarkovMatrix{T}}, d::MarkovMatrix{S}) = MarkovMatrix([convert(Dirichlet{T}, c) for c in d.cols])
 
 nstates(d::MarkovMatrix) = length(d.cols)
 size(d::MarkovMatrix) = (length(d.cols), length(d.cols))
@@ -225,7 +241,7 @@ function rand(d::MarkovMatrix)
     x
 end
 
-function logpdf{N <: Number}(d::MarkovMatrix, x::Matrix{N})
+function logpdf{T <: Real}(d::MarkovMatrix, x::Matrix{T})
     size(x) == size(d) || error("Input matrix x has wrong size.")
     s = 0.
     for i in 1:nstates(d)
