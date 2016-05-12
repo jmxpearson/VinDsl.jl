@@ -16,9 +16,9 @@ immutable HMM{N <: Number} <: DiscreteMatrixDistribution
 
         M, T = size(ψ)
 
-        sum(π0) ≈ 1 || error("Entries of π0 do not sum to 1.")
+        sum(π0) ≈ 1 || warn("Entries of π0 do not sum to 1.")
 
-        sum(A, 1) ≈ ones(1, M) || error("Columns of A do not sum to 1.")
+        sum(A, 1) ≈ ones(1, M) || warn("Columns of A do not sum to 1.")
 
         ξ, logZ, Ξ = forwardbackward(π0, A, ψ)
 
@@ -96,9 +96,9 @@ immutable MarkovChain{N <: Number, T} <: DiscreteMatrixDistribution
         isa(T, Int) || error("Chain length must be an integer")
         length(π0) == size(A, 1) == size(A, 2) || error("A and π0 have incompatible shapes")
 
-        sum(π0) ≈ 1 || error("Entries of π0 do not sum to 1.")
+        sum(π0) ≈ 1 || warn("Entries of π0 do not sum to 1.")
 
-        sum(A, 1) ≈ ones(1, size(A, 1)) || error("Columns of A do not sum to 1.")
+        sum(A, 1) ≈ ones(1, size(A, 1)) || warn("Columns of A do not sum to 1.")
 
         new(π0, A)
     end
