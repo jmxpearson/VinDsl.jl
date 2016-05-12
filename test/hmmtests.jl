@@ -123,6 +123,14 @@ facts("Checking MarkovChain distribution") do
         @fact_throws ErrorException MarkovChain(π0, A[:, 2:end], T)
     end
 
+    context("Conversions") do
+        π32 = convert(Vector{Float32}, π0)
+        A32 = convert(Matrix{Float32}, A)
+        x32 = MarkovChain(π32, A32, T)
+        @fact isa(convert(MarkovChain{Float64, T}, π32, A32), MarkovChain{Float64, T}) --> true
+        @fact isa(convert(MarkovChain{Float64, T}, x32), MarkovChain{Float64, T}) --> true
+    end
+
     context("Check basic interface") do
         @fact nstates(x) --> K
         @fact size(x) --> (K, T)
@@ -180,7 +188,7 @@ end
 facts("Checking MarkovMatrix distribution") do
     d = 5
 
-    pars = [Dirichlet(d, 1) for i in 1:d]
+    pars = Dirichlet{Float64}[Dirichlet(d, 1) for i in 1:d]
     parmat = hcat([rand(Dirichlet(d, 1)) for i in 1:d]...)
     parvec = [rand(Dirichlet(d, 1)) for i in 1:d]
 
@@ -194,7 +202,7 @@ facts("Checking MarkovMatrix distribution") do
     end
 
     context("Inner constructor consistency checks") do
-        @fact_throws ErrorException MarkovMatrix(pars[2:end, :])
+        @fact_throws ErrorException MarkovMatrix(pars[2:end])
     end
 
     context("Outer constructor") do
@@ -207,6 +215,17 @@ facts("Checking MarkovMatrix distribution") do
 
     context("Outer constructor consistency checks") do
         @fact_throws ErrorException MarkovMatrix(parmat[2:end, :])
+    end
+
+    context("Conversions") do
+        pars32 = Dirichlet{Float32}[Dirichlet(rand(5)) for _ in 1:d]
+        parvec32 = [rand(Float32, d) for _ in 1:d]
+        parmat32 = rand(Float32, d, d)
+        x32 = MarkovMatrix(pars32)
+        @fact isa(convert(MarkovMatrix{Float64}, pars32), MarkovMatrix{Float64}) --> true
+        @fact isa(convert(MarkovMatrix{Float64}, parvec32), MarkovMatrix{Float64}) --> true
+        @fact isa(convert(MarkovMatrix{Float64}, parmat32), MarkovMatrix{Float64}) --> true
+        @fact isa(convert(MarkovMatrix{Float64}, x32), MarkovMatrix{Float64}) --> true
     end
 
     context("Check basic interfact") do
