@@ -91,35 +91,36 @@ function naturals_to_params{D <: HMM}(η, ::Type{D})
 end
 
 ################### Markov Chain distribution #####################
-immutable MarkovChain{S <: Real, T} <: DiscreteMatrixDistribution
+immutable MarkovChain{S <: Real} <: DiscreteMatrixDistribution
     # convention: Matrices are state x time
     π0::Vector{S}  # vector of initial state probabilities
     A::Matrix{S}  # transition matrix (columns sum to 1)
+    T::Integer
 
-    function MarkovChain(π0, A)
-        isa(T, Int) || error("Chain length must be an integer")
+    function MarkovChain(π0, A, T)
+        isa(T, Int) || error("Supplied chain length is not an integer.")
         length(π0) == size(A, 1) == size(A, 2) || error("A and π0 have incompatible shapes")
 
         sum(π0) ≈ 1 || warn("Entries of π0 do not sum to 1.")
 
         sum(A, 1) ≈ ones(1, size(A, 1)) || warn("Columns of A do not sum to 1.")
 
-        new(π0, A)
+        new(π0, A, T)
     end
 end
 
-MarkovChain{S <: Real}(π0::Vector{S}, A::Matrix{S}, T) = MarkovChain{S, T}(π0, A)
+MarkovChain{S <: Real}(π0::Vector{S}, A::Matrix{S}, T) = MarkovChain{S}(π0, A, T)
 function MarkovChain{S <: Real, V <: Real}(π0::Vector{S}, A::Matrix{V}, T)
     W = promote_type(eltype(π0), eltype(A))
     MarkovChain(convert(Vector{W}, π0), convert(Matrix{W}, A), T)
 end
 
 #### Conversions
-convert{S <: Real, V <: Real, T}(::Type{MarkovChain{S, T}}, π0::Vector{V}, A::Matrix{V}) = MarkovChain(convert(Vector{S}, π0), convert(Matrix{S}, A), T)
-convert{S <: Real, V <: Real, T}(::Type{MarkovChain{S, T}}, d::MarkovChain{V, T}) = MarkovChain(convert(Vector{S}, d.π0), convert(Matrix{S}, d.A), T)
+convert{S <: Real, V <: Real}(::Type{MarkovChain{S}}, π0::Vector{V}, A::Matrix{V}, T) = MarkovChain(convert(Vector{S}, π0), convert(Matrix{S}, A), T)
+convert{S <: Real, V <: Real}(::Type{MarkovChain{S}}, d::MarkovChain{V}) = MarkovChain(convert(Vector{S}, d.π0), convert(Matrix{S}, d.A), d.T)
 
 nstates(d::MarkovChain) = length(d.π0)
-size{S <: Real, T}(d::MarkovChain{S, T}) = (nstates(d), T)
+size(d::MarkovChain) = (nstates(d), d.T)
 length(d::MarkovChain) = prod(size(d))
 
 function mean(d::MarkovChain)
