@@ -34,6 +34,15 @@ facts("Checking HMM distribution") do
         @fact_throws ErrorException HMM(ψ, π0, A[:, 2:end])
     end
 
+    context("Conversions") do
+        ψ32 = convert(Matrix{Float32}, ψ)
+        π32 = convert(Vector{Float32}, π0)
+        A32 = convert(Matrix{Float32}, A)
+        x32 = HMM(ψ32, π32, A32)
+        @fact isa(convert(HMM{Float64}, ψ32, π32, A32), HMM{Float64}) --> true
+        @fact isa(convert(HMM{Float64}, x32), HMM{Float64}) --> true
+    end
+
     context("Check basic interface") do
         @fact nstates(x) --> K
         @fact size(x) --> (K, T)
