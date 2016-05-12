@@ -136,8 +136,8 @@ facts("Checking MarkovChain distribution") do
         π32 = convert(Vector{Float32}, π0)
         A32 = convert(Matrix{Float32}, A)
         x32 = MarkovChain(π32, A32, T)
-        @fact isa(convert(MarkovChain{Float64, T}, π32, A32), MarkovChain{Float64, T}) --> true
-        @fact isa(convert(MarkovChain{Float64, T}, x32), MarkovChain{Float64, T}) --> true
+        @fact isa(convert(MarkovChain{Float64}, π32, A32, T), MarkovChain{Float64}) --> true
+        @fact isa(convert(MarkovChain{Float64}, x32), MarkovChain{Float64}) --> true
     end
 
     context("Check basic interface") do
