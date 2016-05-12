@@ -2,14 +2,14 @@ using Distributions
 import Base.size, Base.length, Base.rand, Base.mean, Base.convert, Distributions.logpdf, Distributions.entropy, Distributions.params
 
 ################### Hidden Markov Model distribution #####################
-immutable HMM{N <: Number} <: DiscreteMatrixDistribution
+immutable HMM{S <: Real} <: DiscreteMatrixDistribution
     # convention: Matrices are state x time
-    ψ::Matrix{N}  # matrix of conditional probabilites of symbol emission
-    π0::Vector{N}  # vector of initial state probabilities
-    A::Matrix{N}  # transition matrix (columns sum to 1)
-    ξ::Matrix{N}  # mean of distribution
-    Ξ::Array{N, 3}  # two-slice marginal of distribution (state x state x time)
-    logZ::N  # log normalization constant for distribution
+    ψ::Matrix{S}  # matrix of conditional probabilites of symbol emission
+    π0::Vector{S}  # vector of initial state probabilities
+    A::Matrix{S}  # transition matrix (columns sum to 1)
+    ξ::Matrix{S}  # mean of distribution
+    Ξ::Array{S, 3}  # two-slice marginal of distribution (state x state x time)
+    logZ::S  # log normalization constant for distribution
 
     function HMM(ψ, π0, A)
         size(ψ, 1) == length(π0) == size(A, 1) == size(A, 2) || error("A and π0 have incompatible shapes")
@@ -26,7 +26,11 @@ immutable HMM{N <: Number} <: DiscreteMatrixDistribution
     end
 end
 
-HMM{N <: Number}(ψ::Matrix{N}, π0::Vector{N}, A::Matrix{N}) = HMM{N}(ψ, π0, A)
+HMM{S <: Real}(ψ::Matrix{S}, π0::Vector{S}, A::Matrix{S}) = HMM{S}(ψ, π0, A)
+
+#### Conversions
+convert{S <: Real, V <: Real}(::Type{HMM{S}}, ψ::Matrix{V}, π0::Vector{V}, A::Matrix{V}) = HMM(convert(Matrix{S}, ψ), convert(Vector{S}, π0), convert(Matrix{S}, A))
+convert{S <: Real, V <: Real}(::Type{HMM{S}}, d::HMM{V}) = HMM(convert(Matrix{S}, d.ψ), convert(Vector{S}, d.π0), convert(Matrix{S}, d.A))
 
 nstates(d::HMM) = length(d.π0)
 size(d::HMM) = size(d.ψ)
@@ -50,7 +54,7 @@ function rand(d::HMM)
     z
 end
 
-function logpdf{N <: Number}(d::HMM{N}, x::Matrix{N})
+function logpdf{S <: Real}(d::HMM{S}, x::Matrix{S})
     size(x) == size(d) || error("Input matrix x has wrong size.")
 
     T = size(x, 2)
