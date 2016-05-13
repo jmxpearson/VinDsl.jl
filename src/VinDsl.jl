@@ -45,7 +45,7 @@ include("conjugate_relations.jl")
 
 export VBModel,
     Factor, FactorInds, @factor, get_structure, project, project_inds, @wrapvars, value,
-    EntropyFactor, LogNormalFactor, LogGammaFactor, LogMvNormalCanonFactor,
+    EntropyFactor, LogNormalFactor, LogGammaCanonFactor, LogMvNormalCanonFactor,
     LogMvNormalDiagCanonFactor, LogMarkovChainFactor, LogDirichletFactor,
     LogMarkovMatrixFactor,
     _simplify, _simplify_inside, _simplify_call, _simplify_compose, get_all_syms, get_all_inds, strip_inds, @exprnode,
