@@ -163,7 +163,7 @@ facts("Expression nodes") do
         w[i] ~ Const(rand(p))
         @exprnode z (x + 3a)
 
-        f = @factor LogGammaFactor v w z
+        f = @factor LogGammaCanonFactor v w z
 
         @fact Set(f.inds.indices) --> Set([:i, :k])
         @fact value(f) --> isfinite

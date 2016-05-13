@@ -16,12 +16,12 @@ facts("Conjugate Normal model") do
     # make factors
     obs = @factor LogNormalFactor y μ τ
     μ_prior = @factor LogNormalFactor μ μ0 τ0
-    τ_prior = @factor LogGammaFactor τ a0 b0
+    τ_prior = @factor LogGammaCanonFactor τ a0 b0
 
     m = VBModel([μ, τ, μ0, τ0, a0, b0, y], [obs, μ_prior, τ_prior])
 
     @fact Set([n.name for n in m.nodes]) --> Set([:μ, :τ, :μ0, :τ0, :a0, :b0, :y])
-    @fact Set([typeof(f) for f in m.factors]) --> Set([VinDsl.LogNormalFactor{2}, VinDsl.LogNormalFactor{1}, VinDsl.LogGammaFactor{1}])
+    @fact Set([typeof(f) for f in m.factors]) --> Set([VinDsl.LogNormalFactor{2}, VinDsl.LogNormalFactor{1}, VinDsl.LogGammaCanonFactor{1}])
     @fact length(m.graph) --> 7
     @fact check_conjugate(τ, m) --> true
     @fact check_conjugate(μ, m) --> true
@@ -213,7 +213,7 @@ facts("Updating via explicit optimization") do
     # make factors
     obs = @factor LogNormalFactor y μ τ
     μ_prior = @factor LogNormalFactor μ μ0 τ0
-    τ_prior = @factor LogGammaFactor τ a0 b0
+    τ_prior = @factor LogGammaCanonFactor τ a0 b0
 
     m = VBModel([μ, τ, μ0, τ0, a0, b0, y], [obs, μ_prior, τ_prior])
 

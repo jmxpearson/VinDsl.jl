@@ -18,11 +18,11 @@ end
 ################# Gamma ####################
 function naturals(d::Gamma)
     a, θ = params(d)
-    (a, 1/θ)
+    (a - 1, -1/θ)
 end
 
 function naturals_to_params{D <: Gamma}(η, ::Type{D})
-    (η[1] + 1, -η[2])
+    (η[1] + 1, -1/η[2])
 end
 
 function Elog(d::Gamma)
