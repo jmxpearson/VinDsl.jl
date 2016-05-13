@@ -6,7 +6,7 @@
     -(1/2) * ((E(τ) * ( V(x) + V(μ) + (E(x) - E(μ))^2 ) + log(2π) + Elog(τ)))
 end
 
-@deffactor LogGammaFactor [x, α, β] begin
+@deffactor LogGammaCanonFactor [x, α, β] begin
     (E(α) - 1) * Elog(x) - E(β) * E(x) + E(α) * E(β) - Eloggamma(α)
 end
 

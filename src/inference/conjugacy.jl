@@ -3,7 +3,7 @@
 function check_conjugate{D}(n::RandomNode{D}, m::VBModel)
     is_conj = true
     for (f, s) in m.graph[n]
-        ttype = Tuple{Type{typeof(f)}, Type{Val{s}}, Type{D}}
+        ttype = Tuple{Type{typeof(f)}, Type{Val{s}}, Type{D.name.primary}}
         if !method_exists(natural_formula, ttype)
             is_conj = false
             break
