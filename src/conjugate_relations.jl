@@ -19,6 +19,10 @@ end
     (E(α) - 1, -1/E(θ))
 end
 
+@defnaturals LogGammaFactor x Gamma begin
+    (E(α) - 1, -1/E(θ))
+end
+
 @defnaturals LogGammaCanonFactor x Gamma begin
     (E(α) - 1, -E(β))
 end
