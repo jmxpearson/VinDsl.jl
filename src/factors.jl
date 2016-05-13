@@ -7,7 +7,11 @@
 end
 
 @deffactor LogGammaCanonFactor [x, α, β] begin
-    (E(α) - 1) * Elog(x) - E(β) * E(x) + E(α) * E(β) - Eloggamma(α)
+    (E(α) - 1) * Elog(x) - E(x) * E(β) + E(α) * Elog(β) - Eloggamma(α)
+end
+
+@deffactor LogGammaFactor [x, α, θ] begin
+    (E(α) - 1) * Elog(x) - E(x)/E(θ) - E(α) * Elog(θ) - Eloggamma(α)
 end
 
 @deffactor LogMvNormalCanonFactor [x, μ, Λ] begin
