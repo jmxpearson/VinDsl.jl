@@ -4,7 +4,8 @@ function check_conjugate{D}(n::RandomNode{D}, m::VBModel)
     is_conj = true
     for (f, s) in m.graph[n]
         ttype = Tuple{Type{typeof(f)}, Type{Val{s}}, Type{D.name.primary}}
-        if !method_exists(natural_formula, ttype)
+        isentropy = isa(f, EntropyFactor)
+        if !isentropy && !method_exists(natural_formula, ttype)
             is_conj = false
             break
         end
@@ -14,7 +15,8 @@ end
 
 function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:conjugate}})
     # get natural parameter vectors for each factor
-    messages = [naturals(f, n) for (f, _) in m.graph[n]]
+    hasnaturals = filter(x -> !isa(x[1], EntropyFactor), m.graph[n])
+    messages = [naturals(f, n) for (f, s) in hasnaturals]
 
     # update each distribution in the array
     for idx in eachindex(n.data)
@@ -22,7 +24,7 @@ function update!{D}(n::RandomNode{D}, m::VBModel, ::Type{Val{:conjugate}})
         this_messages = Any[msg[idx] for msg in messages]
 
         # sum respective tuple elements
-        natpars = map(x -> +(x...), this_messages)
+        natpars = map(+, this_messages...)
 
         # convert natural parameters to Distributions.jl parameters
         n[idx] = D(naturals_to_params(natpars, D)...)
