@@ -155,7 +155,7 @@ function unroll_pars(n::RandomNode)
 end
 
 function unroll_pars(d::Distribution)
-    vcat([flatten(par) for par in params(d)]...)
+    vcat([flatten(par) for par in uparams(d)]...)
 end
 
 function reroll_pars{D <: Distribution}(d::D, par_sizes, x)
@@ -167,5 +167,5 @@ function reroll_pars{D <: Distribution}(d::D, par_sizes, x)
         push!(pars, p)
         ctr += sz
     end
-    D(pars...)
+    D.name.primary(constrain(pars, D)...)
 end
