@@ -3,7 +3,7 @@
 @deffactor EntropyFactor [x] H(x)
 
 @deffactor LogNormalFactor [x, μ, τ] begin
-    -(1/2) * ((E(τ) * ( V(x) + V(μ) + (E(x) - E(μ))^2 ) + log(2π) + Elog(τ)))
+    -(1/2) * ((E(τ) * ( V(x) + V(μ) + (E(x) - E(μ))^2 ) + log(2π) - Elog(τ)))
 end
 
 @deffactor LogGammaCanonFactor [x, α, β] begin
