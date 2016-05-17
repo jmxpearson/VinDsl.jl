@@ -2,9 +2,6 @@
 
 typealias explicit_opts Union{Val{:l_bfgs}, Val{:cg}}
 function update!{D, S <: explicit_opts}(n::RandomNode{D}, m::VBModel, ::Type{S})
-    # make backup of node
-    pars_old = copy(n.data)
-
     # use const here so that the closure below can be optimized
     const fac_list = [f for (f, _) in m.graph[n]]
 
@@ -15,11 +12,11 @@ function update!{D, S <: explicit_opts}(n::RandomNode{D}, m::VBModel, ::Type{S})
     # and sums the values of all factors containing n
     function objfun(x)
         update_pars!(n, x)
-        val = 0
+        val = 0.0
         for f in fac_list
             val += value(f)
         end
-        val
+        -val  # Optim minimizes, so objfun = -ELBO
     end
 
     # use ForwardDiff to get the gradient; autodiff in optimize uses
@@ -30,9 +27,15 @@ function update!{D, S <: explicit_opts}(n::RandomNode{D}, m::VBModel, ::Type{S})
     # define mutating gradient; store gradient in storage array
     objgrad!(x, storage) = gradf!(storage, x)
 
+    if S.parameters[1] == :l_bfgs
+        method = LBFGS()
+    elseif S.parameters[1] == :cg
+        method = ConjugateGradient()
+    end
+
     # try optimization; if it fails, set parameters back to initial guess
     try
-        optimize(objfun, objgrad!, x0, method=S.parameters[1])
+        optimize(objfun, objgrad!, x0, method=method)
     catch
         finalpars = unroll_pars(n)
         println("Optimization failed at pars:\n$finalpars")
