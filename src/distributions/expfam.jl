@@ -15,6 +15,15 @@ function naturals_to_params{D <: Normal}(η, ::Type{D})
     (η[1] * σ, σ)
 end
 
+function uparams(d::Normal)
+    μ, σ = params(d)
+    (μ, log(σ))
+end
+
+function constrain{D <: Normal}(pars, ::Type{D})
+    (pars[1], exp(pars[2]))
+end
+
 ################# Gamma ####################
 function naturals(d::Gamma)
     a, θ = params(d)
