@@ -193,6 +193,8 @@ type VBModel
                 m.update_strategy[n] = :constant
             elseif isa(n, RandomNode) && check_conjugate(n, m)
                 m.update_strategy[n] = :conjugate
+            else
+                m.update_strategy[n] = :undefined
             end
         end
 
