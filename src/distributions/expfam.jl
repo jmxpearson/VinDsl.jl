@@ -12,7 +12,7 @@ end
 
 function naturals_to_params{D <: Normal}(η, ::Type{D})
     σ = sqrt(-1/(2η[2]))
-    (η[1] * σ, σ)
+    (η[1] * σ^2, σ)
 end
 
 function uparams(d::Normal)
