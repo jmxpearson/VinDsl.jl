@@ -12,7 +12,7 @@ end
 
 @defnaturals LogNormalFactor τ Gamma begin
     v = V(x) + V(μ) + (E(x) - E(μ))^2
-    (1/2, v/2)
+    (1/2, -v/2)
 end
 
 @defnaturals LogGammaFactor x Gamma begin
