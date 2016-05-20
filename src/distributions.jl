@@ -1,6 +1,7 @@
 dists = [
     "expfam",
-    "HMM"
+    "HMM",
+    "matrixnormal"
 ]
 
 for dname in dists

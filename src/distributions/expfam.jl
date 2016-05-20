@@ -2,7 +2,7 @@
 
 using Distributions
 
-naturals_to_params(η, d::Distribution) = naturals_to_params(η, typeof(d))
+naturals_to_params(η, d::Distribution) = naturals_to_params(η, typeof(d).name.primary)
 
 ################# Normal ####################
 function naturals(d::Normal)

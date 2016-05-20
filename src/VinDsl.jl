@@ -10,7 +10,7 @@ using PDMats
 using Optim
 using ForwardDiff
 import Base: convert, call, zero, getindex, setindex!, ndims
-import Distributions: var, entropy, cov
+import Distributions: params, var, entropy, cov, invcov, logpdf, logdetcov
 using Base.Cartesian
 
 # general helper functions
@@ -55,6 +55,7 @@ export VBModel,
     get_par_sizes, flatten,
     E, Elog, Eloggamma, Elogdet, V, H, C, value, naturals, @defnaturals,
     get_node_size, get_name_mapping, HMM, MarkovChain, MarkovMatrix,
+    MatrixNormal,
     nstates, naturals, naturals_to_params, forwardbackward
 
 end  # module

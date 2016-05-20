@@ -7,7 +7,14 @@ lB(x::Matrix) = sum(lgamma(x), 1) - lgamma(sum(x, 1))  # columnwise
 
 # define a convert method for Arrays to PDMats (positive definite matrices)
 # if the array is not posdef, this will throw an exception
-convert{T <: Number}(::Type{PDMat{T, Array{T, 2}}}, arr::Array{T, 2}) = PDMat(arr)
+raw(Σ::PDMat) = Σ.mat
+raw(Σ::PDSparseMat) = Σ.mat
+raw(Σ::PDiagMat) = Σ.diag
+raw(Σ::ScalMat) = diag(Σ)
+
+convert{T<:AbstractPDMat}(::Type{T}, P::T) = P
+convert{T <: Number}(::Type{PDMat{T, Matrix{T}}}, P::Matrix{T}) = PDMat(P)
+convert{T<:AbstractPDMat, S<:AbstractPDMat}(::Type{T}, P::S) = convert(T, raw(P))
 
 flatten(a::Number) = a
 flatten(a::Array) = reshape(a, prod(size(a)))
