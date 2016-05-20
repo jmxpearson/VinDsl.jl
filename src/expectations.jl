@@ -17,7 +17,9 @@ H(x::Distribution) = entropy(x)
 # Define functions for nonrandom nodes.
 # In each case, a specialized method is already defined for distributions.
 Elog(x) = log(x)
+Einv(x) = inv(x)
 Eloggamma(x) = lgamma(x)
+Elogmvgamma(p, x) = logmvgamma(p, x)
 Elogbeta(x) = lbeta(x)
 ElogB(x) = lB(x)
 Elogdet(x) = logdet(x)
@@ -30,7 +32,7 @@ macro make_mapped_version(fn)
     esc(:($fn{D <: Distribution}(n::Array{D}) = map($fn, n)))
 end
 
-to_map = [E, V, C, H, Elog, ElogB, Eloggamma, Elogdet]
+to_map = [E, V, C, H, Einv, Elog, ElogB, Eloggamma, Elogmvgamma, Elogdet]
 for fn in to_map
     @make_mapped_version fn
 end

@@ -93,6 +93,12 @@ end
     nats_mvn(v, τ)
 end
 
+@defnaturals LogWishartFactor Λ Wishart begin
+    EinvV = Einv(V)
+    p = size(EinvV, 1)
+    (-EinvV/2, (E(ν) - p - 1)/2)
+end
+
 @defnaturals LogMarkovChainFactor π0 Dirichlet begin
     (E(z)[:, 1], )
 end

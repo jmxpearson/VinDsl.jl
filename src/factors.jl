@@ -26,6 +26,13 @@ end
     dot(E(α) - 1, Elog(x)) - ElogB(α)
 end
 
+@deffactor LogWishartFactor [X ν V] begin
+    EX = E(X)
+    p = size(EX, 1)
+    n = E(ν)
+    0.5 * (n - p - 1) * Elogdet(X) - 0.5 * n * Elogdet(V) - 0.5 * trace(Einv(V) * EX) - 0.5 * n * p * log(2) - Elogmvgamma(p, ν/2)
+end
+
 ################### Dealing with HMMs in factors #####################
 @deffactor LogMarkovChainFactor [z, π0, A] begin
     dot(E(z)[:, 1], Elog(π0)) + sum(C(z) .* Elog(A))
