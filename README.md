@@ -7,6 +7,10 @@
 ## **WARNING**:
 VinDsl.jl is a work in progress. Not quite alpha, but watch this space!
 
+## **DEPENDENCY ALERT**:
+While updating of [Distributions.jl](https://github.com/JuliaStats/Distributions.jl) for automatic differentiation is in progress, this package will rely on the *current master* of that package. Use `Pkg.checkout("Distributions")` to be sure you have the latest updates.
+
+## **Development**:
 For contributors: documentation of design, internals, and todos, see [here](http://vindsljl.readthedocs.org/en/latest/)
 
 See also [this presentation](https://github.com/jmxpearson/VinDsl.jl/blob/master/doc/dukeML_feb_18_2016.ipynb)
