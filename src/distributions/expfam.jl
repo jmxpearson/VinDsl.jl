@@ -24,15 +24,6 @@ function constrain{D <: Normal}(pars, ::Type{D})
     (pars[1], exp(pars[2]))
 end
 
-function uparams(d::Normal)
-    μ, σ = params(d)
-    (μ, log(σ))
-end
-
-function constrain{D <: Normal}(pars, ::Type{D})
-    (pars[1], exp(pars[2]))
-end
-
 ################# Gamma ####################
 function naturals(d::Gamma)
     a, θ = params(d)
@@ -41,6 +32,15 @@ end
 
 function naturals_to_params{D <: Gamma}(η, ::Type{D})
     (η[1] + 1, -1/η[2])
+end
+
+function uparams(d::Gamma)
+    a, θ = params(d)
+    (log(a), log(θ))
+end
+
+function constrain{D <: Gamma}(pars, ::Type{D})
+    (exp(pars[1]), exp(pars[2]))
 end
 
 function Elog(d::Gamma)
@@ -54,7 +54,7 @@ function naturals(d::Dirichlet)
 end
 
 function naturals_to_params{D <: Dirichlet}(η, ::Type{D})
-    (η + 1,)
+    (η[1] + 1,)
 end
 
 function Elog(d::Dirichlet)
@@ -76,13 +76,39 @@ function naturals_to_params{D <: MvNormalCanon}(η, ::Type{D})
     (η[1], -2η[2])
 end
 
+function uparams(d::MvNormalCanon)
+    μ, h, J = params(d)
+    U = J.chol[:U]
+    (h, flatten(U))
+end
+
+function constrain{D <: MvNormalCanon}(pars, ::Type{D})
+    U = UpperTriangular(pars[2])
+    # could do much better here by creating PDMat directly using
+    # U and not doing Cholesky all over again, but this is fine for now
+    (pars[1], U' * U)
+end
+
 ################# Wishart ####################
 function naturals(d::Wishart)
-    (-inv(d.S).mat/2, (d.df - size(d)[1] - 1)/2)
+    ((d.df - size(d)[1] - 1)/2, -inv(d.S).mat/2)
 end
 
 function naturals_to_params{D <: Wishart}(η, ::Type{D})
-    (-inv(η[1])/2, 2η[2] + size(eta[1], 1) + 1)
+    (2η[1] + size(η[2], 1) + 1, -inv(η[2])/2)
+end
+
+function uparams(d::Wishart)
+    df, S, _ = params(d)
+    U = S.chol[:U]
+    d = dim(S)
+    (log(df - d + 1), flatten(U))
+end
+
+function constrain{D <: Wishart}(pars, ::Type{D})
+    U = UpperTriangular(pars[2])
+    d = size(U, 1)
+    (exp(pars[1]) + d - 1, U' * U)
 end
 
 Elogdet(d::Wishart) = Distributions.meanlogdet(d)

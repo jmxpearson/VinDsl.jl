@@ -76,7 +76,7 @@ end
 @defnaturals LogMvNormalCanonFactor Λ Wishart begin
     δ = E(x) - E(μ)
     v = C(x) .+ C(μ) .+ δ * δ'
-    (v/2, 0.)
+    (0., v/2)
 end
 
 @defnaturals LogMvNormalDiagCanonFactor x Normal begin

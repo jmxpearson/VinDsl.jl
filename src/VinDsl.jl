@@ -54,9 +54,9 @@ export VBModel,
     Node, RandomNode, ConstantNode, ExprNode, ExprDist, @simplify, nodeextract,
     register, check_conjugate, update!, unroll_pars, update_pars!, reroll_pars,
     get_par_sizes, flatten,
-    E, Elog, Eloggamma, Elogdet, V, H, C, value, naturals, @defnaturals,
+    E, Elog, Eloggamma, Elogmvgamma, Elogdet, V, H, C, value, naturals, @defnaturals,
     get_node_size, get_name_mapping, HMM, MarkovChain, MarkovMatrix,
     MatrixNormal,
-    nstates, naturals, naturals_to_params, forwardbackward
+    nstates, naturals, naturals_to_params, uparams, constrain, forwardbackward
 
 end  # module

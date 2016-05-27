@@ -39,7 +39,7 @@ facts("Univariate ⟷ multivariate naturals extraction") do
 
         @fact value(f) --> isfinite
         @fact map(size, naturals(f, μ)[1]) --> ((d,), (d, d))
-        @fact map(size, naturals(f, Λ)[1]) --> ((d, d), ())
+        @fact map(size, naturals(f, Λ)[1]) --> ((), (d, d))
     end
 
     context("vector mean, diagonal covariance") do
@@ -75,7 +75,7 @@ facts("Univariate ⟷ multivariate naturals extraction") do
 
         @fact value(f) --> isfinite
         @fact map(size, naturals(f, μ)[1]) --> ((), ())
-        @fact map(size, naturals(f, Λ)[1]) --> ((d, d), ())
+        @fact map(size, naturals(f, Λ)[1]) --> ((), (d, d))
     end
 
     context("scalar mean, diagonal covariance") do

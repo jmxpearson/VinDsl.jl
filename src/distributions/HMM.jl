@@ -1,5 +1,5 @@
 using Distributions
-import Base.size, Base.length, Base.rand, Base.mean, Base.convert, Distributions.logpdf, Distributions.entropy, Distributions.params
+import Base.size, Base.length, Base.rand, Base.mean, Base.convert, Base.eltype, Distributions.logpdf, Distributions.entropy, Distributions.params
 
 ################### Hidden Markov Model distribution #####################
 immutable HMM{S <: Real} <: DiscreteMatrixDistribution
@@ -215,6 +215,7 @@ convert{T <: Real, S <: Real}(::Type{MarkovMatrix{T}}, A::Matrix{S}) = MarkovMat
 convert{T <: Real, S <: Real}(::Type{MarkovMatrix{T}}, cols::Vector{Vector{S}}) = MarkovMatrix([convert(Vector{T}, c) for c in cols])
 convert{T <: Real, S <: Real}(::Type{MarkovMatrix{T}}, d::MarkovMatrix{S}) = MarkovMatrix([convert(Dirichlet{T}, c) for c in d.cols])
 
+eltype{T <: Real}(d::MarkovMatrix{T}) = T
 nstates(d::MarkovMatrix) = length(d.cols)
 size(d::MarkovMatrix) = (length(d.cols), length(d.cols))
 length(d::MarkovMatrix) = length(d.cols)^2
@@ -265,7 +266,7 @@ end
 
 function naturals(d::MarkovMatrix)
     p = nstates(d)
-    nats = Array{Float64}(p, p)
+    nats = Array{eltype(d)}(p, p)
     for i in 1:p
         nats[:, i] = naturals(d.cols[i])[1]  # naturals returns a tuple
     end
@@ -274,9 +275,9 @@ end
 
 function params(d::MarkovMatrix)
     p = nstates(d)
-    nats = Array{Float64}(p, p)
+    nats = Array{eltype(d)}(p, p)
     for i in 1:p
-        nats[:, i] = params(d.cols[i])[1]  # naturals returns a tuple
+        nats[:, i] = params(d.cols[i])[1]  # params returns a tuple
     end
     (nats,)
 end
@@ -286,7 +287,7 @@ function naturals_to_params{D <: MarkovMatrix}(η, ::Type{D})
     p, _ = size(nats)
     pars = similar(nats)
     for i in 1:p
-        pars[:, i] = naturals_to_params(nats[:, i], Dirichlet)[1]  # n2par returns a tuple
+        pars[:, i] = naturals_to_params((nats[:, i],), Dirichlet)[1]  # n2par returns a tuple
     end
     (pars,)
 end

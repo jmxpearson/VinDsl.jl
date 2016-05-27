@@ -93,21 +93,63 @@ facts("Checking MatrixNormal distribution") do
     context("Check entropy") do
         @fact entropy(X) --> entropy(convert(MvNormal, X))
     end
-    #
-    # context("Check natural parameters") do
-    #     nats = naturals(x)
-    #     pars = naturals_to_params(nats, typeof(x))
-    #
-    #     @fact length(nats) --> 3
-    #     @fact size(nats[1]) --> size(x)
-    #     @fact length(pars) --> 3
-    #     @fact size(pars[1]) --> size(x)
-    #     @fact nats[1] --> roughly(log(ψ))
-    #     @fact nats[2] --> roughly(log(π0))
-    #     @fact nats[3] --> roughly(log(A))
-    #     @fact pars[1] --> roughly(ψ)
-    #     @fact pars[2] --> roughly(π0)
-    #     @fact pars[3] --> roughly(A)
-    # end
-    #
+
+end
+
+facts("Checking exponential family interface") do
+    context("Normal") do
+        μ = 1.1
+        σ = 2.5
+        τ = 1/σ^2
+        d = Normal(μ, σ)
+        @fact naturals(d) --> (μ * τ, -τ/2)
+        @fact naturals_to_params(naturals(d), Normal) --> (μ, σ)
+        @fact Normal(constrain(uparams(d), Normal)...) --> d
+    end
+
+    context("Gamma") do
+        a = 1.1
+        θ = 2.5
+        d = Gamma(a, θ)
+        @fact naturals(d) --> (a - 1, -1/θ)
+        @fact naturals_to_params(naturals(d), Gamma) --> (a, θ)
+        @fact Gamma(constrain(uparams(d), Gamma)...) --> d
+    end
+
+    context("Dirichlet") do
+        a = rand(5)
+        α = a / sum(a)
+        d = Dirichlet(α)
+        @fact naturals(d) --> (α - 1,)
+        @fact naturals_to_params(naturals(d), Dirichlet)[1] --> roughly(α)
+        # @fact Dirichlet(constrain(uparams(d), Dirichlet)...) --> d
+    end
+
+    context("MvNormalCanon") do
+        p = 7
+        h = rand(p)
+        jj = rand(p, p)
+        J = jj * jj'
+        d = MvNormalCanon(h, J)
+        @fact naturals(d) --> (h, -J/2)
+        @fact naturals_to_params(naturals(d), MvNormalCanon) --> (h, J)
+        @fact MvNormalCanon(constrain(uparams(d), MvNormalCanon)...) --> d
+    end
+
+    context("Wishart") do
+        p = 7
+        ss = rand(p, p)
+        S = ss * ss'
+        df = p + 10
+        d = Wishart(df, S)
+        nats = naturals(d)
+        @fact nats[1] --> (df - p - 1)/2
+        @fact nats[2] --> roughly(-inv(S)/2)
+        n2p =  naturals_to_params(naturals(d), Wishart)
+        @fact n2p[1] --> df
+        @fact n2p[2] --> roughly(S)
+        dd = Wishart(constrain(uparams(d), Wishart)...)
+        @fact dd.df --> df
+        @fact dd.S.mat --> roughly(S)
+    end
 end

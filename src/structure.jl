@@ -147,7 +147,7 @@ end
 setindex!(n::Node, val, inds...) = setindex!(n.data, val, inds...)
 
 function get_par_sizes(d::Distribution)
-    [size(p) for p in params(d)]
+    [size(p) for p in uparams(d)]
 end
 
 function unroll_pars(n::RandomNode)

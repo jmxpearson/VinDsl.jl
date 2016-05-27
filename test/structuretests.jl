@@ -156,7 +156,7 @@ end
 facts("Unrolling and rerolling parameters") do
     context("Distributions") do
         dists = [Gamma(1.1, 1.), Normal(),
-                 MvNormal(ones(5), eye(5)),
+                 MvNormalCanon(ones(5), eye(5)),
                  Wishart(5, eye(2)),]
 
         for d in dists

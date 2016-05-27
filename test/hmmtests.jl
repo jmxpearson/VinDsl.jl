@@ -197,7 +197,7 @@ end
 facts("Checking MarkovMatrix distribution") do
     d = 5
 
-    pars = Dirichlet{Float64}[Dirichlet(d, 1) for i in 1:d]
+    pars = Dirichlet{Float64}[Dirichlet(rand(d)) for i in 1:d]
     parmat = hcat([rand(Dirichlet(d, 1)) for i in 1:d]...)
     parvec = [rand(Dirichlet(d, 1)) for i in 1:d]
 
@@ -237,7 +237,7 @@ facts("Checking MarkovMatrix distribution") do
         @fact isa(convert(MarkovMatrix{Float64}, x32), MarkovMatrix{Float64}) --> true
     end
 
-    context("Check basic interfact") do
+    context("Check basic interface") do
         @fact nstates(x) --> d
         @fact size(x) --> (d, d)
         @fact length(x) --> d^2
