@@ -39,7 +39,7 @@ end
 function UpperTriangular(v::AbstractVector)
     l = length(v)
     d = (-1 + Int(sqrt(1 + 8l))) ÷ 2
-    A = Array(eltype(v), d, d)
+    A = zeros(eltype(v), d, d)
     idx = 1
     for c in 1:d
         for r in 1:d
