@@ -76,7 +76,7 @@ end
 @defnaturals LogMvNormalCanonFactor Λ Wishart begin
     δ = E(x) - E(μ)
     v = C(x) .+ C(μ) .+ δ * δ'
-    (0., v/2)
+    (0., -v/2)
 end
 
 @defnaturals LogMvNormalDiagCanonFactor x Normal begin
@@ -99,6 +99,13 @@ end
     δ = E(x) - E(μ)
     v = V(x) + V(μ) + δ.^2
     nats_mvn(v, τ)
+end
+
+@defnaturals LogWishartFactor X Wishart begin
+    n = E(ν)
+    Vinv = Einv(V)
+    p = size(Vinv, 1)
+    ((n - p - 1)/2, -Vinv/2)
 end
 
 @defnaturals LogMarkovChainFactor π0 Dirichlet begin
