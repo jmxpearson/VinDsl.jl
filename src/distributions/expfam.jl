@@ -48,6 +48,13 @@ function Elog(d::Gamma)
     digamma(a) + log(θ)
 end
 
+# the following overwrites logpdf in Distributions
+# this can be removed when Distributions has a pure Julia implementation
+function logpdf(d::Gamma, x::Real)
+    α, θ = params(d)
+    (α - 1) * log(x) - (x/θ) - α * log(θ) - lgamma(α)
+end
+
 ################# Dirichlet ####################
 function naturals(d::Dirichlet)
     (d.alpha - 1,)
@@ -61,6 +68,15 @@ function Elog(d::Dirichlet)
     α = d.alpha
     digamma(α) - digamma(sum(α))
 end
+
+################# Poisson ####################
+# the following overwrites logpdf in Distributions
+# this can be removed when Distributions has a pure Julia implementation
+function logpdf(d::Poisson, x::Int)
+    (λ,) = params(d)
+    x * log(λ) - λ - lgamma(x + 1)
+end
+logpdf(d::Poisson, X::Array{Int}) = map(x -> logpdf(d, x), X)
 
 ################# MvNormalCanon ####################
 # exponential family representation of the multivariate normal
