@@ -45,6 +45,8 @@ include("factors.jl")
 include("conjugate_relations.jl")
 
 export VBModel,
+    RVType, RScalar, RVector, RMatrix, RReal, RPositive, RCholCov, RRealVec,
+    constrain, logdetjac,
     Factor, FactorInds, @factor, get_structure, project, project_inds, @wrapvars, value,
     EntropyFactor, LogNormalFactor, LogGammaCanonFactor, LogMvNormalCanonFactor,
     LogGammaFactor,
@@ -58,6 +60,6 @@ export VBModel,
     E, Elog, Eloggamma, Elogmvgamma, Elogdet, V, H, C, value, naturals, @defnaturals, logpdf,
     get_node_size, get_name_mapping, HMM, MarkovChain, MarkovMatrix,
     MatrixNormal,
-    nstates, naturals, naturals_to_params, uparams, constrain, forwardbackward
+    nstates, naturals, naturals_to_params, uparams, forwardbackward
 
 end  # module

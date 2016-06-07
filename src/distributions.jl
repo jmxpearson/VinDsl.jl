@@ -1,4 +1,5 @@
 dists = [
+    "constraints",
     "expfam",
     "HMM",
     "matrixnormal"

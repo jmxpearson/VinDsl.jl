@@ -27,7 +27,8 @@ tests = [
     "expressiontests",
     "hmmtests",
     "integrationtests",
-    "distributiontests"
+    "distributiontests",
+    "constrainttests"
 ]
 
 print_with_color(:blue, "Running tests:\n")
