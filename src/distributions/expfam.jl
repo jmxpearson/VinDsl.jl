@@ -4,6 +4,9 @@ using Distributions
 
 naturals_to_params(η, d::Distribution) = naturals_to_params(η, typeof(d).name.primary)
 
+constrain(pars, d::Distribution) = map(constrain, partypes(d), pars)
+unconstrain(d::Distribution) = map(unconstrain, partypes(d), params(d))
+
 ################# Normal ####################
 function naturals(d::Normal)
     μ, σ = params(d)
@@ -15,14 +18,7 @@ function naturals_to_params{D <: Normal}(η, ::Type{D})
     (η[1] * σ^2, σ)
 end
 
-function uparams(d::Normal)
-    μ, σ = params(d)
-    (μ, log(σ))
-end
-
-function constrain{D <: Normal}(pars, ::Type{D})
-    (pars[1], exp(pars[2]))
-end
+partypes(::Normal) = (RReal(), RPositive())
 
 ################# Gamma ####################
 function naturals(d::Gamma)
@@ -34,14 +30,7 @@ function naturals_to_params{D <: Gamma}(η, ::Type{D})
     (η[1] + 1, -1/η[2])
 end
 
-function uparams(d::Gamma)
-    a, θ = params(d)
-    (log(a), log(θ))
-end
-
-function constrain{D <: Gamma}(pars, ::Type{D})
-    (exp(pars[1]), exp(pars[2]))
-end
+partypes(::Gamma) = (RPositive(), RPositive())
 
 function Elog(d::Gamma)
     a, θ = params(d)
@@ -92,18 +81,14 @@ function naturals_to_params{D <: MvNormalCanon}(η, ::Type{D})
     (η[1], -2η[2])
 end
 
-function uparams(d::MvNormalCanon)
+partypes(d::MvNormalCanon) = (RRealVec(length(d)), RCholCov(length(d)))
+
+# override because MvNormalCanon is overparameterized
+function unconstrain(d::MvNormalCanon)
     μ, h, J = params(d)
-    U = J.chol[:U]
-    (h, flatten(U))
+    (h, unconstrain(RCholCov(length(d)), J))
 end
 
-function constrain{D <: MvNormalCanon}(pars, ::Type{D})
-    U = UpperTriangular(pars[2])
-    # could do much better here by creating PDMat directly using
-    # U and not doing Cholesky all over again, but this is fine for now
-    (pars[1], U' * U)
-end
 
 ################# Wishart ####################
 function naturals(d::Wishart)
@@ -114,17 +99,6 @@ function naturals_to_params{D <: Wishart}(η, ::Type{D})
     (2η[1] + size(η[2], 1) + 1, -inv(η[2])/2)
 end
 
-function uparams(d::Wishart)
-    df, S, _ = params(d)
-    U = S.chol[:U]
-    d = dim(S)
-    (log(df - d + 1), flatten(U))
-end
-
-function constrain{D <: Wishart}(pars, ::Type{D})
-    U = UpperTriangular(pars[2])
-    d = size(U, 1)
-    (exp(pars[1]) + d - 1, U' * U)
-end
+partypes(d::Wishart) = (RPositive(d.df - 1), RCholCov(dim(d)))
 
 Elogdet(d::Wishart) = Distributions.meanlogdet(d)

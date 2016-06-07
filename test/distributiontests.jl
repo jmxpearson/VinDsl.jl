@@ -104,7 +104,7 @@ facts("Checking exponential family interface") do
         d = Normal(μ, σ)
         @fact naturals(d) --> (μ * τ, -τ/2)
         @fact naturals_to_params(naturals(d), Normal) --> (μ, σ)
-        @fact Normal(constrain(uparams(d), Normal)...) --> d
+        @fact Normal(constrain(unconstrain(d), d)...) --> d
     end
 
     context("Gamma") do
@@ -113,7 +113,7 @@ facts("Checking exponential family interface") do
         d = Gamma(a, θ)
         @fact naturals(d) --> (a - 1, -1/θ)
         @fact naturals_to_params(naturals(d), Gamma) --> (a, θ)
-        @fact Gamma(constrain(uparams(d), Gamma)...) --> d
+        @fact Gamma(constrain(unconstrain(d), d)...) --> d
     end
 
     context("Dirichlet") do
@@ -122,7 +122,7 @@ facts("Checking exponential family interface") do
         d = Dirichlet(α)
         @fact naturals(d) --> (α - 1,)
         @fact naturals_to_params(naturals(d), Dirichlet)[1] --> roughly(α)
-        # @fact Dirichlet(constrain(uparams(d), Dirichlet)...) --> d
+        # @fact Dirichlet(constrain(unconstrain(d), Dirichlet)...) --> d
     end
 
     context("MvNormalCanon") do
@@ -133,7 +133,9 @@ facts("Checking exponential family interface") do
         d = MvNormalCanon(h, J)
         @fact naturals(d) --> (h, -J/2)
         @fact naturals_to_params(naturals(d), MvNormalCanon) --> (h, J)
-        @fact MvNormalCanon(constrain(uparams(d), MvNormalCanon)...) --> d
+        dd =  MvNormalCanon(constrain(unconstrain(d), d)...)
+        @fact dd.h --> h
+        @fact dd.J.mat --> roughly(J)
     end
 
     context("Wishart") do
@@ -148,7 +150,7 @@ facts("Checking exponential family interface") do
         n2p =  naturals_to_params(naturals(d), Wishart)
         @fact n2p[1] --> df
         @fact n2p[2] --> roughly(S)
-        dd = Wishart(constrain(uparams(d), Wishart)...)
+        dd = Wishart(constrain(unconstrain(d), d)...)
         @fact dd.df --> df
         @fact dd.S.mat --> roughly(S)
     end

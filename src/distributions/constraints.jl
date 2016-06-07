@@ -25,6 +25,7 @@ Real-valued scalar.
 immutable RReal  <: RScalar
 end
 constrain(rv::RReal, x::Real) = x
+unconstrain(rv::RReal, x::Real) = x
 logdetjac(rv::RReal, x::Real) = 0.
 
 """
@@ -35,6 +36,7 @@ immutable RPositive{T <: Real}  <: RScalar
 end
 RPositive{T <: Real}(lb::T=0.) = RPositive{T}(lb)
 constrain(rv::RPositive, x::Real) = exp(x) + rv.lb
+unconstrain(rv::RPositive, x::Real) = log(x - rv.lb)
 logdetjac(rv::RPositive, x::Real) = x
 
 """
@@ -45,6 +47,7 @@ immutable RRealVec  <: RVector
 end
 ndims(x::RRealVec) = x.d
 constrain(rv::RRealVec, x::Vector) = x
+unconstrain(rv::RRealVec, x::Vector) = x
 logdetjac(rv::RRealVec, x::Vector) = 0.
 
 """
@@ -62,6 +65,14 @@ function constrain(rv::RCholCov, x::Vector)
         U[j, j] = exp(U[j, j])  # Cholesky factor must have positive diagonals
     end
     PDMat(Base.LinAlg.Cholesky(full(U), :U))
+end
+
+function unconstrain(rv::RCholCov, S::PDMat)
+    U = copy(S.chol[:U])
+    for j in 1:dim(S)
+        U[j, j] = log(U[j, j])  # diagonal of Cholesky must be positive
+    end
+    flatten(U)
 end
 
 function logdetjac(rv::RCholCov, x::Vector)

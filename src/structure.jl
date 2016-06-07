@@ -147,7 +147,7 @@ end
 setindex!(n::Node, val, inds...) = setindex!(n.data, val, inds...)
 
 function get_par_sizes(d::Distribution)
-    [size(p) for p in uparams(d)]
+    [size(p) for p in unconstrain(d)]
 end
 
 function unroll_pars(n::RandomNode)
@@ -155,10 +155,11 @@ function unroll_pars(n::RandomNode)
 end
 
 function unroll_pars(d::Distribution)
-    vcat([flatten(par) for par in uparams(d)]...)
+    vcat([flatten(par) for par in unconstrain(d)]...)
 end
 
-function reroll_pars{D <: Distribution}(d::D, par_sizes, x)
+function reroll_pars(d::Distribution, par_sizes, x)
+    D = typeof(d).name.primary
     ctr = 0
     pars = []
     for (i, dims) in enumerate(par_sizes)
@@ -167,5 +168,5 @@ function reroll_pars{D <: Distribution}(d::D, par_sizes, x)
         push!(pars, p)
         ctr += sz
     end
-    D.name.primary(constrain(pars, D)...)
+    D(constrain(pars, d)...)
 end
