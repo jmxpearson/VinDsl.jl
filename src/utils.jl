@@ -19,7 +19,7 @@ convert{T<:AbstractPDMat, S<:AbstractPDMat}(::Type{T}, P::S) = convert(T, raw(P)
 
 flatten(a::Number) = a
 flatten(a::Array) = reshape(a, prod(size(a)))
-flatten(a::AbstractPDMat) = flatten(full(a))
+flatten(a::AbstractPDMat) = flatten(UpperTriangular(full(a)))
 function flatten(a::UpperTriangular)
     d = size(a, 1)
     l = div(d * (d + 1), 2)
