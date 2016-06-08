@@ -105,8 +105,11 @@ end
 parsupp(d::Wishart) = (RPositive(dim(d) - 1), RCovMat(dim(d)))
 supp(d::Wishart) = RCovMat(dim(d))
 
+logpdf(d::Wishart, x::AbstractPDMat) = logpdf(d, x.mat)
 Elogdet(d::Wishart) = Distributions.meanlogdet(d)
 
 ################# InverseWishart ####################
 parsupp(d::InverseWishart) = (RPositive(dim(d) - 1), RCovMat(dim(d)))
 supp(d::InverseWishart) = RCovMat(dim(d))
+
+logpdf(d::InverseWishart, x::AbstractPDMat) = logpdf(d, x.mat)
