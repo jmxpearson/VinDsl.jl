@@ -90,11 +90,6 @@ unconstrain(d::Distribution) = map(unconstrain, parsupp(d), params(d))
 Number of free parameters needed for (multivariate) normal approximation
 to the posterior over unconstrained parameters in ADVI.
 """
-function num_pars_advi(d::Distribution, full=false)
-    p = nfree(supp(d))
-    full ? p * (p + 3) ÷ 2 : 2p
-end
-
 function num_pars_advi(rv::RVType, full=false)
     p = nfree(rv)
     full ? p * (p + 3) ÷ 2 : 2p
