@@ -67,6 +67,7 @@ facts("Checking parameter number calculations") do
     context("Normal") do
         d = Normal(1)
         @fact VinDsl.num_pars_advi(d) --> 2
+        @fact VinDsl.num_pars_advi(d, true) --> 2
     end
 
     context("Gamma") do
@@ -81,7 +82,8 @@ facts("Checking parameter number calculations") do
 
     context("MvNormal") do
         d = MvNormal(rand(3))
-        @fact VinDsl.num_pars_advi(d) --> 9
+        @fact VinDsl.num_pars_advi(d) --> 6
+        @fact VinDsl.num_pars_advi(d, true) --> 9
     end
 
     context("Wishart") do
@@ -90,6 +92,7 @@ facts("Checking parameter number calculations") do
         d = Wishart(10, S)
         # a 10-d covariance matrix has 55 free parameters
         # a multivariate normal on this has 55 (mean) + 55 * 56 / 2 (cov) pars
-        @fact VinDsl.num_pars_advi(d) --> 1595
+        @fact VinDsl.num_pars_advi(d) --> 110
+        @fact VinDsl.num_pars_advi(d, true) --> 1595
     end
 end

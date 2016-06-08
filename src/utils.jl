@@ -57,13 +57,19 @@ Generate a (multivariate) Normal distribution from a vector of unconstrained
 parameters. Number of required parameters is
 p (μ) + p(p + 1)/2 (Σ) = p(p + 3)/2
 """
-function normal_from_unconstrained(x::Vector)
-    # number of parameters: will throw InexactError if not an integer
-    p = Int((-3 + sqrt(9 + 8 * length(x)))/2)
-    if p == 1
-        d = Normal(x[1], exp(x[2]))
-    else
+function normal_from_unconstrained(x::Vector, full=false)
+    if full
+        # number of parameters: will throw InexactError if not an integer
+        p = Int((-3 + sqrt(9 + 8 * length(x)))/2)
         d = MvNormal(x[1:p], constrain(RCovMat(p), x[p+1:end]))
+    else
+        # return a multivariate normal with diagonal covariance
+        p = Int(length(x)/2)
+        if p == 1
+            d = Normal(x[1], exp(x[2]))
+        else
+            d = MvNormal(x[1:p], exp(x[p+1:end]))  # μ, σ constructor
+        end
     end
     d
 end
