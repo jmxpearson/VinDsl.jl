@@ -105,6 +105,7 @@ facts("Checking exponential family interface") do
         @fact naturals(d) --> (μ * τ, -τ/2)
         @fact naturals_to_params(naturals(d), Normal) --> (μ, σ)
         @fact Normal(constrain(unconstrain(d), d)...) --> d
+        @fact supp(d) --> RReal()
     end
 
     context("Gamma") do
@@ -114,6 +115,7 @@ facts("Checking exponential family interface") do
         @fact naturals(d) --> (a - 1, -1/θ)
         @fact naturals_to_params(naturals(d), Gamma) --> (a, θ)
         @fact Gamma(constrain(unconstrain(d), d)...) --> d
+        @fact supp(d) --> RPositive()
     end
 
     context("Dirichlet") do
@@ -136,6 +138,7 @@ facts("Checking exponential family interface") do
         dd =  MvNormalCanon(constrain(unconstrain(d), d)...)
         @fact dd.h --> h
         @fact dd.J.mat --> roughly(J)
+        @fact supp(d) --> RRealVec(length(d))
     end
 
     context("Wishart") do
@@ -153,5 +156,6 @@ facts("Checking exponential family interface") do
         dd = Wishart(constrain(unconstrain(d), d)...)
         @fact dd.df --> df
         @fact dd.S.mat --> roughly(S)
+        @fact supp(d) --> RCovMat(dim(d))
     end
 end

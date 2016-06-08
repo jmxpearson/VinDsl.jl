@@ -44,13 +44,13 @@ facts("Random variable types") do
         @fact logdetjac(rv, vv) --> 0.
     end
 
-    context("RCholCov type interface") do
-        @fact RCholCov <: RVType --> true
-        @fact RCholCov <: RMatrix --> true
+    context("RCovMat type interface") do
+        @fact RCovMat <: RVType --> true
+        @fact RCovMat <: RMatrix --> true
 
-        @fact ndims(RCholCov(5)) --> 5
+        @fact ndims(RCovMat(5)) --> 5
 
-        rv = RCholCov(5)
+        rv = RCovMat(5)
         vv = randn(5 * (5 + 1) ÷ 2)
         @fact isa(constrain(rv, vv), PDMat) --> true
         @fact isfinite(logdetjac(rv, vv)) --> true

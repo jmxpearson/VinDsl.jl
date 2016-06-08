@@ -4,9 +4,6 @@ using Distributions
 
 naturals_to_params(η, d::Distribution) = naturals_to_params(η, typeof(d).name.primary)
 
-constrain(pars, d::Distribution) = map(constrain, partypes(d), pars)
-unconstrain(d::Distribution) = map(unconstrain, partypes(d), params(d))
-
 ################# Normal ####################
 function naturals(d::Normal)
     μ, σ = params(d)
@@ -18,7 +15,8 @@ function naturals_to_params{D <: Normal}(η, ::Type{D})
     (η[1] * σ^2, σ)
 end
 
-partypes(::Normal) = (RReal(), RPositive())
+parsupp(::Normal) = (RReal(), RPositive())
+supp(::Normal) = RReal()
 
 ################# Gamma ####################
 function naturals(d::Gamma)
@@ -30,7 +28,8 @@ function naturals_to_params{D <: Gamma}(η, ::Type{D})
     (η[1] + 1, -1/η[2])
 end
 
-partypes(::Gamma) = (RPositive(), RPositive())
+parsupp(::Gamma) = (RPositive(), RPositive())
+supp(::Gamma) = RPositive()
 
 function Elog(d::Gamma)
     a, θ = params(d)
@@ -81,12 +80,13 @@ function naturals_to_params{D <: MvNormalCanon}(η, ::Type{D})
     (η[1], -2η[2])
 end
 
-partypes(d::MvNormalCanon) = (RRealVec(length(d)), RCholCov(length(d)))
+parsupp(d::MvNormalCanon) = (RRealVec(length(d)), RCovMat(length(d)))
+supp(d::MvNormalCanon) = RRealVec(length(d))
 
 # override because MvNormalCanon is overparameterized
 function unconstrain(d::MvNormalCanon)
     μ, h, J = params(d)
-    (h, unconstrain(RCholCov(length(d)), J))
+    (h, unconstrain(RCovMat(length(d)), J))
 end
 
 
@@ -99,6 +99,11 @@ function naturals_to_params{D <: Wishart}(η, ::Type{D})
     (2η[1] + size(η[2], 1) + 1, -inv(η[2])/2)
 end
 
-partypes(d::Wishart) = (RPositive(d.df - 1), RCholCov(dim(d)))
+parsupp(d::Wishart) = (RPositive(dim(d) - 1), RCovMat(dim(d)))
+supp(d::Wishart) = RCovMat(dim(d))
 
 Elogdet(d::Wishart) = Distributions.meanlogdet(d)
+
+################# InverseWishart ####################
+parsupp(d::InverseWishart) = (RPositive(dim(d) - 1), RCovMat(dim(d)))
+supp(d::InverseWishart) = RCovMat(dim(d))

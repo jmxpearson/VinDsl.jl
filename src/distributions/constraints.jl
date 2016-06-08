@@ -51,15 +51,15 @@ unconstrain(rv::RRealVec, x::Vector) = x
 logdetjac(rv::RRealVec, x::Vector) = 0.
 
 """
-Random covariance matrix (based on Cholesky factorization).
+Random covariance matrix (symmetric, positive-definite).
 """
-immutable RCholCov <: RMatrix
+immutable RCovMat <: RMatrix
     d::Int
 end
 
-ndims(x::RCholCov) = x.d
+ndims(x::RCovMat) = x.d
 
-function constrain(rv::RCholCov, x::Vector)
+function constrain(rv::RCovMat, x::Vector)
     U = UpperTriangular(x)
     for j in 1:ndims(rv)
         U[j, j] = exp(U[j, j])  # Cholesky factor must have positive diagonals
@@ -67,7 +67,7 @@ function constrain(rv::RCholCov, x::Vector)
     PDMat(Base.LinAlg.Cholesky(full(U), :U))
 end
 
-function unconstrain(rv::RCholCov, S::PDMat)
+function unconstrain(rv::RCovMat, S::PDMat)
     U = copy(S.chol[:U])
     for j in 1:dim(S)
         U[j, j] = log(U[j, j])  # diagonal of Cholesky is positive, so take log
@@ -75,7 +75,10 @@ function unconstrain(rv::RCholCov, S::PDMat)
     flatten(U)
 end
 
-function logdetjac(rv::RCholCov, x::Vector)
+function logdetjac(rv::RCovMat, x::Vector)
     d = ndims(rv)
     d * logtwo + (d + 1:-1:2) ⋅ diag(UpperTriangular(x))
 end
+
+constrain(pars, d::Distribution) = map(constrain, parsupp(d), pars)
+unconstrain(d::Distribution) = map(unconstrain, parsupp(d), params(d))

@@ -45,8 +45,8 @@ include("factors.jl")
 include("conjugate_relations.jl")
 
 export VBModel,
-    RVType, RScalar, RVector, RMatrix, RReal, RPositive, RCholCov, RRealVec,
-    constrain, unconstrain, logdetjac,
+    RVType, RScalar, RVector, RMatrix, RReal, RPositive, RCovMat, RRealVec,
+    constrain, unconstrain, logdetjac, supp, parsupp,
     Factor, FactorInds, @factor, get_structure, project, project_inds, @wrapvars, value,
     EntropyFactor, LogNormalFactor, LogGammaCanonFactor, LogMvNormalCanonFactor,
     LogGammaFactor,
