@@ -13,6 +13,7 @@ abstract RVector <: RVType
 abstract RMatrix <: RVType
 
 ndims(x::RScalar) = 1
+nfree(x::RScalar) = 1
 # size(x::RVector) = (D,)
 # size(x::RMatrix) = (P, Q)
 
@@ -46,6 +47,7 @@ immutable RRealVec  <: RVector
     d::Int
 end
 ndims(x::RRealVec) = x.d
+nfree(x::RRealVec) = ndims(x)
 constrain(rv::RRealVec, x::Vector) = x
 unconstrain(rv::RRealVec, x::Vector) = x
 logdetjac(rv::RRealVec, x::Vector) = 0.
@@ -58,6 +60,7 @@ immutable RCovMat <: RMatrix
 end
 
 ndims(x::RCovMat) = x.d
+nfree(x::RCovMat) = (p = ndims(x); p * (p + 1) ÷ 2)
 
 function constrain(rv::RCovMat, x::Vector)
     U = UpperTriangular(x)
@@ -82,3 +85,9 @@ end
 
 constrain(pars, d::Distribution) = map(constrain, parsupp(d), pars)
 unconstrain(d::Distribution) = map(unconstrain, parsupp(d), params(d))
+
+"""
+Number of free parameters needed for (multivariate) normal approximation
+to the posterior over unconstrained parameters in ADVI.
+"""
+num_pars_advi(d::Distribution) = (p = nfree(supp(d)); p * (p + 3) ÷ 2)

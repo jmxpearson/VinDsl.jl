@@ -89,6 +89,9 @@ function unconstrain(d::MvNormalCanon)
     (h, unconstrain(RCovMat(length(d)), J))
 end
 
+################# MvNormal ####################
+parsupp(d::MvNormal) = (RRealVec(length(d)), RCovMat(length(d)))
+supp(d::MvNormal) = RRealVec(length(d))
 
 ################# Wishart ####################
 function naturals(d::Wishart)
