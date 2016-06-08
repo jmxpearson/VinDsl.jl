@@ -51,3 +51,19 @@ function UpperTriangular(v::AbstractVector)
     end
     UpperTriangular(A)
 end
+
+"""
+Generate a (multivariate) Normal distribution from a vector of unconstrained
+parameters. Number of required parameters is
+p (μ) + p(p + 1)/2 (Σ) = p(p + 3)/2
+"""
+function normal_from_unconstrained(x::Vector)
+    # number of parameters: will throw InexactError if not an integer
+    p = Int((-3 + sqrt(9 + 8 * length(x)))/2)
+    if p == 1
+        d = Normal(x[1], exp(x[2]))
+    else
+        d = MvNormal(x[1:p], constrain(RCovMat(p), x[p+1:end]))
+    end
+    d
+end
