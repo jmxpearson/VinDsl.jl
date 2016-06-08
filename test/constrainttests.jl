@@ -12,6 +12,7 @@ facts("Random variable types") do
 
         @fact ndims(RReal()) --> 1
         @fact nfree(RReal()) --> 1
+        @fact VinDsl.num_pars_advi(RReal()) --> 2
 
         rv = RReal()
         @fact constrain(rv, -2) --> -2
@@ -24,6 +25,7 @@ facts("Random variable types") do
 
         @fact ndims(RPositive()) --> 1
         @fact nfree(RPositive()) --> 1
+        @fact VinDsl.num_pars_advi(RPositive()) --> 2
 
         @fact RPositive().lb --> 0.
         @fact RPositive().lb --> 0.
@@ -40,6 +42,8 @@ facts("Random variable types") do
 
         @fact ndims(RRealVec(3)) --> 3
         @fact nfree(RRealVec(3)) --> 3
+        @fact VinDsl.num_pars_advi(RRealVec(3)) --> 6
+        @fact VinDsl.num_pars_advi(RRealVec(3), true) --> 9
 
         d = 3
         rv = RRealVec(d)
@@ -54,6 +58,8 @@ facts("Random variable types") do
 
         @fact ndims(RCovMat(5)) --> 5
         @fact nfree(RCovMat(5)) --> 15
+        @fact VinDsl.num_pars_advi(RCovMat(5)) --> 30
+        @fact VinDsl.num_pars_advi(RCovMat(5), true) --> 135
 
         rv = RCovMat(5)
         vv = randn(5 * (5 + 1) ÷ 2)

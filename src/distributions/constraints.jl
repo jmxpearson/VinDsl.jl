@@ -94,3 +94,8 @@ function num_pars_advi(d::Distribution, full=false)
     p = nfree(supp(d))
     full ? p * (p + 3) ÷ 2 : 2p
 end
+
+function num_pars_advi(rv::RVType, full=false)
+    p = nfree(rv)
+    full ? p * (p + 3) ÷ 2 : 2p
+end
