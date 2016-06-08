@@ -70,7 +70,7 @@ end
 function unconstrain(rv::RCholCov, S::PDMat)
     U = copy(S.chol[:U])
     for j in 1:dim(S)
-        U[j, j] = log(U[j, j])  # diagonal of Cholesky must be positive
+        U[j, j] = log(U[j, j])  # diagonal of Cholesky is positive, so take log
     end
     flatten(U)
 end
