@@ -59,7 +59,7 @@ RandomNode{D <: Distribution}(name::Symbol, indices::Vector{Symbol}, ::Type{D}, 
         else
             RandomNode{D}(name, indices, map(D, pars...))
         end
-    elseif length(unique(dims)) == 1
+    elseif length(unique(dims)) == 1 && dims[1] != ()
         RandomNode{D}(name, indices, map(D, pars...))
     else
         RandomNode{D}(name, indices, [D(pars...)])
