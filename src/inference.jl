@@ -1,7 +1,8 @@
 # include various methods for updating nodes
 strategies = [
     "conjugacy",
-    "opt"
+    "opt",
+    "advi"
 ]
 
 for sname in strategies

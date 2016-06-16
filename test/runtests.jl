@@ -30,6 +30,7 @@ tests = [
     "hmmtests",
     "integrationtests",
     "distributiontests",
+    "advitests",
 ]
 
 print_with_color(:blue, "Running tests:\n")
