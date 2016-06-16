@@ -53,11 +53,13 @@ function UpperTriangular(v::AbstractVector)
 end
 
 """
-Generate a (multivariate) Normal distribution from a vector of unconstrained
+Generate a Normal distribution from a vector of unconstrained
 parameters. Number of required parameters is
 p (μ) + p(p + 1)/2 (Σ) = p(p + 3)/2
 """
-function normal_from_unconstrained(x::Vector, full=false)
+normal_from_unconstrained(x::Vector) = Normal(x[1], exp(x[2]))
+
+function mvnormal_from_unconstrained(x::Vector, full=false)
     if full
         # number of parameters: will throw InexactError if not an integer
         p = Int((-3 + sqrt(9 + 8 * length(x)))/2)
@@ -65,11 +67,7 @@ function normal_from_unconstrained(x::Vector, full=false)
     else
         # return a multivariate normal with diagonal covariance
         p = Int(length(x)/2)
-        if p == 1
-            d = Normal(x[1], exp(x[2]))
-        else
-            d = MvNormal(x[1:p], exp(x[p+1:end]))  # μ, σ constructor
-        end
+        d = MvNormal(x[1:p], exp(x[p+1:end]))  # μ, σ constructor
     end
     d
 end
