@@ -22,7 +22,7 @@ function update!{D, S <: explicit_opts}(n::RandomNode{D}, m::VBModel, ::Type{S})
     # use ForwardDiff to get the gradient; autodiff in optimize uses
     # ReverseDiff, but ForwardDiff only requires args <: Real, but
     # ReverseDiff needs args <: Number, which Distributions doesn't allow
-    gradf! = ForwardDiff.gradient(objfun, mutates=true)
+    gradf! = (out, x) -> ForwardDiff.gradient!(out, objfun, x)
 
     # define mutating gradient; store gradient in storage array
     objgrad!(x, storage) = gradf!(storage, x)
