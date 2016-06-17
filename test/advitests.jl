@@ -2,6 +2,7 @@
 using FactCheck
 using Distributions
 using PDMats
+using StatsFuns
 
 using VinDsl
 srand(56778)
@@ -25,4 +26,9 @@ facts("Utility functions") do
     x = Array{ForwardDiff.Dual}(rand(10, 7))
     randn!(x)
     @fact eltype(x) <: ForwardDiff.Dual --> true
+
+    p = 5
+    vv = rand(p * (p + 3) ÷ 2)
+    @fact H(vv, true) --> p * (log2π + 1)/2 + sum(vv[p + [1, 6, 10, 13, 15]])
+    @fact H([1.1, 2.2]) --> (log2π + 1)/2 + 2.2/2
 end
