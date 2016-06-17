@@ -35,6 +35,21 @@ function flatten(a::UpperTriangular)
     end
     out
 end
+function flatten(a::LowerTriangular)
+    d = size(a, 1)
+    l = div(d * (d + 1), 2)
+    out = Array(eltype(a), l)
+    idx = 1
+    for c in 1:d
+        for r in 1:d
+            if r ≥ c
+                out[idx] = a.data[r, c]
+                idx += 1
+            end
+        end
+    end
+    out
+end
 
 function UpperTriangular(v::AbstractVector)
     l = length(v)
@@ -50,6 +65,21 @@ function UpperTriangular(v::AbstractVector)
         end
     end
     UpperTriangular(A)
+end
+function LowerTriangular(v::AbstractVector)
+    l = length(v)
+    d = (-1 + Int(sqrt(1 + 8l))) ÷ 2
+    A = zeros(eltype(v), d, d)
+    idx = 1
+    for c in 1:d
+        for r in 1:d
+            if r ≥ c
+                A[r, c] = v[idx]
+                idx += 1
+            end
+        end
+    end
+    LowerTriangular(A)
 end
 
 """

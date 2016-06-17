@@ -48,9 +48,37 @@ immutable RRealVec  <: RVector
 end
 ndims(x::RRealVec) = x.d
 nfree(x::RRealVec) = ndims(x)
-constrain(rv::RRealVec, x::Vector) = x
-unconstrain(rv::RRealVec, x::Vector) = x
-logdetjac(rv::RRealVec, x::Vector) = 0.
+constrain(::RRealVec, x::Vector) = x
+unconstrain(::RRealVec, x::Vector) = x
+logdetjac(::RRealVec, x::Vector) = 0.
+
+"""
+Random Cholesky factor (lower triangular matrix with positive diagonal).
+"""
+immutable RCholFact <: RMatrix
+    d::Int
+end
+
+ndims(x::RCholFact) = x.d
+nfree(x::RCholFact) = (p = ndims(x); p * (p + 1) ÷ 2)
+
+function constrain(rv::RCholFact, x::Vector)
+    L = LowerTriangular(x)
+    for j in 1:ndims(rv)
+        L[j, j] = exp(L[j, j])  # Cholesky factor must have positive diagonals
+    end
+    L
+end
+
+function unconstrain(::RCholFact, S::LowerTriangular)
+    L = copy(S)
+    for j in 1:dim(S)
+        L[j, j] = log(L[j, j])  # diagonal of Cholesky is positive, so take log
+    end
+    flatten(L)
+end
+
+logdetjac(rv::RCholFact, x::Vector) = sum(diag(LowerTriangular(x)))
 
 """
 Random covariance matrix (symmetric, positive-definite).
@@ -63,24 +91,24 @@ ndims(x::RCovMat) = x.d
 nfree(x::RCovMat) = (p = ndims(x); p * (p + 1) ÷ 2)
 
 function constrain(rv::RCovMat, x::Vector)
-    U = UpperTriangular(x)
+    L = LowerTriangular(x)
     for j in 1:ndims(rv)
-        U[j, j] = exp(U[j, j])  # Cholesky factor must have positive diagonals
+        L[j, j] = exp(L[j, j])  # Cholesky factor must have positive diagonals
     end
-    PDMat(Base.LinAlg.Cholesky(full(U), :U))
+    PDMat(Base.LinAlg.Cholesky(full(L), :L))
 end
 
-function unconstrain(rv::RCovMat, S::PDMat)
-    U = copy(S.chol[:U])
+function unconstrain(::RCovMat, S::PDMat)
+    L = copy(S.chol[:L])
     for j in 1:dim(S)
-        U[j, j] = log(U[j, j])  # diagonal of Cholesky is positive, so take log
+        L[j, j] = log(L[j, j])  # diagonal of Cholesky is positive, so take log
     end
-    flatten(U)
+    flatten(L)
 end
 
 function logdetjac(rv::RCovMat, x::Vector)
     d = ndims(rv)
-    d * logtwo + (d + 1:-1:2) ⋅ diag(UpperTriangular(x))
+    d * logtwo + (d + 1:-1:2) ⋅ diag(LowerTriangular(x))
 end
 
 constrain(pars, d::Distribution) = map(constrain, parsupp(d), pars)

@@ -52,6 +52,21 @@ facts("Random variable types") do
         @fact logdetjac(rv, vv) --> 0.
     end
 
+    context("RCholFact type interface") do
+        @fact RCholFact <: RVType --> true
+        @fact RCholFact <: RMatrix --> true
+
+        @fact ndims(RCholFact(5)) --> 5
+        @fact nfree(RCholFact(5)) --> 15
+        @fact VinDsl.num_pars_advi(RCholFact(5)) --> 30
+        @fact VinDsl.num_pars_advi(RCholFact(5), true) --> 135
+
+        rv = RCholFact(5)
+        vv = randn(5 * (5 + 1) ÷ 2)
+        @fact isa(constrain(rv, vv), LowerTriangular) --> true
+        @fact logdetjac(rv, vv) --> vv[1] + vv[6] + vv[10] + vv[13] + vv[15]
+    end
+
     context("RCovMat type interface") do
         @fact RCovMat <: RVType --> true
         @fact RCovMat <: RMatrix --> true
