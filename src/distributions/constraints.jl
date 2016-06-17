@@ -14,9 +14,10 @@ abstract RMatrix <: RVType
 
 ndims(x::RScalar) = 1
 nfree(x::RScalar) = 1
-# size(x::RVector) = (D,)
-# size(x::RMatrix) = (P, Q)
 
+storage_type(rv::RScalar, T) = T
+storage_type(rv::RVector, T) = Vector{T}
+storage_type(rv::RMatrix, T) = Matrix{T}
 ###################################################
 # random variable concrete types
 ###################################################

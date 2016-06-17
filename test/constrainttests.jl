@@ -4,6 +4,10 @@ facts("Random variable types") do
         @fact RScalar <: RVType --> true
         @fact RVector <: RVType --> true
         @fact RMatrix <: RVType --> true
+
+        @fact VinDsl.storage_type(RReal(), Float64) --> Float64
+        @fact VinDsl.storage_type(RRealVec(5), Float64) --> Array{Float64, 1}
+        @fact VinDsl.storage_type(RCovMat(5), Float64) --> Array{Float64, 2}
     end
 
     context("RReal type interface") do
