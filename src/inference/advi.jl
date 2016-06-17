@@ -23,6 +23,36 @@ function randn!{T<:ForwardDiff.Dual}(A::AbstractArray{T})
     A
 end
 
+function advi_rand{T<:Real}(x::Vector{T}, full=false)
+    if full
+        p = Int((-3 + sqrt(9 + 8 * length(x)))/2)
+        L = LowerTriangular(x[p+1:endof(x)])
+        out = L * randn(p)
+    else
+        p = Int(length(x)/2)
+        out = exp(x[p+1:endof(x)]) .* randn(p)
+    end
+    for i in 1:p
+        @inbounds out[i] += x[i]
+    end
+    out
+end
+
+function advi_rand{T<:Real}(x::Vector{T}, n::Int, full=false)
+    if full
+        p = Int((-3 + sqrt(9 + 8 * length(x)))/2)
+        L = LowerTriangular(x[p+1:endof(x)])
+        out = L * randn(p, n)
+    else
+        p = Int(length(x)/2)
+        out = scale(exp(x[p+1:endof(x)]), randn(p, n))
+    end
+    for i in 1:p
+        @inbounds out[i] += x[i]
+    end
+    out
+end
+
 """
 Calculate the entropy of a (multivariate) Normal distribution based on
 a vector of unconstrained parameters for the mean and covariance.
