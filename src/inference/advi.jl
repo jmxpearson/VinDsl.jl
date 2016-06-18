@@ -186,3 +186,20 @@ function _convert_typename(ex)
     out.args[1] = Symbol("R", out.args[1])
     out
 end
+
+macro advi_model(x)
+    esc(_advi_model(x))
+end
+
+function _advi_model(ex::Expr)
+    # if we have a ~ expression, replace with increment of L
+    if ex.head == :macrocall && ex.args[1] == Symbol("@~")
+        out = :(L += logpdf($(ex.args[3]), $(ex.args[2])))
+    else  # recursively parse
+        out = copy(ex)
+        for i in eachindex(out.args)
+            out.args[i] = isa(out.args[i], Expr) ? _advi_model(out.args[i]) : out.args[i]
+        end
+    end
+    out
+end
