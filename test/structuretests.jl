@@ -151,6 +151,27 @@ facts("Basic factor construction") do
         @fact value(f) --> isfinite
     end
 
+    context("pmodel macro") do
+        dims = (10, 2)
+
+        a[j] ~ Normal(rand(dims[2]), ones(dims[2]))
+        b ~ Gamma(1, 1)
+        y[i, j] ~ Normal(rand(dims), ones(dims))
+
+        f1 = @factor LogNormalFactor y a b
+        @pmodel begin
+            y ~ Normal(a, b)
+        end
+        f2 = pmodel_factors[1]
+
+        @fact isa(pmodel_factors, Array{Factor, 1}) --> true
+        @fact isa(f2, typeof(f1)) --> true
+        for f in fieldnames(f1.inds)
+            @fact getfield(f2.inds, f) --> getfield(f1.inds, f)
+        end
+        @fact f2.namemap --> f1.namemap
+    end
+
 end
 
 facts("Unrolling and rerolling parameters") do

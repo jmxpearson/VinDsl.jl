@@ -74,6 +74,33 @@ macro deffactor(typename, vars, valexpr)
     esc(ex)
 end
 
+###################################################
+# Macro to instantiate a factor using ~
+###################################################
+macro pmodel(ex)
+    body = _pmodel(ex)
+    out = quote
+        pmodel_factors = Factor[]
+        $body
+    end
+    esc(out)
+end
+
+function _pmodel(ex)
+    # if we have a ~ expression, replace with an @factor
+    if ex.head == :macrocall && ex.args[1] == Symbol("@~")
+        lhs = ex.args[2]
+        rhs = ex.args[3]
+        factorname = Symbol("Log", rhs.args[1], "Factor")
+        out = :(push!(pmodel_factors, @factor $factorname $lhs $(rhs.args[2:end]...)))
+    else  # recursively parse
+        out = copy(ex)
+        for i in eachindex(out.args)
+            out.args[i] = isa(out.args[i], Expr) ? _pmodel(out.args[i]) : out.args[i]
+        end
+    end
+    out
+end
 
 ######### macros/functions to generalize expectations of expressions ##########
 macro simplify(ex)
