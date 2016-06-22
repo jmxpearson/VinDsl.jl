@@ -203,3 +203,16 @@ function _advi_model(ex::Expr)
     end
     out
 end
+
+macro ELBO(ex)
+    out = quote
+        function ELBO(x::Vector)
+            ctr = 1
+            L = zero(eltype(x))
+            $ex
+            L
+        end
+    end
+
+    esc(out)
+end
