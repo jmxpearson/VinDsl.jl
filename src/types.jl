@@ -91,6 +91,33 @@ ConstantNode{T}(data::Array{T}, indices::Vector{Symbol}) =
     ConstantNode(gensym("const"), indices, data)
 ConstantNode(x::Number) = ConstantNode(gensym("const"), [:scalar], [x])
 
+function show(io::IO, n::Node)
+    T = typeof(n)
+    print(io, T.name, "{", T.parameters[1].name.name, "}", " ", n.name)
+    inners = filter(x -> x != :scalar, n.innerinds)
+    outers = filter(x -> x != :scalar, n.outerinds)
+    if !isempty(inners)
+        print(io, "(")
+        _printinds(io, n.innerinds)
+        print(io, ")")
+    end
+    if !isempty(outers)
+        print(io, "[")
+        _printinds(io, n.outerinds)
+        print(io, "]")
+    end
+end
+
+function _printinds(io::IO, inds::Vector{Symbol})
+    for idx in inds
+        lastind = last(inds)
+        if idx == lastind
+            print(io, idx)
+        else
+            print(io, idx, ",")
+        end
+    end
+end
 
 ###################################################
 # FactorInds
@@ -109,6 +136,15 @@ immutable FactorInds
     inds_in_node::Dict{Symbol, Vector{Int}}
 end
 
+function show(io::IO, f::Factor)
+    println(io, typeof(f))
+    for v in fieldnames(f)
+        if v ∉ [:inds, :namemap]
+            print(io, v, ": ")
+            println(io, getfield(f, v))
+        end
+    end
+end
 
 ###################################################
 # ExprNode <: Node

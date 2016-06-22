@@ -10,7 +10,7 @@ using PDMats
 using StatsFuns
 using Optim
 using ForwardDiff
-import Base: convert, call, zero, getindex, setindex!, ndims
+import Base: convert, call, show, zero, getindex, setindex!, ndims
 import Distributions: params, var, entropy, cov, invcov, logpdf, logdetcov, logmvgamma
 using Base.Cartesian
 
