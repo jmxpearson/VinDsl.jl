@@ -76,6 +76,32 @@ facts("Random variable types") do
         @fact logdetjac(rv, 1) --> log(2 - (-3)) - 1 - 2 * log(1 + exp(-1))
     end
 
+    context("RProbability type interface") do
+        @fact RProbability <: RVType --> true
+        @fact RProbability <: RScalar --> true
+
+        @fact ndims(RProbability()) --> 1
+        @fact nfree(RProbability()) --> 1
+        @fact VinDsl.num_pars_advi(RProbability()) --> 2
+
+        rv = RProbability()
+        @fact constrain(rv, 2) --> 1 / (1 + exp(-2))
+        @fact logdetjac(rv, 2) --> - 2 - 2 * log(1 + exp(-2))
+    end
+
+    context("RCorrelation type interface") do
+        @fact RCorrelation <: RVType --> true
+        @fact RCorrelation <: RScalar --> true
+
+        @fact ndims(RCorrelation()) --> 1
+        @fact nfree(RCorrelation()) --> 1
+        @fact VinDsl.num_pars_advi(RCorrelation()) --> 2
+
+        rv = RCorrelation()
+        @fact constrain(rv, 3) --> (exp(6) - 1) / (exp(6) + 1)
+        @fact logdetjac(rv, 3) --> log(4) + 6 - 2log(1 + exp(6))
+    end
+
     context("RRealVec type interface") do
         @fact RRealVec <: RVType --> true
         @fact RRealVec <: RVector --> true

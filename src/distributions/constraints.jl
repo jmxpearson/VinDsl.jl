@@ -93,7 +93,27 @@ function unconstrain(rv::RBounded, x::Real)
     logitx
 end
 
-logdetjac(rv::RBounded, x::Real) = log(rv.ub - rv.lb) - x - 2 * log(1 + exp(-x))
+logdetjac(rv::RBounded, x::Real) = log(rv.ub - rv.lb) - x - 2log(1 + exp(-x))
+
+"""
+Probability constrained value.
+"""
+immutable RProbability <: RScalar
+end
+
+constrain(rv::RProbability, x::Real) = 1 / (1 + exp(-x))
+unconstrain(rv::RProbability, x::Real) = log(x / (1 - x))
+logdetjac(rv::RProbability, x::Real) = - x - 2log(1 + exp(-x))
+
+"""
+Correlation constrained value.
+"""
+immutable RCorrelation <: RScalar
+end
+
+constrain(rv::RCorrelation, x::Real) = (exp(2 * x) - 1) / (exp(2 * x) + 1)
+unconstrain(rv::RCorrelation, x::Real) = .5log((1 + x) / (1 - x))
+logdetjac(rv::RCorrelation, x::Real) = log(4) + 2 * x - 2 * log(1 + exp(2 * x))
 
 
 """
