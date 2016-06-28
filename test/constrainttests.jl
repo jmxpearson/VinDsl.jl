@@ -37,7 +37,43 @@ facts("Random variable types") do
 
         rv = RPositive(1.5)
         @fact constrain(rv, -2) ≥ rv.lb --> true
+        @fact logdetjac(rv, 2.5) --> 2.5
+    end
+
+    context("RNegative type interface") do
+        @fact RNegative <: RVType --> true
+        @fact RNegative <: RScalar --> true
+
+        @fact ndims(RNegative()) --> 1
+        @fact nfree(RNegative()) --> 1
+        @fact VinDsl.num_pars_advi(RNegative()) --> 2
+
+        @fact RNegative().ub --> 0.
+        @fact RNegative().ub --> 0.
+        @fact RNegative(-2).ub --> -2
+
+        rv = RNegative(-1.5)
+        @fact constrain(rv, 2) ≤ rv.ub --> true
         @fact logdetjac(rv, -2.5) --> -2.5
+    end
+
+    context("RBounded type interface") do
+        @fact RBounded <: RVType --> true
+        @fact RBounded <: RScalar --> true
+
+        @fact ndims(RBounded()) --> 1
+        @fact nfree(RBounded()) --> 1
+        @fact VinDsl.num_pars_advi(RBounded()) --> 2
+
+        @fact RBounded().ub --> 1
+        @fact RBounded().lb --> 0.
+        @fact RBounded(-3, 2).ub --> 2
+        @fact RBounded(-3, 2).lb --> -3
+
+        rv = RBounded(-3, 2)
+        @fact constrain(rv, 1) ≤ rv.ub --> true
+        @fact constrain(rv, 1) ≥ rv.lb --> true
+        @fact logdetjac(rv, 1) --> log(2 - (-3)) - 1 - 2 * log(1 + exp(-1))
     end
 
     context("RRealVec type interface") do

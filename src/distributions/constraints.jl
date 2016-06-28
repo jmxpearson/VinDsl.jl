@@ -42,7 +42,62 @@ unconstrain(rv::RPositive, x::Real) = log(x - rv.lb)
 logdetjac(rv::RPositive, x::Real) = x
 
 """
-Real-valued scalar.
+ Constrained variable with (optional) upper bound.
+"""
+immutable RNegative{T <: Real}  <: RScalar
+    ub::T
+end
+RNegative{T <: Real}(ub::T=0.) = RNegative{T}(ub)
+constrain(rv::RNegative, x::Real) = rv.ub - exp(x)
+unconstrain(rv::RNegative, x::Real) = log(rv.ub - x)
+logdetjac(rv::RNegative, x::Real) = x
+
+"""
+Constrained variable with (optional) upper and lower bound.
+"""
+immutable RBounded{T <: Real}  <: RScalar
+    lb::T
+    ub::T
+end
+
+RBounded{T <: Real}(lb::T = 0., ub::T = 1.0) = RBounded{T}(lb, ub)
+
+function constrain(rv::RBounded, x::Real)
+    if x > 0
+        invlogitx = 1 / (1 + exp(-x))
+        if x < Inf && invlogitx == 1
+            invlogitx = 1 - eps()
+        else
+            invlogitx = 1
+        end
+    else
+        invlogitx = 1 - 1 / (1 + exp(x))
+        if x > -Inf && invlogitx == 0
+            invlogitx = eps()
+        else
+            invlogitx = 0
+        end
+        rv.lb + (rv.ub - rv.lb) * invlogitx
+    end
+end
+
+# constrain(rv::RBounded, x::Real) = rv.lub - exp(x)
+function unconstrain(rv::RBounded, x::Real)
+    if rv.lb < x < rv.ub
+        logitx = log((x - rv.lb) / (rv.ub - x))
+    elseif x == rv.lb
+        logitx = -Inf
+    elseif x == rv.ub
+        logitx = Inf
+    end
+    logitx
+end
+
+logdetjac(rv::RBounded, x::Real) = log(rv.ub - rv.lb) - x - 2 * log(1 + exp(-x))
+
+
+"""
+Real-valued vector.
 """
 immutable RRealVec  <: RVector
     d::Int
