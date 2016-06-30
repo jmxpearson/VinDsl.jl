@@ -140,6 +140,45 @@ unconstrain(::RUnitVec, x::Vector) = x .* sqrt(dot(x, x))
 logdetjac(::RUnitVec, x::Vector) = - .5 * dot(x, x)
 
 """
+Unit length vector.
+"""
+immutable RUnitVec  <: RVector
+    d::Int
+end
+ndims(x::RUnitVec) = x.d
+nfree(x::RUnitVec) = ndims(x)
+constrain(::RUnitVec, x::Vector) = x ./ sqrt(dot(x, x))
+unconstrain(::RUnitVec, x::Vector) = x .* sqrt(dot(x, x))
+logdetjac(::RUnitVec, x::Vector) = - .5 * dot(x, x)
+
+"""
+Ordered Constraint
+"""
+immutable ROrdered  <: RVector
+    d::Int
+end
+ndims(x::ROrdered) = x.d
+nfree(x::ROrdered) = ndims(x)
+function constrain(rv::ROrdered, x::Vector)
+    y = x
+    for j in 1:(ndims(rv) - 1)
+        y[j + 1] = y[j] + exp(x[j + 1])
+    end
+    y
+end
+
+function unconstrain(::ROrdered, x::Vector)
+    y = x
+    for j in 1:(ndims(rv) - 1)
+        y[j + 1] = log(x[j + 1] - x[j])
+    end
+    y
+end
+
+logdetjac(::ROrdered, x::Vector) = sum(x)
+
+
+"""
 Random Cholesky factor (lower triangular matrix with positive diagonal).
 """
 immutable RCholFact <: RMatrix
