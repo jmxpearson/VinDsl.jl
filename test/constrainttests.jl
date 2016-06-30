@@ -118,6 +118,22 @@ facts("Random variable types") do
         @fact logdetjac(rv, vv) --> 0.
     end
 
+    context("RUnitVec type interface") do
+        @fact RUnitVec <: RVType --> true
+        @fact RUnitVec <: RVector --> true
+
+        @fact ndims(RUnitVec(3)) --> 3
+        @fact nfree(RUnitVec(3)) --> 3
+        @fact VinDsl.num_pars_advi(RUnitVec(3)) --> 6
+        @fact VinDsl.num_pars_advi(RUnitVec(3), true) --> 9
+
+        d = 3
+        rv = RUnitVec(d)
+        vv = rand(d)
+        @fact vecnorm(constrain(rv, vv)) --> 1
+        #@fact logdetjac(rv, vv) --> - .5 * vecnorm(x) ** 2
+    end
+
     context("RCholFact type interface") do
         @fact RCholFact <: RVType --> true
         @fact RCholFact <: RMatrix --> true

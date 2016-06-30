@@ -81,7 +81,6 @@ function constrain(rv::RBounded, x::Real)
     end
 end
 
-# constrain(rv::RBounded, x::Real) = rv.lub - exp(x)
 function unconstrain(rv::RBounded, x::Real)
     if rv.lb < x < rv.ub
         logitx = log((x - rv.lb) / (rv.ub - x))
@@ -127,6 +126,18 @@ nfree(x::RRealVec) = ndims(x)
 constrain(::RRealVec, x::Vector) = x
 unconstrain(::RRealVec, x::Vector) = x
 logdetjac(::RRealVec, x::Vector) = 0.
+
+"""
+Unit length vector.
+"""
+immutable RUnitVec  <: RVector
+    d::Int
+end
+ndims(x::RUnitVec) = x.d
+nfree(x::RUnitVec) = ndims(x)
+constrain(::RUnitVec, x::Vector) = x ./ sqrt(dot(x, x))
+unconstrain(::RUnitVec, x::Vector) = x .* sqrt(dot(x, x))
+logdetjac(::RUnitVec, x::Vector) = - .5 * dot(x, x)
 
 """
 Random Cholesky factor (lower triangular matrix with positive diagonal).
