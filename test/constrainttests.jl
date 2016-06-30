@@ -152,6 +152,24 @@ facts("Random variable types") do
         @fact logdetjac(rv, vv) --> vv[1] + vv[2] + vv[3]
     end
 
+    context("RPosOrdered type interface") do
+        @fact RPosOrdered <: RVType --> true
+        @fact RPosOrdered <: RVector --> true
+
+        @fact ndims(RPosOrdered(3)) --> 3
+        @fact nfree(RPosOrdered(3)) --> 3
+        @fact VinDsl.num_pars_advi(RPosOrdered(3)) --> 6
+        @fact VinDsl.num_pars_advi(RPosOrdered(3), true) --> 9
+
+        d = 3
+        rv = RPosOrdered(d)
+        vv = rand(d)
+        #vv0 = vv
+        #@fact constrain(rv, vv) --> [vv0[1], vv0[1] + exp(vv0[2]), (vv0[1] + exp(vv0[2])) + exp(vv0[3])]
+        @fact constrain(rv, vv)[1] > 0 --> true
+        @fact logdetjac(rv, vv) --> vv[1] + vv[2] + vv[3]
+    end
+
     context("RCholFact type interface") do
         @fact RCholFact <: RVType --> true
         @fact RCholFact <: RMatrix --> true

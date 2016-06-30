@@ -177,6 +177,34 @@ end
 
 logdetjac(::ROrdered, x::Vector) = sum(x)
 
+"""
+Positive Ordered Constraint
+"""
+immutable RPosOrdered  <: RVector
+    d::Int
+end
+ndims(x::RPosOrdered) = x.d
+nfree(x::RPosOrdered) = ndims(x)
+function constrain(rv::RPosOrdered, x::Vector)
+    y = x
+    y[1] = exp(x[1])
+    for j in 1:(ndims(rv) - 1)
+        y[j + 1] = y[j] + exp(x[j + 1])
+    end
+    y
+end
+
+function unconstrain(::RPosOrdered, x::Vector)
+    y = x
+    for j in 1:(ndims(rv) - 1)
+        y[j + 1] = log(x[j + 1] - x[j])
+    end
+    y[1] = log(x[1])
+    y
+end
+
+logdetjac(::RPosOrdered, x::Vector) = sum(x)
+
 
 """
 Random Cholesky factor (lower triangular matrix with positive diagonal).
