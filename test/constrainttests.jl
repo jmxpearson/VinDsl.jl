@@ -73,7 +73,7 @@ facts("Random variable types") do
         rv = RBounded(-3, 2)
         @fact constrain(rv, 1) ≤ rv.ub --> true
         @fact constrain(rv, 1) ≥ rv.lb --> true
-        @fact logdetjac(rv, 1) --> log(2 - (-3)) - 1 - 2 * log(1 + exp(-1))
+        @fact logdetjac(rv, 1) --> log(2 - (-3)) - 1 - 2log(1 + exp(-1))
     end
 
     context("RProbability type interface") do
@@ -86,7 +86,7 @@ facts("Random variable types") do
 
         rv = RProbability()
         @fact constrain(rv, 2) --> 1 / (1 + exp(-2))
-        @fact logdetjac(rv, 2) --> - 2 - 2 * log(1 + exp(-2))
+        @fact logdetjac(rv, 2) --> - 2 - 2StatsFuns.log1pexp(-2) # Actually - 2 - 2log(1 + exp(-2)) has higher precision
     end
 
     context("RCorrelation type interface") do
@@ -167,6 +167,8 @@ facts("Random variable types") do
         #vv0 = vv
         #@fact constrain(rv, vv) --> [vv0[1], vv0[1] + exp(vv0[2]), (vv0[1] + exp(vv0[2])) + exp(vv0[3])]
         @fact constrain(rv, vv)[1] > 0 --> true
+        vvresult = constrain(rv, vv)
+        @fact vvresult[3] > vvresult[2] > vvresult[1] --> true
         @fact logdetjac(rv, vv) --> vv[1] + vv[2] + vv[3]
     end
 

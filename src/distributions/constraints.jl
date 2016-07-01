@@ -61,38 +61,9 @@ immutable RBounded{T <: Real}  <: RScalar
 end
 
 RBounded{T <: Real}(lb::T = 0., ub::T = 1.0) = RBounded{T}(lb, ub)
-
-function constrain(rv::RBounded, x::Real)
-    if x > 0
-        invlogitx = 1 / (1 + exp(-x))
-        if x < Inf && invlogitx == 1
-            invlogitx = 1 - eps()
-        else
-            invlogitx = 1
-        end
-    else
-        invlogitx = 1 - 1 / (1 + exp(x))
-        if x > -Inf && invlogitx == 0
-            invlogitx = eps()
-        else
-            invlogitx = 0
-        end
-        rv.lb + (rv.ub - rv.lb) * invlogitx
-    end
-end
-
-function unconstrain(rv::RBounded, x::Real)
-    if rv.lb < x < rv.ub
-        logitx = log((x - rv.lb) / (rv.ub - x))
-    elseif x == rv.lb
-        logitx = -Inf
-    elseif x == rv.ub
-        logitx = Inf
-    end
-    logitx
-end
-
-logdetjac(rv::RBounded, x::Real) = log(rv.ub - rv.lb) - x - 2log(1 + exp(-x))
+constrain(rv::RBounded, x::Real) = rv.lb + (rv.ub - rv.lb) * StatsFuns.logistic(x)
+unconstrain(rv::RBounded, x::Real) = logit((x - rv.lb) / (rv.ub - rv.lb))
+logdetjac(rv::RBounded, x::Real) = log(rv.ub - rv.lb) - x - 2 * StatsFuns.log1pexp(-x)
 
 """
 Probability constrained value.
@@ -100,9 +71,9 @@ Probability constrained value.
 immutable RProbability <: RScalar
 end
 
-constrain(rv::RProbability, x::Real) = 1 / (1 + exp(-x))
-unconstrain(rv::RProbability, x::Real) = log(x / (1 - x))
-logdetjac(rv::RProbability, x::Real) = - x - 2log(1 + exp(-x))
+constrain(rv::RProbability, x::Real) = StatsFuns.logistic(x)
+unconstrain(rv::RProbability, x::Real) = StatsFuns.logit(x)
+logdetjac(rv::RProbability, x::Real) = - x - 2log1pexp(-x)
 
 """
 Correlation constrained value.
@@ -110,9 +81,9 @@ Correlation constrained value.
 immutable RCorrelation <: RScalar
 end
 
-constrain(rv::RCorrelation, x::Real) = (exp(2 * x) - 1) / (exp(2 * x) + 1)
-unconstrain(rv::RCorrelation, x::Real) = .5log((1 + x) / (1 - x))
-logdetjac(rv::RCorrelation, x::Real) = log(4) + 2 * x - 2 * log(1 + exp(2 * x))
+constrain(rv::RCorrelation, x::Real) = corrx = tanh(x)
+unconstrain(rv::RCorrelation, x::Real) = atanh(x)
+logdetjac(rv::RCorrelation, x::Real) = log(4) + 2x - 2 * StatsFuns.log1pexp(2x)
 
 
 """
@@ -139,17 +110,6 @@ constrain(::RUnitVec, x::Vector) = x ./ sqrt(dot(x, x))
 unconstrain(::RUnitVec, x::Vector) = x .* sqrt(dot(x, x))
 logdetjac(::RUnitVec, x::Vector) = - .5 * dot(x, x)
 
-"""
-Unit length vector.
-"""
-immutable RUnitVec  <: RVector
-    d::Int
-end
-ndims(x::RUnitVec) = x.d
-nfree(x::RUnitVec) = ndims(x)
-constrain(::RUnitVec, x::Vector) = x ./ sqrt(dot(x, x))
-unconstrain(::RUnitVec, x::Vector) = x .* sqrt(dot(x, x))
-logdetjac(::RUnitVec, x::Vector) = - .5 * dot(x, x)
 
 """
 Ordered Constraint
@@ -205,6 +165,12 @@ end
 
 logdetjac(::RPosOrdered, x::Vector) = sum(x)
 
+#"""
+#Simplex (left blank here)
+#"""
+
+
+
 
 """
 Random Cholesky factor (lower triangular matrix with positive diagonal).
@@ -233,6 +199,7 @@ function unconstrain(::RCholFact, S::LowerTriangular)
 end
 
 logdetjac(rv::RCholFact, x::Vector) = sum(diag(LowerTriangular(x)))
+
 
 """
 Random covariance matrix (symmetric, positive-definite).
