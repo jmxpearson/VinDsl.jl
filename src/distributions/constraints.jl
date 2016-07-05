@@ -127,7 +127,7 @@ function constrain(rv::ROrdered, x::Vector)
     y
 end
 
-function unconstrain(::ROrdered, x::Vector)
+function unconstrain(rv::ROrdered, x::Vector)
     y = x
     for j in 1:(ndims(rv) - 1)
         y[j + 1] = log(x[j + 1] - x[j])
@@ -154,7 +154,7 @@ function constrain(rv::RPosOrdered, x::Vector)
     y
 end
 
-function unconstrain(::RPosOrdered, x::Vector)
+function unconstrain(rv::RPosOrdered, x::Vector)
     y = x
     for j in 1:(ndims(rv) - 1)
         y[j + 1] = log(x[j + 1] - x[j])
@@ -174,14 +174,27 @@ end
 ndims(x::RSimplex) = x.d
 nfree(x::RSimplex) = ndims(x)
 function constrain(rv::RSimplex, x::Vector)
-    y = [x; 1]
+    y = x
     stick_len = 1
     for j in 1:ndims(rv)
-        y[j] = stick_len * logistic(x[j] - log(ndims(rv) - j))
+        #println("stick_len is: ", stick_len)
+        y[j] = stick_len * logistic(x[j] - log(ndims(rv) - (j - 1)))
         stick_len -= y[j]
     end
-    y[ndims(rv) + 1] = stick_len
-    println(y)
+    y! = [y; stick_len]
+end
+
+function unconstrain(rv::RSimplex, x::Vector)
+    y = zeros(ndims(rv))
+    #println("x is: ", x)
+    stick_len = 1
+    for j in 1:ndims(rv)
+        #println("stick_len is: ", stick_len)
+        y[j] = logit(x[j] / stick_len) + log(ndims(rv) - (j - 1))
+        #println("x[j] is ", x[j], " y[j] is ", y[j])
+        stick_len -= x[j]
+        #println("stick_len_2 is: ", stick_len)
+    end
     y
 end
 

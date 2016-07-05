@@ -182,12 +182,12 @@ facts("Random variable types") do
 
         d = 3
         rv = RSimplex(d)
-        #vv = rand(d)
-        #@fact constrain(rv, vv) --> [vv0[1], vv0[1] + exp(vv0[2]), (vv0[1] + exp(vv0[2])) + exp(vv0[3])]
-        #@fact constrain(rv, vv)[1] > 0 --> true
-        #vvresult = constrain(rv, vv)
-        #@fact vvresult[3] > vvresult[2] > vvresult[1] --> true
-        #@fact logdetjac(rv, vv) --> vv[1] + vv[2] + vv[3]
+        vv = rand(d)
+        yy = constrain(rv, vv)
+        @fact length(yy) --> d + 1
+        @fact sum(yy) --> 1
+        xx = unconstrain(rv, yy)
+        #@fact round(xx, 8) == round(vv, 8)  --> true
     end
 
     context("RCholFact type interface") do
