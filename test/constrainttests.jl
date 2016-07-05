@@ -164,7 +164,6 @@ facts("Random variable types") do
         d = 3
         rv = RPosOrdered(d)
         vv = rand(d)
-        #vv0 = vv
         #@fact constrain(rv, vv) --> [vv0[1], vv0[1] + exp(vv0[2]), (vv0[1] + exp(vv0[2])) + exp(vv0[3])]
         @fact constrain(rv, vv)[1] > 0 --> true
         vvresult = constrain(rv, vv)
@@ -183,8 +182,28 @@ facts("Random variable types") do
 
         rv = RCholFact(5)
         vv = randn(5 * (5 + 1) ÷ 2)
-        @fact isa(constrain(rv, vv), LowerTriangular) --> true
+        L1 = constrain(rv, vv)
+        #println(L1)
+        @fact isa(L1, LowerTriangular) --> true
         @fact logdetjac(rv, vv) --> vv[1] + vv[6] + vv[10] + vv[13] + vv[15]
+    end
+
+    context("RCholCorr type interface") do
+        @fact RCholCorr <: RVType --> true
+        @fact RCholCorr <: RMatrix --> true
+
+        @fact ndims(RCholCorr(5)) --> 5
+        @fact nfree(RCholCorr(5)) --> 10
+        @fact VinDsl.num_pars_advi(RCholCorr(5)) --> 20
+        @fact VinDsl.num_pars_advi(RCholCorr(5), true) --> 65
+
+        rv = RCholCorr(5)
+        vv = randn(5 * (5 - 1) ÷ 2)
+        Lmatrix = constrain(rv, vv)
+        #println(Lmatrix)
+        @fact isa(Lmatrix, LowerTriangular) --> true
+        @fact countnz(abs(Lmatrix) .<= 1) --> ndims(rv)^2
+        #@fact logdetjac(rv, vv) --> vv[1] + vv[6] + vv[10] + vv[13] + vv[15]
     end
 
     context("RCovMat type interface") do

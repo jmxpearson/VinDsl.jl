@@ -81,7 +81,7 @@ Correlation constrained value.
 immutable RCorrelation <: RScalar
 end
 
-constrain(rv::RCorrelation, x::Real) = corrx = tanh(x)
+constrain(rv::RCorrelation, x::Real) = tanh(x)
 unconstrain(rv::RCorrelation, x::Real) = atanh(x)
 logdetjac(rv::RCorrelation, x::Real) = log(4) + 2x - 2 * StatsFuns.log1pexp(2x)
 
@@ -199,6 +199,73 @@ function unconstrain(::RCholFact, S::LowerTriangular)
 end
 
 logdetjac(rv::RCholFact, x::Vector) = sum(diag(LowerTriangular(x)))
+
+
+"""
+Cholesky Correlation Matrix (lower triangular matrix with elements between -1 and 1).
+"""
+immutable RCholCorr <: RMatrix
+    d::Int
+end
+
+ndims(x::RCholCorr) = x.d
+nfree(x::RCholCorr) = (p = ndims(x); p * (p - 1) ÷ 2)
+
+function constrain(rv::RCholCorr, x::Vector)
+    z = tanh(x)
+    k = 1
+    L = eye(ndims(rv))
+    #L[1, 1] = 1
+    for i in 2:ndims(rv)
+        L[i, 1] = z[k]
+        k += 1
+        sumsqs = L[i, 1]^2
+        for j in 2:i-1
+            L[i, j] = z[k] * sqrt(1 - sumsqs)
+            k += 1
+            sumsqs += L[i, j]^2
+        end
+        L[i, i] = sqrt(1 - sumsqs)
+    end
+    LowerTriangular(L)
+end
+
+function unconstrain(::RCholCorr, S::LowerTriangular)
+    L = copy(S)
+    k = 1
+    for i in 2:dim(S)
+        z[k] = L[i, 1]
+        k += 1
+        sumsqs = L[i, 1]^2
+        for j in 2:i
+            z[k] = L[i, j] / sqrt(1 - sumsqs)
+            k += 1
+            sumsqs += L[i, j]^2
+        end
+    end
+    atanh(z)
+end
+
+function logdetjac(rv::RCholCorr, x::Vector)
+    z = tanh(x)
+    k = 1
+    L = eye(ndims(rv))
+    #L[1, 1] = 1
+    for i in 2:ndims(rv)
+        L[i, 1] = z[k]
+        k += 1
+        sumsqs = L[i, 1]^2
+        for j in 2:i
+            logdetL += 0.5 * sumsqs
+            L[i, j] = z[k] * sqrt(1 - sumsqs)
+            k += 1
+            sumsqs += L[i, j]^2
+        end
+        L[i, i] = sqrt(1 - sumsqs)
+    end
+    logdetL
+end
+
 
 
 """
