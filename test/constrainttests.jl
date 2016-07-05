@@ -225,6 +225,24 @@ facts("Random variable types") do
         #@fact logdetjac(rv, vv) --> vv[1] + vv[6] + vv[10] + vv[13] + vv[15]
     end
 
+    context("RCorrMat type interface") do
+        @fact RCorrMat <: RVType --> true
+        @fact RCorrMat <: RMatrix --> true
+
+        @fact ndims(RCorrMat(5)) --> 5
+        @fact nfree(RCorrMat(5)) --> 10
+        @fact VinDsl.num_pars_advi(RCorrMat(5)) --> 20
+        @fact VinDsl.num_pars_advi(RCorrMat(5), true) --> 65
+
+        rv = RCorrMat(5)
+        vv = randn(5 * (5 - 1) ÷ 2)
+        Lmatrix = constrain(rv, vv)
+        @fact countnz(abs(Lmatrix) .<= 1) --> ndims(rv)^2
+        @fact round(diag(Lmatrix), 8) == ones(ndims(rv)) --> true
+        logdetLL = logdetjac(rv, vv)
+        #@fact logdetjac(rv, vv) --> vv[1] + vv[6] + vv[10] + vv[13] + vv[15]
+    end
+
     context("RCovMat type interface") do
         @fact RCovMat <: RVType --> true
         @fact RCovMat <: RMatrix --> true

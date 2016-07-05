@@ -42,7 +42,7 @@ unconstrain(rv::RPositive, x::Real) = log(x - rv.lb)
 logdetjac(rv::RPositive, x::Real) = x
 
 """
- Constrained variable with (optional) upper bound.
+Constrained variable with (optional) upper bound.
 """
 immutable RNegative{T <: Real}  <: RScalar
     ub::T
@@ -166,7 +166,7 @@ end
 logdetjac(::RPosOrdered, x::Vector) = sum(x)
 
 """
-Simplex (left blank here)
+Simplex Constraint (entries sum to one)
 """
 immutable RSimplex  <: RVector
     d::Int
@@ -177,7 +177,6 @@ function constrain(rv::RSimplex, x::Vector)
     y = x
     stick_len = 1
     for j in 1:ndims(rv)
-        #println("stick_len is: ", stick_len)
         y[j] = stick_len * logistic(x[j] - log(ndims(rv) - (j - 1)))
         stick_len -= y[j]
     end
@@ -186,18 +185,25 @@ end
 
 function unconstrain(rv::RSimplex, x::Vector)
     y = zeros(ndims(rv))
-    #println("x is: ", x)
     stick_len = 1
     for j in 1:ndims(rv)
-        #println("stick_len is: ", stick_len)
         y[j] = logit(x[j] / stick_len) + log(ndims(rv) - (j - 1))
-        #println("x[j] is ", x[j], " y[j] is ", y[j])
         stick_len -= x[j]
-        #println("stick_len_2 is: ", stick_len)
     end
     y
 end
 
+function logdetjac(rv::RSimplex, x::Vector)
+    y = x
+    stick_len = 1
+    for j in 1:ndims(rv)
+        constan = x[j] - log(ndims(rv) - (j - 1))
+        y[j] = stick_len * logistic(constan)
+        logdetx += log(stick_len) - StatsFuns.log1pexp(-constan) + StatsFuns.log1pexp(constan)
+        stick_len -= y[j]
+    end
+    logdetx
+end
 
 
 """
@@ -243,7 +249,6 @@ function constrain(rv::RCholCorr, x::Vector)
     z = tanh(x)
     k = 1
     L = eye(ndims(rv))
-    #L[1, 1] = 1
     for i in 2:ndims(rv)
         L[i, 1] = z[k]
         k += 1
@@ -278,12 +283,11 @@ function logdetjac(rv::RCholCorr, x::Vector)
     z = tanh(x)
     k = 1
     L = eye(ndims(rv))
-    #L[1, 1] = 1
     for i in 2:ndims(rv)
         L[i, 1] = z[k]
         k += 1
         sumsqs = L[i, 1]^2
-        for j in 2:i
+        for j in 2:i-1
             logdetL += 0.5 * sumsqs
             L[i, j] = z[k] * sqrt(1 - sumsqs)
             k += 1
@@ -294,7 +298,73 @@ function logdetjac(rv::RCholCorr, x::Vector)
     logdetL
 end
 
+"""
+Random Correlation matrix (symmetric, positive-definite).
+"""
+immutable RCorrMat <: RMatrix
+    d::Int
+end
 
+ndims(x::RCorrMat) = x.d
+nfree(x::RCorrMat) = (p = ndims(x); p * (p - 1) ÷ 2)
+
+function constrain(rv::RCorrMat, x::Vector)
+    z = tanh(x)
+    k = 1
+    L = eye(ndims(rv))
+    for i in 2:ndims(rv)
+        L[i, 1] = z[k]
+        k += 1
+        sumsqs = L[i, 1]^2
+        for j in 2:i-1
+            L[i, j] = z[k] * sqrt(1 - sumsqs)
+            k += 1
+            sumsqs += L[i, j]^2
+        end
+        L[i, i] = sqrt(1 - sumsqs)
+    end
+    lowerL = LowerTriangular(L)
+    lowerL * transpose(lowerL)
+end
+
+function unconstrain(::RCorrMat, S::PDMat)
+    L = copy(S.chol[:L])
+    k = 1
+    for i in 2:dim(S)
+        z[k] = L[i, 1]
+        k += 1
+        sumsqs = L[i, 1]^2
+        for j in 2:i
+            z[k] = L[i, j] / sqrt(1 - sumsqs)
+            k += 1
+            sumsqs += L[i, j]^2
+        end
+    end
+    atanh(z)
+end
+
+
+###### Need revise for the following logdetjac!!!
+function logdetjac(rv::RCorrMat, x::Vector)
+    d = ndims(rv)
+    z = tanh(x)
+    logdetL = d * log(4) + 2 * sum(x) - 2 * sum(log1pexp(2x))
+    k = 1
+    L = eye(ndims(rv))
+    for i in 2:ndims(rv)
+        L[i, 1] = z[k]
+        k += 1
+        sumsqs = L[i, 1]^2
+        for j in 2:i-1
+            logdetL += 0.5 * sumsqs
+            L[i, j] = z[k] * sqrt(1 - sumsqs)
+            k += 1
+            sumsqs += L[i, j]^2
+        end
+        L[i, i] = sqrt(1 - sumsqs)
+    end
+    logdetL
+end
 
 """
 Random covariance matrix (symmetric, positive-definite).
