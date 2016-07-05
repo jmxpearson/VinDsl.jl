@@ -171,6 +171,25 @@ facts("Random variable types") do
         @fact logdetjac(rv, vv) --> vv[1] + vv[2] + vv[3]
     end
 
+    context("RSimplex type interface") do
+        @fact RSimplex <: RVType --> true
+        @fact RSimplex <: RVector --> true
+
+        @fact ndims(RSimplex(3)) --> 3
+        @fact nfree(RSimplex(3)) --> 3
+        @fact VinDsl.num_pars_advi(RSimplex(3)) --> 6
+        @fact VinDsl.num_pars_advi(RSimplex(3), true) --> 9
+
+        d = 3
+        rv = RSimplex(d)
+        #vv = rand(d)
+        #@fact constrain(rv, vv) --> [vv0[1], vv0[1] + exp(vv0[2]), (vv0[1] + exp(vv0[2])) + exp(vv0[3])]
+        #@fact constrain(rv, vv)[1] > 0 --> true
+        #vvresult = constrain(rv, vv)
+        #@fact vvresult[3] > vvresult[2] > vvresult[1] --> true
+        #@fact logdetjac(rv, vv) --> vv[1] + vv[2] + vv[3]
+    end
+
     context("RCholFact type interface") do
         @fact RCholFact <: RVType --> true
         @fact RCholFact <: RMatrix --> true

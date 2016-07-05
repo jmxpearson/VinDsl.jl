@@ -165,10 +165,25 @@ end
 
 logdetjac(::RPosOrdered, x::Vector) = sum(x)
 
-#"""
-#Simplex (left blank here)
-#"""
-
+"""
+Simplex (left blank here)
+"""
+immutable RSimplex  <: RVector
+    d::Int
+end
+ndims(x::RSimplex) = x.d
+nfree(x::RSimplex) = ndims(x)
+function constrain(rv::RSimplex, x::Vector)
+    y = [x; 1]
+    stick_len = 1
+    for j in 1:ndims(rv)
+        y[j] = stick_len * logistic(x[j] - log(ndims(rv) - j))
+        stick_len -= y[j]
+    end
+    y[ndims(rv) + 1] = stick_len
+    println(y)
+    y
+end
 
 
 
