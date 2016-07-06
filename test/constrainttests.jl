@@ -182,8 +182,10 @@ facts("Random variable types") do
 
         d = 3
         rv = RSimplex(d)
-        vv = rand(d)
+        vv = [1.0, -1.0, 2.0]
+        #vv = rand(d)
         yy = constrain(rv, vv)
+        println(yy)
         @fact length(yy) --> d + 1
         @fact sum(yy) --> 1
         xx = unconstrain(rv, yy)
@@ -199,12 +201,13 @@ facts("Random variable types") do
         @fact VinDsl.num_pars_advi(RCholFact(5)) --> 30
         @fact VinDsl.num_pars_advi(RCholFact(5), true) --> 135
 
-        rv = RCholFact(5)
-        vv = randn(5 * (5 + 1) ÷ 2)
+        rv = RCholFact(2)
+        vv = [1.0, 2.0, 3.0]
+        #vv = randn(5 * (5 + 1) ÷ 2)
         L1 = constrain(rv, vv)
-        #println(L1)
+        println(L1)
         @fact isa(L1, LowerTriangular) --> true
-        @fact logdetjac(rv, vv) --> vv[1] + vv[6] + vv[10] + vv[13] + vv[15]
+        #@fact logdetjac(rv, vv) --> vv[1] + vv[6] + vv[10] + vv[13] + vv[15]
     end
 
     context("RCholCorr type interface") do
@@ -216,12 +219,14 @@ facts("Random variable types") do
         @fact VinDsl.num_pars_advi(RCholCorr(5)) --> 20
         @fact VinDsl.num_pars_advi(RCholCorr(5), true) --> 65
 
-        rv = RCholCorr(5)
-        vv = randn(5 * (5 - 1) ÷ 2)
+        rv = RCholCorr(4)
+        vv = [-0.202733, 0.549306, -0.361359, 0.867301, -0.287743, 1.35484]
+        #vv = randn(5 * (5 - 1) ÷ 2)
         Lmatrix = constrain(rv, vv)
-        #println(Lmatrix)
+        println(Lmatrix)
         @fact isa(Lmatrix, LowerTriangular) --> true
         @fact countnz(abs(Lmatrix) .<= 1) --> ndims(rv)^2
+        println(logdetjac(rv, vv))
         #@fact logdetjac(rv, vv) --> vv[1] + vv[6] + vv[10] + vv[13] + vv[15]
     end
 

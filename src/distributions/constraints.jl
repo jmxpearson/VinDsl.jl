@@ -279,12 +279,13 @@ function logdetjac(rv::RCholCorr, x::Vector)
     k = 1
     L = eye(ndims(rv))
     #L[1, 1] = 1
+    logdetL = sum(log(4) + 2x - 2 * StatsFuns.log1pexp(2x))
     for i in 2:ndims(rv)
         L[i, 1] = z[k]
         k += 1
         sumsqs = L[i, 1]^2
-        for j in 2:i
-            logdetL += 0.5 * sumsqs
+        for j in 2:i-1
+            logdetL += 0.5 * log1p(-sumsqs)
             L[i, j] = z[k] * sqrt(1 - sumsqs)
             k += 1
             sumsqs += L[i, j]^2
