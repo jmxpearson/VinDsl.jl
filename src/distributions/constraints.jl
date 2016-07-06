@@ -107,7 +107,7 @@ end
 ndims(x::RUnitVec) = x.d
 nfree(x::RUnitVec) = ndims(x)
 constrain(::RUnitVec, x::Vector) = x ./ sqrt(dot(x, x))
-unconstrain(::RUnitVec, x::Vector) = x .* sqrt(dot(x, x))
+unconstrain(::RUnitVec, x::Vector, len::Real) = len * x  # need to provide the norm of original vector to free x
 logdetjac(::RUnitVec, x::Vector) = - .5 * dot(x, x)
 
 
@@ -120,7 +120,7 @@ end
 ndims(x::ROrdered) = x.d
 nfree(x::ROrdered) = ndims(x)
 function constrain(rv::ROrdered, x::Vector)
-    y = x
+    y = copy(x)
     for j in 1:(ndims(rv) - 1)
         y[j + 1] = y[j] + exp(x[j + 1])
     end
@@ -128,14 +128,14 @@ function constrain(rv::ROrdered, x::Vector)
 end
 
 function unconstrain(rv::ROrdered, x::Vector)
-    y = x
+    y = copy(x)
     for j in 1:(ndims(rv) - 1)
         y[j + 1] = log(x[j + 1] - x[j])
     end
     y
 end
 
-logdetjac(::ROrdered, x::Vector) = sum(x)
+logdetjac(::ROrdered, x::Vector) = sum(x[2:end])
 
 """
 Positive Ordered Constraint
@@ -146,7 +146,7 @@ end
 ndims(x::RPosOrdered) = x.d
 nfree(x::RPosOrdered) = ndims(x)
 function constrain(rv::RPosOrdered, x::Vector)
-    y = x
+    y = copy(x)
     y[1] = exp(x[1])
     for j in 1:(ndims(rv) - 1)
         y[j + 1] = y[j] + exp(x[j + 1])
@@ -155,7 +155,7 @@ function constrain(rv::RPosOrdered, x::Vector)
 end
 
 function unconstrain(rv::RPosOrdered, x::Vector)
-    y = x
+    y = copy(x)
     for j in 1:(ndims(rv) - 1)
         y[j + 1] = log(x[j + 1] - x[j])
     end
@@ -174,7 +174,7 @@ end
 ndims(x::RSimplex) = x.d
 nfree(x::RSimplex) = ndims(x)
 function constrain(rv::RSimplex, x::Vector)
-    y = x
+    y = copy(x)
     stick_len = 1
     for j in 1:ndims(rv)
         y[j] = stick_len * logistic(x[j] - log(ndims(rv) - (j - 1)))
@@ -194,12 +194,14 @@ function unconstrain(rv::RSimplex, x::Vector)
 end
 
 function logdetjac(rv::RSimplex, x::Vector)
-    y = x
+    y = copy(x)
+    d = length(x)
     stick_len = 1
+    logdetx = 0
     for j in 1:ndims(rv)
-        constan = x[j] - log(ndims(rv) - (j - 1))
+        constan = x[j] - log(d - (j - 1))
         y[j] = stick_len * logistic(constan)
-        logdetx += log(stick_len) - StatsFuns.log1pexp(-constan) + StatsFuns.log1pexp(constan)
+        logdetx += log(stick_len) - StatsFuns.log1pexp(-constan) - StatsFuns.log1pexp(constan)
         stick_len -= y[j]
     end
     logdetx
@@ -226,7 +228,7 @@ end
 
 function unconstrain(::RCholFact, S::LowerTriangular)
     L = copy(S)
-    for j in 1:dim(S)
+    for j in 1:ndims(S)
         L[j, j] = log(L[j, j])  # diagonal of Cholesky is positive, so take log
     end
     flatten(L)
@@ -266,7 +268,8 @@ end
 function unconstrain(::RCholCorr, S::LowerTriangular)
     L = copy(S)
     k = 1
-    for i in 2:dim(S)
+    z = zeros(ndims(S) * (ndims(S) - 1))
+    for i in 2:ndims(S)
         z[k] = L[i, 1]
         k += 1
         sumsqs = L[i, 1]^2
@@ -276,8 +279,10 @@ function unconstrain(::RCholCorr, S::LowerTriangular)
             sumsqs += L[i, j]^2
         end
     end
+    #println("length: ", length(z), "vector: ", z)
     atanh(z)
 end
+
 
 function logdetjac(rv::RCholCorr, x::Vector)
     z = tanh(x)
@@ -311,20 +316,19 @@ nfree(x::RCorrMat) = (p = ndims(x); p * (p - 1) ÷ 2)
 
 function constrain(rv::RCorrMat, x::Vector)
     z = tanh(x)
+    #println(z)
     k = 1
     L = eye(ndims(rv))
-    for i in 2:ndims(rv)
-        L[i, 1] = z[k]
-        k += 1
-        sumsqs = L[i, 1]^2
-        for j in 2:i-1
+    for j in 1:ndims(rv)
+        for i in j+1:ndims(rv)
+            sumsqs = dot(vec(L[i, 1:j]), vec(L[i, 1:j]))
             L[i, j] = z[k] * sqrt(1 - sumsqs)
             k += 1
-            sumsqs += L[i, j]^2
         end
-        L[i, i] = sqrt(1 - sumsqs)
+        L[j, j] = sqrt(1 - dot(vec(L[j, 1:j-1]), vec(L[j, 1:j-1])))
     end
     lowerL = LowerTriangular(L)
+    #println(lowerL)
     lowerL * transpose(lowerL)
 end
 
@@ -349,23 +353,44 @@ end
 function logdetjac(rv::RCorrMat, x::Vector)
     d = ndims(rv)
     z = tanh(x)
+    pos = 1
+    val = zeros(length(x))
     logdetL = d * log(4) + 2 * sum(x) - 2 * sum(log1pexp(2x))
-    k = 1
-    L = eye(ndims(rv))
-    for i in 2:ndims(rv)
-        L[i, 1] = z[k]
-        k += 1
-        sumsqs = L[i, 1]^2
-        for j in 2:i-1
-            logdetL += 0.5 * sumsqs
-            L[i, j] = z[k] * sqrt(1 - sumsqs)
-            k += 1
-            sumsqs += L[i, j]^2
+    println(logdetL)
+    for k in 1:ndims(rv)-2
+        for i in k+1:ndims(rv)
+            #println(i, k)
+            val[pos] = (d - k - 1) * log1p(-z[pos]^2)
+            #println(z[pos])
+            pos += 1
         end
-        L[i, i] = sqrt(1 - sumsqs)
     end
-    logdetL
+    println(val)
+    println(sum(val))
+    logdetL += sum(val)
+    .5 * logdetL
+
 end
+
+
+
+
+#    k = 1
+#    L = eye(ndims(rv))
+#    for i in 2:ndims(rv)
+#        L[i, 1] = z[k]
+#        k += 1
+#        sumsqs = L[i, 1]^2
+#        for j in 2:i-1
+#            logdetL += 0.5 * log1p(-sumsqs)
+#            L[i, j] = z[k] * sqrt(1 - sumsqs)
+#            k += 1
+#            sumsqs += L[i, j]^2
+#        end
+#        L[i, i] = sqrt(1 - sumsqs)
+#    end
+#    logdetL
+#end
 
 """
 Random covariance matrix (symmetric, positive-definite).
