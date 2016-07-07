@@ -46,7 +46,7 @@ include("conjugate_relations.jl")
 
 export VBModel,
     RVType, RScalar, RVector, RMatrix, RReal, RPositive, RNegative, RBounded, RProbability, RCorrelation,
-    RRealVec, RUnitVec, ROrdered, RPosOrdered, RSimplex, RCholFact, RCholCorr, RCorrMat, RCovMat,
+    RRealVec, RUnitVec, ROrdered, RPosOrdered, RSimplex, RCholFact, RCholCorr, RCorrMat, RCovMat, RCovLKJ,
     @advi_declarations, @advi_model, @ELBO,
     constrain, unconstrain, logdetjac, supp, parsupp, nfree,
     Factor, FactorInds, @factor, get_structure, project, project_inds, @wrapvars, value, @pmodel,

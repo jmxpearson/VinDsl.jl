@@ -54,6 +54,7 @@ logdetjac(rv::RNegative, x::Real) = x
 
 """
 Constrained variable with (optional) upper and lower bound.
+Using logistic transformation.
 """
 immutable RBounded{T <: Real}  <: RScalar
     lb::T
@@ -67,6 +68,7 @@ logdetjac(rv::RBounded, x::Real) = log(rv.ub - rv.lb) - x - 2 * StatsFuns.log1pe
 
 """
 Probability constrained value.
+Using logistic transformation.
 """
 immutable RProbability <: RScalar
 end
@@ -77,6 +79,7 @@ logdetjac(rv::RProbability, x::Real) = - x - 2log1pexp(-x)
 
 """
 Correlation constrained value.
+Using tanh(x) function.
 """
 immutable RCorrelation <: RScalar
 end
@@ -111,7 +114,7 @@ logdetjac(::RUnitVec, x::Vector) = - .5 * dot(x, x)
 
 
 """
-Ordered Constraint
+Ordered Constraint.
 """
 immutable ROrdered  <: RVector
     d::Int
@@ -119,9 +122,11 @@ end
 ndims(x::ROrdered) = x.d
 nfree(x::ROrdered) = ndims(x)
 function constrain(rv::ROrdered, x::Vector)
-    y = copy(x)
+    y = zeros(length(x))
+    y[:] = x
+    # Or use y = copy(x); drawback needed!
     for j in 1:(ndims(rv) - 1)
-        y[j + 1] = y[j] + exp(x[j + 1])
+        y[j + 1] = y[j] + exp(x[j + 1]) # make sure the latter is greater than previous.
     end
     y
 end
@@ -146,7 +151,7 @@ ndims(x::RPosOrdered) = x.d
 nfree(x::RPosOrdered) = ndims(x)
 function constrain(rv::RPosOrdered, x::Vector)
     y = copy(x)
-    y[1] = exp(x[1])
+    y[1] = exp(x[1]) # Ensure the first is positive
     for j in 1:(ndims(rv) - 1)
         y[j + 1] = y[j] + exp(x[j + 1])
     end
@@ -174,7 +179,7 @@ ndims(x::RSimplex) = x.d
 nfree(x::RSimplex) = ndims(x)
 function constrain(rv::RSimplex, x::Vector)
     y = copy(x)
-    stick_len = 1
+    stick_len = 1 # entries sum to 1
     for j in 1:ndims(rv)
         y[j] = stick_len * logistic(x[j] - log(ndims(rv) - (j - 1)))
         stick_len -= y[j]
@@ -248,15 +253,23 @@ nfree(x::RCholCorr) = (p = ndims(x); p * (p - 1) ÷ 2)
 
 function constrain(rv::RCholCorr, x::Vector)
     z = tanh(x)
-    k = 1
+    pos = 1
     L = eye(ndims(rv))
+
+
+
+
+
+
+
+
     for i in 2:ndims(rv)
-        L[i, 1] = z[k]
-        k += 1
+        L[i, 1] = z[pos]
+        pos += 1
         sumsqs = L[i, 1]^2
         for j in 2:i-1
-            L[i, j] = z[k] * sqrt(1 - sumsqs)
-            k += 1
+            L[i, j] = z[pos] * sqrt(1 - sumsqs)
+            pos += 1
             sumsqs += L[i, j]^2
         end
         L[i, i] = sqrt(1 - sumsqs)
@@ -266,36 +279,35 @@ end
 
 function unconstrain(::RCholCorr, S::LowerTriangular)
     L = copy(S)
-    k = 1
+    pos = 1
     z = zeros(ndims(S) * (ndims(S) - 1))
     for i in 2:ndims(S)
-        z[k] = L[i, 1]
-        k += 1
+        z[pos] = L[i, 1]
+        pos += 1
         sumsqs = L[i, 1]^2
         for j in 2:i
-            z[k] = L[i, j] / sqrt(1 - sumsqs)
-            k += 1
+            z[pos] = L[i, j] / sqrt(1 - sumsqs)
+            pos += 1
             sumsqs += L[i, j]^2
         end
     end
-    #println("length: ", length(z), "vector: ", z)
     atanh(z)
 end
 
 
 function logdetjac(rv::RCholCorr, x::Vector)
     z = tanh(x)
-    k = 1
+    pos = 1
     L = eye(ndims(rv))
     logdetL = sum(log(4) + 2x - 2 * StatsFuns.log1pexp(2x))
     for i in 2:ndims(rv)
-        L[i, 1] = z[k]
-        k += 1
+        L[i, 1] = z[pos]
+        pos += 1
         sumsqs = L[i, 1]^2
         for j in 2:i-1
             logdetL += 0.5 * log1p(-sumsqs)
-            L[i, j] = z[k] * sqrt(1 - sumsqs)
-            k += 1
+            L[i, j] = z[pos] * sqrt(1 - sumsqs)
+            pos += 1
             sumsqs += L[i, j]^2
         end
         L[i, i] = sqrt(1 - sumsqs)
@@ -315,27 +327,24 @@ nfree(x::RCorrMat) = (p = ndims(x); p * (p - 1) ÷ 2)
 
 function constrain(rv::RCorrMat, x::Vector)
     z = tanh(x)
-    #println(z)
-    k = 1
+    pos = 1
     L = eye(ndims(rv))
     for j in 1:ndims(rv)
         for i in j+1:ndims(rv)
             sumsqs = dot(vec(L[i, 1:j]), vec(L[i, 1:j]))
-            L[i, j] = z[k] * sqrt(1 - sumsqs)
-            k += 1
+            L[i, j] = z[pos] * sqrt(1 - sumsqs)
+            pos += 1
         end
         L[j, j] = sqrt(1 - dot(vec(L[j, 1:j-1]), vec(L[j, 1:j-1])))
     end
-    lowerL = LowerTriangular(L)
-    #println(lowerL)
-    lowerL * transpose(lowerL)
+    PDMat(Base.LinAlg.Cholesky(full(L), :L))
 end
 
 function unconstrain(::RCorrMat, S::PDMat)
     L = copy(S.chol[:L])
     K = dim(S)
-    z = zeros(int(.5 * K * (K - 1)))
-    z[1:K-1] = copy(L.data[2:K, 1])
+    z = zeros(Int(.5 * K * (K - 1)))
+    z[1:K-1] = L.data[2:K, 1]
     pos = K
     for j in 2:K
         for i in j+1:K
@@ -374,7 +383,7 @@ nfree(x::RCovMat) = (p = ndims(x); p * (p + 1) ÷ 2)
 
 function constrain(rv::RCovMat, x::Vector)
     L = LowerTriangular(x)
-    println(L)
+    #println(L)
     for j in 1:ndims(rv)
         L[j, j] = exp(L[j, j])  # Cholesky factor must have positive diagonals
     end
@@ -391,9 +400,73 @@ end
 
 function logdetjac(rv::RCovMat, x::Vector)
     d = ndims(rv)
-    d * logtwo + (d + 1:-1:2) ⋅ diag(LowerTriangular(x))
+    d * logtwo + (d+1:-1:2) ⋅ diag(LowerTriangular(x))
 end
 
+"""
+Random LKJ covariance matrix (symmetric, positive-definite).
+"""
+immutable RCovLKJ <: RMatrix
+    d::Int
+end
+
+ndims(x::RCovLKJ) = x.d
+nfree(x::RCovLKJ) = (p = ndims(x); p * (p + 1) ÷ 2)
+
+function constrain(rv::RCovLKJ, x::Vector)
+    d = ndims(rv)
+    K = Int(.5d * (d - 1))
+    # if K not an integer, should throw an error message
+    z = tanh(x[1:K])
+    diagz = exp(x[K + 1:end])
+    pos = 1
+    L = eye(ndims(rv))
+    for j in 1:ndims(rv)
+        for i in j+1:ndims(rv)
+            sumsqs = dot(vec(L[i, 1:j]), vec(L[i, 1:j]))
+            L[i, j] = z[pos] * sqrt(1 - sumsqs)
+            pos += 1
+        end
+        L[j, j] = sqrt(1 - dot(vec(L[j, 1:j-1]), vec(L[j, 1:j-1])))
+    end
+    PDMat(Base.LinAlg.Cholesky(full(Base.LinAlg.Diagonal(diagz) * L), :L))
+end
+
+
+function unconstrain(::RCovLKJ, S::PDMat)
+    K = dim(S)
+    z = zeros(Int(.5K * (K + 1)))
+    z[Int(.5K * (K - 1))+1:end] = .5log(diag(S)) # identify the σ^2 variances
+    L = S.chol[:L] ./ sqrt(diag(S))
+    z[1:K-1] = L[2:K, 1]
+    pos = K
+    for j in 2:K
+        for i in j+1:K
+            z[pos] = L[i, j] / sqrt(1 - dot(vec(L[i, 1:j-1]), vec(L[i, 1:j-1])))
+            pos += 1
+        end
+    end
+    z[1:Int(.5K * (K - 1))] = atanh(z[1:Int(.5K * (K - 1))])
+    z
+end
+
+function logdetjac(rv::RCovLKJ, x::Vector)
+    d = ndims(rv)
+    K = Int(.5d * (d - 1))
+    z = tanh(x[1:K])
+    pos = 1
+    val = zeros(length(x))
+    logdetL = K * log(4) + 2sum(x[1:K]) - 2sum(StatsFuns.log1pexp(2x[1:K]))
+    logdetL += sum(x[K+1:end]) # log determinant for positive constraint
+    logdetL += d .* (sum(x[K+1:end]) + log(2)) # correction from correlation to covariance
+    for k in 1:d-2
+        for i in k+1:d
+            val[pos] = (d - k - 1) * log1p(-z[pos]^2)
+            pos += 1
+        end
+    end
+    logdetL += .5 * sum(val) # log determinant for correlation constraint
+end
 
 constrain(pars, d::Distribution) = map(constrain, parsupp(d), pars)
 unconstrain(d::Distribution) = map(unconstrain, parsupp(d), params(d))
