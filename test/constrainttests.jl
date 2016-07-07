@@ -296,17 +296,16 @@ facts("Random variable types") do
         x2 = unconstrain(rv, L2)
         lp = logdetjac(rv, vv)
         @fact L2 --> [1.0 0.0 0.0 0.0;
- -0.20000042810804294 0.9797958097259855 0.0 0.0;
- 0.49999989174945103 -0.3000003289343604 0.8124037856200652 0.0;
- 0.7000002408759531 -0.2000000289044577 0.6000003991366605 0.33166123114960505]
+                    -0.20000042810804294 0.9797958097259855 0.0 0.0;
+                    0.49999989174945103 -0.3000003289343604 0.8124037856200652 0.0;
+                    0.7000002408759531 -0.2000000289044577 0.6000003991366605 0.33166123114960505]
         #@fact x2 --> [-0.202733, 0.549306, -0.361359, 0.867301, -0.287743, 1.35484]
         @fact lp --> -3.5216454246105022
-        println("Chol corr constraint: ", L2)
-        println("free: ", x2)
-        println("log determinant: ", lp)
+        #println("Chol corr constraint: ", L2)
+        #println("free: ", x2)
+        #println("log determinant: ", lp)
         @fact isa(L2, LowerTriangular) --> true
         @fact countnz(abs(L2) .<= 1) --> ndims(rv)^2
-        #@fact logdetjac(rv, vv) --> vv[1] + vv[6] + vv[10] + vv[13] + vv[15]
     end
 
     context("RCorrMat type interface") do
@@ -321,13 +320,20 @@ facts("Random variable types") do
         rv = RCorrMat(4)
         #vv = randn(5 * (5 - 1) ÷ 2)
         vv = [-1., 2., 0., 1., 3., -1.5]
-        Lmatrix = constrain(rv, vv)
-        println(Lmatrix)
-        @fact countnz(abs(Lmatrix) .<= 1) --> ndims(rv)^2
-        @fact round(diag(Lmatrix), 8) == ones(ndims(rv)) --> true
-        logdetL = logdetjac(rv, vv)
-        println(logdetL)
-        #@fact logdetjac(rv, vv) --> vv[1] + vv[6] + vv[10] + vv[13] + vv[15]
+        L3 = constrain(rv, vv)
+        x3 = unconstrain(rv, PDMats.PDMat(L3))
+        lp = logdetjac(rv, vv)
+        @fact L3 --> [1.0 -0.7615941559557649 0.9640275800758169 0.0;
+                    -0.7615941559557649 1.0 -0.6030099255325068 0.6448494856562506;
+                    0.9640275800758169 -0.6030099255325068 1.0 0.1859455624117277;
+                    0.0 0.6448494856562506 0.1859455624117277 1.0]
+        @fact round(x3, 8) --> [-1., 2., 0., 1., 3., -1.5]
+        @fact lp --> -16.975342658573595
+        #println("Chol corr constraint: ", L3)
+        #println("free: ", x3)
+        #println("log determinant: ", lp)
+        @fact countnz(abs(L3) .<= 1) --> ndims(rv)^2
+        @fact round(diag(L3), 8) == ones(ndims(rv)) --> true
     end
 
     context("RCovMat type interface") do
@@ -339,8 +345,22 @@ facts("Random variable types") do
         @fact VinDsl.num_pars_advi(RCovMat(5)) --> 30
         @fact VinDsl.num_pars_advi(RCovMat(5), true) --> 135
 
-        rv = RCovMat(5)
-        vv = randn(5 * (5 + 1) ÷ 2)
+        rv = RCovMat(4)
+        #vv = randn(5 * (5 + 1) ÷ 2)
+        vv = [-1.0, 2.0, 0.0, 1.0, 3.0, -1.5, 1.0, 2.0, -1.5, 2.5]
+        L4 = constrain(rv, vv)
+        x4 = unconstrain(rv, PDMats.PDMat(L4))
+        lp = logdetjac(rv, vv)
+        @fact L4.chol[:L] --> [0.36787944117144233 0.0 0.0 0.0;
+                            2.0 20.085536923187668 0.0 0.0;
+                            0.0 -1.5 7.38905609893065 0.0;
+                            1.0 1.0 -1.5 12.182493960703473]
+        @fact x4 --> [-1.0,2.0,0.0,1.0,3.0,-1.5,1.0,2.0,-1.5,2.5]
+        @fact lp --> 20.77258872223978
+        println("Chol corr constraint: ", L4.mat)
+        #println(typeof(L4))
+        println("free: ", x4)
+        println("log determinant: ", lp)
         @fact isa(constrain(rv, vv), PDMat) --> true
         @fact isfinite(logdetjac(rv, vv)) --> true
     end

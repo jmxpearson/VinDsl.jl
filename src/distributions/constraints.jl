@@ -85,7 +85,6 @@ constrain(rv::RCorrelation, x::Real) = tanh(x)
 unconstrain(rv::RCorrelation, x::Real) = atanh(x)
 logdetjac(rv::RCorrelation, x::Real) = log(4) + 2x - 2 * StatsFuns.log1pexp(2x)
 
-
 """
 Real-valued vector.
 """
@@ -334,63 +333,34 @@ end
 
 function unconstrain(::RCorrMat, S::PDMat)
     L = copy(S.chol[:L])
-    k = 1
-    for i in 2:dim(S)
-        z[k] = L[i, 1]
-        k += 1
-        sumsqs = L[i, 1]^2
-        for j in 2:i
-            z[k] = L[i, j] / sqrt(1 - sumsqs)
-            k += 1
-            sumsqs += L[i, j]^2
+    K = dim(S)
+    z = zeros(int(.5 * K * (K - 1)))
+    z[1:K-1] = copy(L.data[2:K, 1])
+    pos = K
+    for j in 2:K
+        for i in j+1:K
+            z[pos] = L[i, j] / sqrt(1 - dot(vec(L.data[i, 1:j-1]), vec(L.data[i, 1:j-1])))
+            pos += 1
         end
     end
     atanh(z)
 end
 
 
-###### Need revise for the following logdetjac!!!
 function logdetjac(rv::RCorrMat, x::Vector)
-    d = ndims(rv)
     z = tanh(x)
     pos = 1
     val = zeros(length(x))
-    logdetL = d * log(4) + 2 * sum(x) - 2 * sum(log1pexp(2x))
-    println(logdetL)
+    logdetL = length(x) * log(4) + 2sum(x) - 2sum(StatsFuns.log1pexp(2x))
     for k in 1:ndims(rv)-2
         for i in k+1:ndims(rv)
-            #println(i, k)
-            val[pos] = (d - k - 1) * log1p(-z[pos]^2)
-            #println(z[pos])
+            val[pos] = (ndims(rv) - k - 1) * log1p(-z[pos]^2)
             pos += 1
         end
     end
-    println(val)
-    println(sum(val))
-    logdetL += sum(val)
-    .5 * logdetL
-
+    logdetL += .5 * sum(val)
 end
 
-
-
-
-#    k = 1
-#    L = eye(ndims(rv))
-#    for i in 2:ndims(rv)
-#        L[i, 1] = z[k]
-#        k += 1
-#        sumsqs = L[i, 1]^2
-#        for j in 2:i-1
-#            logdetL += 0.5 * log1p(-sumsqs)
-#            L[i, j] = z[k] * sqrt(1 - sumsqs)
-#            k += 1
-#            sumsqs += L[i, j]^2
-#        end
-#        L[i, i] = sqrt(1 - sumsqs)
-#    end
-#    logdetL
-#end
 
 """
 Random covariance matrix (symmetric, positive-definite).
@@ -404,6 +374,7 @@ nfree(x::RCovMat) = (p = ndims(x); p * (p + 1) ÷ 2)
 
 function constrain(rv::RCovMat, x::Vector)
     L = LowerTriangular(x)
+    println(L)
     for j in 1:ndims(rv)
         L[j, j] = exp(L[j, j])  # Cholesky factor must have positive diagonals
     end
@@ -422,6 +393,7 @@ function logdetjac(rv::RCovMat, x::Vector)
     d = ndims(rv)
     d * logtwo + (d + 1:-1:2) ⋅ diag(LowerTriangular(x))
 end
+
 
 constrain(pars, d::Distribution) = map(constrain, parsupp(d), pars)
 unconstrain(d::Distribution) = map(unconstrain, parsupp(d), params(d))
