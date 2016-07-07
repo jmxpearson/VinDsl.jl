@@ -255,27 +255,39 @@ function constrain(rv::RCholCorr, x::Vector)
     z = tanh(x)
     pos = 1
     L = eye(ndims(rv))
-
-
-
-
-
-
-
-
-    for i in 2:ndims(rv)
-        L[i, 1] = z[pos]
-        pos += 1
-        sumsqs = L[i, 1]^2
-        for j in 2:i-1
+    for j in 1:ndims(rv)
+        for i in j+1:ndims(rv)
+            sumsqs = dot(vec(L[i, 1:j]), vec(L[i, 1:j]))
+            println("sumsqs is :", sumsqs)
             L[i, j] = z[pos] * sqrt(1 - sumsqs)
+            println(i, j, L[i,j])
             pos += 1
-            sumsqs += L[i, j]^2
+            println(pos)
         end
-        L[i, i] = sqrt(1 - sumsqs)
+        L[j, j] = sqrt(1 - dot(vec(L[j, 1:j-1]), vec(L[j, 1:j-1])))
     end
+    #println(L)
     LowerTriangular(L)
 end
+
+
+
+
+
+
+#    for i in 2:ndims(rv)
+#        L[i, 1] = z[pos]
+#        pos += 1
+#        sumsqs = L[i, 1]^2
+#        for j in 2:i-1
+#            L[i, j] = z[pos] * sqrt(1 - sumsqs)
+#            pos += 1
+#            sumsqs += L[i, j]^2
+#        end
+#        L[i, i] = sqrt(1 - sumsqs)
+#    end
+#    LowerTriangular(L)
+#end
 
 function unconstrain(::RCholCorr, S::LowerTriangular)
     L = copy(S)
