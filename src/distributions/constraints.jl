@@ -257,11 +257,18 @@ function constrain(rv::RCholCorr, x::Vector)
     U = eye(ndims(rv))
     for j in 1:ndims(rv)
         for i in 1:j-1
-            sumsqs = dot(vec(U[1:i, j]), vec(U[1:i, j]))
+            sumsqs = 0 # faster than dot(vec(U.data[1:i, j]), vec(U.data[1:i, j]))
+            for ij in 1:i
+                sumsqs += U[ij, j]^2
+            end
             U[i, j] = z[pos] * sqrt(1 - sumsqs)
             pos += 1
         end
-        U[j, j] = sqrt(1 - dot(U[1:j-1, j], U[1:j-1, j]))
+        sumsqs = 0 # compute dot(U[1:j-1, j], U[1:j-1, j]) in loop
+        for ij in 1:j-1
+            sumsqs += U[ij, j]^2
+        end
+        U[j, j] = sqrt(1 - sumsqs)
     end
     transpose(UpperTriangular(U)) # faster than LowerTriangular(transpose(U))
 end
@@ -272,7 +279,11 @@ function unconstrain(rv::RCholCorr, S::LowerTriangular)
     z = zeros(Int(.5 * ndims(rv) * (ndims(rv) - 1)))
     for j in 2:ndims(rv)
         for i in 1:j-1
-            z[pos] = U[i, j] / sqrt(1 - dot(U.data[1:i-1, j], U.data[1:i-1, j]))
+            sumsqs = 0  # faster than dot(vec(U.data[1:i-1, j]), vec(U.data[1:i-1, j]))
+            for ij in 1:i-1
+                sumsqs += U[ij, j]^2
+            end
+            z[pos] = U[i, j] / sqrt(1 - sumsqs)
             pos += 1
         end
     end
@@ -287,12 +298,19 @@ function logdetjac(rv::RCholCorr, x::Vector)
     logdetL = sum(log(4) + 2x - 2 * StatsFuns.log1pexp(2x))
     for j in 3:ndims(rv)
         for i in 1:j-1
-            sumsqs = dot(vec(U[1:i, j]), vec(U[1:i, j]))
+            sumsqs = 0
+            for ij in 1:i
+                sumsqs += U[ij, j]^2
+            end
             logdetL += 0.5 * log1p(-sumsqs)
             U[i, j] = z[pos] * sqrt(1 - sumsqs)
             pos += 1
         end
-        U[j, j] = sqrt(1 - dot(U[1:j-1, j], U[1:j-1, j]))
+        sumsqs = 0 # compute dot(U[1:j-1, j], U[1:j-1, j]) in loop
+        for ij in 1:j-1
+            sumsqs += U[ij, j]^2
+        end
+        U[j, j] = sqrt(1 - sumsqs)
     end
     logdetL
 end
@@ -313,11 +331,18 @@ function constrain(rv::RCorrMat, x::Vector)
     L = eye(ndims(rv))
     for j in 1:ndims(rv)
         for i in j+1:ndims(rv)
-            sumsqs = dot(vec(L[i, 1:j]), vec(L[i, 1:j]))
+            sumsqs = 0 # faster than dot(vec(L[i, 1:j]), vec(L[i, 1:j]))
+            for ij in 1:j
+                sumsqs += L[i, ij]^2
+            end
             L[i, j] = z[pos] * sqrt(1 - sumsqs)
             pos += 1
         end
-        L[j, j] = sqrt(1 - dot(vec(L[j, 1:j-1]), vec(L[j, 1:j-1])))
+        sumsqs = 0
+        for ij in 1:j-1
+            sumsqs += L[j, ij]^2
+        end
+        L[j, j] = sqrt(1 - sumsqs)
     end
     PDMat(Base.LinAlg.Cholesky(full(L), :L))
 end
@@ -330,7 +355,11 @@ function unconstrain(::RCorrMat, S::PDMat)
     pos = K
     for j in 2:K
         for i in j+1:K
-            z[pos] = L[i, j] / sqrt(1 - dot(vec(L.data[i, 1:j-1]), vec(L.data[i, 1:j-1])))
+            sumsqs = 0
+            for ij in 1:j-1
+                sumsqs += L[i, ij]^2
+            end
+            z[pos] = L[i, j] / sqrt(1 - sumsqs)
             pos += 1
         end
     end
@@ -403,11 +432,19 @@ function constrain(rv::RCovLKJ, x::Vector)
     L = eye(ndims(rv))
     for j in 1:ndims(rv)
         for i in j+1:ndims(rv)
-            sumsqs = dot(vec(L[i, 1:j]), vec(L[i, 1:j]))
+            sumsqs = 0
+            for ij in 1:j
+                sumsqs += L[i, ij]^2
+            end
+            #sumsqs = dot(vec(L[i, 1:j]), vec(L[i, 1:j]))
             L[i, j] = z[pos] * sqrt(1 - sumsqs)
             pos += 1
         end
-        L[j, j] = sqrt(1 - dot(vec(L[j, 1:j-1]), vec(L[j, 1:j-1])))
+        sumsqs = 0
+        for ij in 1:j-1
+            sumsqs += L[j, ij]^2
+        end
+        L[j, j] = sqrt(1 - sumsqs)
     end
     PDMat(Base.LinAlg.Cholesky(full(Base.LinAlg.Diagonal(diagz) * L), :L))
 end
@@ -422,7 +459,11 @@ function unconstrain(::RCovLKJ, S::PDMat)
     pos = K
     for j in 2:K
         for i in j+1:K
-            z[pos] = L[i, j] / sqrt(1 - dot(vec(L[i, 1:j-1]), vec(L[i, 1:j-1])))
+            sumsqs = 0
+            for ij in 1:j-1
+                sumsqs += L[i, ij]^2
+            end
+            z[pos] = L[i, j] / sqrt(1 - sumsqs)
             pos += 1
         end
     end
