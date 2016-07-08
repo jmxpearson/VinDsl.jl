@@ -264,14 +264,16 @@ facts("Random variable types") do
         @fact VinDsl.num_pars_advi(RCholFact(5)) --> 30
         @fact VinDsl.num_pars_advi(RCholFact(5), true) --> 135
 
-        rv = RCholFact(2)
+        rv = RCholFact(3)
         vv = [1., 2., 3., 4., 5., 6.]
         L1 = constrain(rv, vv)
         x1 = unconstrain(rv, L1)
         lp = logdetjac(rv, vv)
-        @fact L1 --> [2.718281828459045 0.0 0.0; 2.0 54.598150033144236 0.0; 3.0 5.0 6.0]
+        @fact L1 --> [2.718281828459045 0.0 0.0
+                    2.0 20.085536923187668 0.0
+                    4.0 5.0 403.4287934927351]
         @fact x1 --> [1.0,2.0,3.0,4.0,5.0,6.0]
-        @fact lp --> 11
+        @fact lp --> 10
         #println("Chol factor constraint: ", L1)
         #println("free: ", x1)
         #println("log determinant: ", lp)
@@ -293,15 +295,15 @@ facts("Random variable types") do
         vv = [-0.202733, 0.549306, -0.361359, 0.867301, -0.287743, 1.35484]
         #vv = randn(5 * (5 - 1) ÷ 2)
         L2 = constrain(rv, vv)
-        #x2 = unconstrain(rv, L2)
-        #lp = logdetjac(rv, vv)
+        x2 = unconstrain(rv, L2)
+        lp = logdetjac(rv, vv)
         @fact L2 --> [1.0 0.0 0.0 0.0;
                     -0.20000042810804294 0.9797958097259855 0.0 0.0;
                     0.49999989174945103 -0.3000003289343604 0.8124037856200652 0.0;
                     0.7000002408759531 -0.2000000289044577 0.6000003991366605 0.33166123114960505]
-        #@fact x2 --> [-0.202733, 0.549306, -0.361359, 0.867301, -0.287743, 1.35484]
-        #@fact lp --> -3.5216454246105022
-        println("Chol corr constraint: ", L2)
+        @fact round(x2, 6) --> [-0.202733, 0.549306, -0.361359, 0.867301, -0.287743, 1.35484]
+        @fact lp --> -3.5216454246105022
+        #println("Chol corr constraint: ", L2)
         #println("free: ", x2)
         #println("log determinant: ", lp)
         @fact isa(L2, LowerTriangular) --> true
@@ -351,10 +353,10 @@ facts("Random variable types") do
         L4 = constrain(rv, vv)
         x4 = unconstrain(rv, PDMats.PDMat(L4))
         lp = logdetjac(rv, vv)
-        @fact L4.mat --> [0.1353352832366127 0.7357588823428847 0.0 0.36787944117144233
-                        0.7357588823428847 407.4287934927351 -30.128305384781502 22.085536923187668
-                        0.0 -30.128305384781502 56.84815003314424 -12.583584148395975
-                        0.36787944117144233 22.085536923187668 -12.583584148395975 152.6631591025766]
+        @fact L4.mat --> [0.1353352832366127 0.7357588823428847 0.36787944117144233 0.36787944117144233
+                        0.7357588823428847 5.0 5.0 4.0
+                        0.36787944117144233 5.0 10.049787068367865 6.665304759777356
+                        0.36787944117144233 4.0 6.665304759777356 155.6631591025766]
         @fact x4 --> [-1.0,2.0,0.0,1.0,3.0,-1.5,1.0,2.0,-1.5,2.5]
         @fact lp --> 20.77258872223978
         #println("Covariance constraint: ", L4.mat)

@@ -223,22 +223,22 @@ ndims(x::RCholFact) = x.d
 nfree(x::RCholFact) = (p = ndims(x); p * (p + 1) ÷ 2)
 
 function constrain(rv::RCholFact, x::Vector)
-    L = LowerTriangular(x)
+    U = UpperTriangular(x)
     for j in 1:ndims(rv)
-        L[j, j] = exp(L[j, j])  # Cholesky factor must have positive diagonals
+        U[j, j] = exp(U[j, j])  # Cholesky factor must have positive diagonals
     end
-    L
+    transpose(U)
 end
 
-function unconstrain(::RCholFact, S::LowerTriangular)
-    L = copy(S)
-    for j in 1:ndims(S)
-        L[j, j] = log(L[j, j])  # diagonal of Cholesky is positive, so take log
+function unconstrain(rv::RCholFact, S::LowerTriangular)
+    U = transpose(S)
+    for j in 1:ndims(rv)
+        U[j, j] = log(U[j, j])  # diagonal of Cholesky is positive, so take log
     end
-    flatten(L)
+    flatten(U)
 end
 
-logdetjac(rv::RCholFact, x::Vector) = sum(diag(LowerTriangular(x)))
+logdetjac(rv::RCholFact, x::Vector) = sum(diag(UpperTriangular(x)))
 
 
 """
@@ -254,53 +254,26 @@ nfree(x::RCholCorr) = (p = ndims(x); p * (p - 1) ÷ 2)
 function constrain(rv::RCholCorr, x::Vector)
     z = tanh(x)
     pos = 1
-    L = eye(ndims(rv))
+    U = eye(ndims(rv))
     for j in 1:ndims(rv)
-        for i in j+1:ndims(rv)
-            sumsqs = dot(vec(L[i, 1:j]), vec(L[i, 1:j]))
-            println("sumsqs is :", sumsqs)
-            L[i, j] = z[pos] * sqrt(1 - sumsqs)
-            println(i, j, L[i,j])
+        for i in 1:j-1
+            sumsqs = dot(vec(U[1:i, j]), vec(U[1:i, j]))
+            U[i, j] = z[pos] * sqrt(1 - sumsqs)
             pos += 1
-            println(pos)
         end
-        L[j, j] = sqrt(1 - dot(vec(L[j, 1:j-1]), vec(L[j, 1:j-1])))
+        U[j, j] = sqrt(1 - dot(U[1:j-1, j], U[1:j-1, j]))
     end
-    #println(L)
-    LowerTriangular(L)
+    transpose(UpperTriangular(U)) # faster than LowerTriangular(transpose(U))
 end
 
-
-
-
-
-
-#    for i in 2:ndims(rv)
-#        L[i, 1] = z[pos]
-#        pos += 1
-#        sumsqs = L[i, 1]^2
-#        for j in 2:i-1
-#            L[i, j] = z[pos] * sqrt(1 - sumsqs)
-#            pos += 1
-#            sumsqs += L[i, j]^2
-#        end
-#        L[i, i] = sqrt(1 - sumsqs)
-#    end
-#    LowerTriangular(L)
-#end
-
-function unconstrain(::RCholCorr, S::LowerTriangular)
-    L = copy(S)
+function unconstrain(rv::RCholCorr, S::LowerTriangular)
+    U = transpose(S)
     pos = 1
-    z = zeros(ndims(S) * (ndims(S) - 1))
-    for i in 2:ndims(S)
-        z[pos] = L[i, 1]
-        pos += 1
-        sumsqs = L[i, 1]^2
-        for j in 2:i
-            z[pos] = L[i, j] / sqrt(1 - sumsqs)
+    z = zeros(Int(.5 * ndims(rv) * (ndims(rv) - 1)))
+    for j in 2:ndims(rv)
+        for i in 1:j-1
+            z[pos] = U[i, j] / sqrt(1 - dot(U.data[1:i-1, j], U.data[1:i-1, j]))
             pos += 1
-            sumsqs += L[i, j]^2
         end
     end
     atanh(z)
@@ -309,20 +282,17 @@ end
 
 function logdetjac(rv::RCholCorr, x::Vector)
     z = tanh(x)
-    pos = 1
-    L = eye(ndims(rv))
+    pos = 2 # z[1] has no contribution to logdetjac
+    U = eye(ndims(rv))
     logdetL = sum(log(4) + 2x - 2 * StatsFuns.log1pexp(2x))
-    for i in 2:ndims(rv)
-        L[i, 1] = z[pos]
-        pos += 1
-        sumsqs = L[i, 1]^2
-        for j in 2:i-1
+    for j in 3:ndims(rv)
+        for i in 1:j-1
+            sumsqs = dot(vec(U[1:i, j]), vec(U[1:i, j]))
             logdetL += 0.5 * log1p(-sumsqs)
-            L[i, j] = z[pos] * sqrt(1 - sumsqs)
+            U[i, j] = z[pos] * sqrt(1 - sumsqs)
             pos += 1
-            sumsqs += L[i, j]^2
         end
-        L[i, i] = sqrt(1 - sumsqs)
+        U[j, j] = sqrt(1 - dot(U[1:j-1, j], U[1:j-1, j]))
     end
     logdetL
 end
@@ -375,7 +345,7 @@ function logdetjac(rv::RCorrMat, x::Vector)
     logdetL = length(x) * log(4) + 2sum(x) - 2sum(StatsFuns.log1pexp(2x))
     for k in 1:ndims(rv)-2
         for i in k+1:ndims(rv)
-            val[pos] = (ndims(rv) - k - 1) * log1p(-z[pos]^2)
+            val[pos] = (ndims(rv) - k - 1) * log1p(-z[pos]^2) # from Eq (11) of LKJ paper
             pos += 1
         end
     end
@@ -394,20 +364,19 @@ ndims(x::RCovMat) = x.d
 nfree(x::RCovMat) = (p = ndims(x); p * (p + 1) ÷ 2)
 
 function constrain(rv::RCovMat, x::Vector)
-    L = LowerTriangular(x)
-    #println(L)
+    U = UpperTriangular(x)
     for j in 1:ndims(rv)
-        L[j, j] = exp(L[j, j])  # Cholesky factor must have positive diagonals
+        U[j, j] = exp(U[j, j])  # Cholesky factor must have positive diagonals
     end
-    PDMat(Base.LinAlg.Cholesky(full(L), :L))
+    PDMat(Base.LinAlg.Cholesky(full(U), :U))
 end
 
 function unconstrain(::RCovMat, S::PDMat)
-    L = copy(S.chol[:L])
+    U = copy(S.chol[:U])
     for j in 1:dim(S)
-        L[j, j] = log(L[j, j])  # diagonal of Cholesky is positive, so take log
+        U[j, j] = log(U[j, j])  # diagonal of Cholesky is positive, so take log
     end
-    flatten(L)
+    flatten(U)
 end
 
 function logdetjac(rv::RCovMat, x::Vector)
@@ -427,8 +396,7 @@ nfree(x::RCovLKJ) = (p = ndims(x); p * (p + 1) ÷ 2)
 
 function constrain(rv::RCovLKJ, x::Vector)
     d = ndims(rv)
-    K = Int(.5d * (d - 1))
-    # if K not an integer, should throw an error message
+    K = Int(.5d * (d - 1))  # if K not an integer, should throw an error message
     z = tanh(x[1:K])
     diagz = exp(x[K + 1:end])
     pos = 1
