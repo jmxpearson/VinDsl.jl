@@ -23,7 +23,7 @@ end
 ###################################################
 tests = [
     #"typetests",
-    "constrainttests",
+    #"constrainttests",
     #"utiltests",
     #"structuretests",
     #"expressiontests",
@@ -31,6 +31,7 @@ tests = [
     #"integrationtests",
     #"distributiontests",
     #"advitests",
+    "lkjtests",
 ]
 
 print_with_color(:blue, "Running tests:\n")
