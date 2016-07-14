@@ -125,6 +125,7 @@ function advi_variable(x, offset, rv, dims)
 
     (L, new_offset, v)
 end
+
 function advi_variable(x, offset, rv)
     L = zero(eltype(x))
     npars = VinDsl.num_pars_advi(rv)
@@ -143,6 +144,7 @@ end
 
 macro advi_declarations(adviparamlist)
     esc(_advi_declarations(adviparamlist))
+    #_advi_declarations(adviparamlist)
 end
 
 function _advi_declarations(adviexpr::Expr, paramlist)
@@ -168,7 +170,8 @@ function _advi_declarations(adviexpr::Expr, paramlist)
                 end
                     )
             end
-            push!(param_list, dimsexpr)
+            push!(paramlist, dimsexpr)
+            #println(paramlist)
         end
 
     else
@@ -198,7 +201,7 @@ function _advi_model(adviexpr::Expr)
     else  # recursively parse
         adviexprout = copy(adviexpr)
         for indxadiviex in eachindex(adviexprout.args)
-            adviexprout.args[indxadiviex] = isa(adviexprout.args[i], Expr) ? _advi_model(adviexprout.args[indxadiviex]) : adviexprout.args[indxadiviex]
+            adviexprout.args[indxadiviex] = isa(adviexprout.args[indxadiviex], Expr) ? _advi_model(adviexprout.args[indxadiviex]) : adviexprout.args[indxadiviex]
         end
     end
     adviexprout
