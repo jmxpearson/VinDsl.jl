@@ -4,6 +4,7 @@
 [![Documentation Status](https://readthedocs.org/projects/vindsljl/badge/?version=latest)](http://vindsljl.readthedocs.org/en/latest/?badge=latest)
 [![Build Status](https://travis-ci.org/jmxpearson/VinDsl.jl.svg?branch=master)](https://travis-ci.org/jmxpearson/VinDsl.jl)
 [![Coverage Status](https://coveralls.io/repos/github/jmxpearson/VinDsl.jl/badge.svg?branch=master)](https://coveralls.io/github/jmxpearson/VinDsl.jl?branch=master)
+<a href="https://zenhub.com"><img src="https://raw.githubusercontent.com/ZenHubIO/support/master/zenhub-badge.png"></a>
 ## **WARNING**:
 VinDsl.jl is a work in progress. Not quite alpha, but watch this space!
 
