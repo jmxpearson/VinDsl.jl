@@ -30,8 +30,8 @@ tests = [
     #"hmmtests",
     #"integrationtests",
     #"distributiontests",
-    "advitests",
-    #"lkjtests",
+    #"advitests",
+    "lkjtests",
 ]
 
 print_with_color(:blue, "Running tests:\n")
