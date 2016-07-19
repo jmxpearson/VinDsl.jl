@@ -86,9 +86,9 @@ facts("Random variable types") do
         lp = logdetjac(rv, -1)
         @fact y3 ≤ rv.ub --> true
         @fact y3 ≥ rv.lb --> true
-        @fact y3 --> 2.5378828427399904
+        @fact y3 --> 2.5378828427399904 # Double checked with Stan Lib
         @fact round(x3, 8) --> -1
-        @fact lp --> -0.9333761944765002
+        @fact lp --> -0.9333761944765002 # Double checked with Stan Lib
         #println("lub constraint: ", y3, " free: ", x3, "\t", lp)
         #@fact logdetjac(rv, 1) --> log(4 - 2) - 1 - 2log(1 + exp(-1))
     end
@@ -105,9 +105,9 @@ facts("Random variable types") do
         y4 = constrain(rv, -1)
         x4 = unconstrain(rv, y4)
         lp = logdetjac(rv, -1)
-        @fact y4 --> 0.2689414213699951
+        @fact y4 --> 0.2689414213699951 # Double checked with Stan Lib
         @fact x4 --> -1
-        @fact lp --> -1.6265233750364456
+        @fact lp --> -1.6265233750364456 # Double checked with Stan Lib
         #println("prob constraint: ", y4, " free: ", x4, "\t", lp)
         @fact constrain(rv, 2) --> 1 / (1 + exp(-2))
         @fact logdetjac(rv, 2) --> - 2 - 2StatsFuns.log1pexp(-2) # Actually - 2 - 2log(1 + exp(-2)) has higher precision
@@ -125,9 +125,9 @@ facts("Random variable types") do
         y5 = constrain(rv, -1)
         x5 = unconstrain(rv, y5)
         lp = logdetjac(rv, -1)
-        @fact y5 --> -0.7615941559557649
+        @fact y5 --> -0.7615941559557649 # Double checked with Stan Lib
         @fact round(x5, 8) --> -1
-        @fact lp --> -0.8675616609660544
+        @fact lp --> -0.8675616609660544 # Double checked with Stan Lib
         #println("correlation constraint: ", y5, " free: ", x5, "\t", lp)
         @fact constrain(rv, 3) --> (exp(6) - 1) / (exp(6) + 1)
         @fact logdetjac(rv, 3) --> log(4) + 6 - 2log(1 + exp(6))
@@ -165,7 +165,7 @@ facts("Random variable types") do
         yy1 = constrain(rv, vv)
         xx1 = unconstrain(rv, yy1, sqrt(dot(vv,vv)))
         lp = logdetjac(rv, vv)
-        @fact yy1 --> [0.4082482904638631,-0.4082482904638631,0.8164965809277261]
+        @fact yy1 --> [0.4082482904638631,-0.4082482904638631,0.8164965809277261] # Double checked with Stan Lib
         @fact xx1 --> [1.0,-1.0,2.0]
         @fact lp --> -3
         #println("Unit vector constraint: ", yy1)
@@ -191,7 +191,7 @@ facts("Random variable types") do
         yy2 = constrain(rv, vv)
         xx2 = unconstrain(rv, yy2)
         lp = logdetjac(rv, vv)
-        @fact yy2 --> [1.0,1.3678794411714423,8.756935540102093]
+        @fact yy2 --> [1.0,1.3678794411714423,8.756935540102093] # Double checked with Stan Lib
         @fact xx2 --> [1.0,-1.0,2.0]
         @fact lp --> 1
         #println("Ordered vector constraint: ", yy2)
@@ -217,9 +217,9 @@ facts("Random variable types") do
         yy3 = constrain(rv, vv)
         xx3 = unconstrain(rv, yy3)
         lp = logdetjac(rv, vv)
-        @fact yy3 --> [2.718281828459045,3.0861612696304874,10.475217368561138]
+        @fact yy3 --> [2.718281828459045,3.0861612696304874,10.475217368561138] # Double checked with Stan Lib
         @fact xx3 --> [1.0,-1.0,2.0]
-        @fact lp --> 2
+        @fact lp --> 2 # Double checked with Stan Lib
         #println("Positive ordered constraint: ", yy3)
         #println("free: ", xx3 )
         #println("log determinant: ", lp)
@@ -245,9 +245,9 @@ facts("Random variable types") do
         yy4 = constrain(rv, vv)
         xx4 = unconstrain(rv, yy4)
         lp = logdetjac(rv, vv)
-        @fact yy4 --> [0.4753668864186718,0.08150826148009065,0.3903030749101513,0.05282177719108627]
+        @fact yy4 --> [0.4753668864186718,0.08150826148009065,0.3903030749101513,0.05282177719108627] # Double checked with Stan Lib
         @fact round(xx4, 8) --> [1, -1, 2]
-        @fact lp --> -7.132382729651196
+        @fact lp --> -7.132382729651196 # Double checked with Stan Lib
         #println("Simplex constraint: ", yy4)
         #println("free: ", xx4)
         #println("log determinant: ", lp)
@@ -271,9 +271,9 @@ facts("Random variable types") do
         lp = logdetjac(rv, vv)
         @fact L1 --> [2.718281828459045 0.0 0.0
                     2.0 20.085536923187668 0.0
-                    4.0 5.0 403.4287934927351]
+                    4.0 5.0 403.4287934927351] # Double checked with Stan Lib
         @fact x1 --> [1.0,2.0,3.0,4.0,5.0,6.0]
-        @fact lp --> 10
+        @fact lp --> 10 # Double checked with Stan Lib
         #println("Chol factor constraint: ", L1)
         #println("free: ", x1)
         #println("log determinant: ", lp)
@@ -292,7 +292,7 @@ facts("Random variable types") do
         @fact VinDsl.num_pars_advi(RCholCorr(5), true) --> 65
 
         rv = RCholCorr(4)
-        vv = [-0.202733, 0.549306, -0.361359, 0.867301, -0.287743, 1.35484]
+        vv = [-0.202733, 0.549306, -0.361359, 0.867301, -0.287743, 1.35484] # Double checked with Stan Lib
         #vv = randn(5 * (5 - 1) ÷ 2)
         L2 = constrain(rv, vv)
         x2 = unconstrain(rv, L2)
@@ -300,9 +300,9 @@ facts("Random variable types") do
         @fact L2 --> [1.0 0.0 0.0 0.0;
                     -0.20000042810804294 0.9797958097259855 0.0 0.0;
                     0.49999989174945103 -0.3000003289343604 0.8124037856200652 0.0;
-                    0.7000002408759531 -0.2000000289044577 0.6000003991366605 0.33166123114960505]
+                    0.7000002408759531 -0.2000000289044577 0.6000003991366605 0.33166123114960505] # Double checked with Stan Lib
         @fact round(x2, 6) --> [-0.202733, 0.549306, -0.361359, 0.867301, -0.287743, 1.35484]
-        @fact lp --> -3.5216454246105022
+        @fact lp --> -3.5216454246105022 # Double checked with Stan Lib
         #println("Chol corr constraint: ", L2)
         #println("free: ", x2)
         #println("log determinant: ", lp)
@@ -328,9 +328,9 @@ facts("Random variable types") do
         @fact L3.mat --> [1.0 -0.7615941559557649 0.9640275800758169 0.0;
                         -0.7615941559557649 1.0 -0.6030099255325068 0.6448494856562506;
                         0.9640275800758169 -0.6030099255325068 1.0 0.1859455624117277;
-                        0.0 0.6448494856562506 0.1859455624117277 1.0]
+                        0.0 0.6448494856562506 0.1859455624117277 1.0] # Double checked with Stan Lib
         @fact round(x3, 8) --> [-1., 2., 0., 1., 3., -1.5]
-        @fact lp --> -16.975342658573595
+        @fact lp --> -16.975342658573595 # Double checked with Stan Lib
         #println("Correlation constraint: ", L3)
         #println("free: ", x3)
         #println("log determinant: ", lp)
@@ -358,7 +358,7 @@ facts("Random variable types") do
                         0.36787944117144233 5.0 10.049787068367865 6.665304759777356
                         0.36787944117144233 4.0 6.665304759777356 155.6631591025766]
         @fact x4 --> [-1.0,2.0,0.0,1.0,3.0,-1.5,1.0,2.0,-1.5,2.5]
-        @fact lp --> 20.77258872223978
+        @fact lp --> 20.77258872223978 # Not defined in Stan Lib
         #println("Covariance constraint: ", L4.mat)
         #println(typeof(L4))
         #println("free: ", x4)
@@ -385,7 +385,7 @@ facts("Random variable types") do
         @fact L5.mat --> [7.3890560989306495 -15.297027539933461 0.5847122841245587 0.0
                         -15.297027539933461 54.59815003314424 -0.9941952906687441 58.04750081939266
                         0.5847122841245587 -0.9941952906687441 0.04978706836786394 0.5054524433863966
-                        0.0 58.04750081939266 0.5054524433863966 148.4131591025766]
+                        0.0 58.04750081939266 0.5054524433863966 148.4131591025766] # Double checked with Stan Lib
         @fact round(x5, 8) --> [-1.0,2.0,0.0,1.0,3.0,-1.5,1.0,2.0,-1.5,2.5]
         @fact lp --> 5.7972460636661864
         #println("LKJ Covariance constraint: \n", L5.mat)
