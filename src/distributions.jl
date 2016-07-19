@@ -3,7 +3,7 @@ dists = [
     "expfam",
     "HMM",
     "matrixnormal",
-    "lkjdistribution"
+    "LKJ"
 ]
 
 for dname in dists

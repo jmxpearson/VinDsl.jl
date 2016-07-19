@@ -29,9 +29,8 @@ tests = [
     #"expressiontests",
     #"hmmtests",
     #"integrationtests",
-    #"distributiontests",
+    "distributiontests",
     #"advitests",
-    "lkjtests",
 ]
 
 print_with_color(:blue, "Running tests:\n")
