@@ -170,6 +170,6 @@ facts("Checking LKJ distribution") do
     @fact typeof(yy) --> LKJ{Float64}
     @fact partype(yy) --> Float64
     @fact meanlogdet(yy) --> -7.462607436560608
-    @fact meanloglkj(yy, 10) --> 2.5154263517968545
+    @fact meanlog(yy, 10) --> 2.5154263517968545
     @fact entropy(yy) --> -4.787291422054154
 end

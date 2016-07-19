@@ -63,6 +63,6 @@ export VBModel,
     get_node_size, get_name_mapping, HMM, MarkovChain, MarkovMatrix,
     MatrixNormal,
     nstates, naturals, naturals_to_params, uparams, forwardbackward,
-    LKJ, _cpc_to_corr, meanlogdet, meanloglkj, entropy
+    LKJ, _cpc_to_corr, meanlogdet, meanlog, entropy
 
 end  # module

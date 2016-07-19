@@ -15,7 +15,7 @@ params(d)         # Get the parameters, i.e. (mu, sig)
 
 rand(d, n)          # Draw random samples from LKJ distribution, by default n=1
 meanlogdet(d)       # Expected log determinant
-meanloglkj(d, h)
+meanlog(d, h)
 entropy(d)
 ```
 
@@ -101,7 +101,7 @@ E_q[log p(x)] where
 p(x) = LKJ(h, p)  # p = matrix dimension
 q(x) = LKJ(eta, p)
 """
-function meanloglkj(d::LKJ, h::Real)
+function meanlog(d::LKJ, h::Real)
     η = d.η
     p = d.p
     betaq = [η + (p - i)/2. for i in 2:p]
