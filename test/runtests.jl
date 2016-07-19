@@ -22,15 +22,15 @@ end
 # Test files to run
 ###################################################
 tests = [
-    #"typetests",
+    "typetests",
     "constrainttests",
-    #"utiltests",
-    #"structuretests",
-    #"expressiontests",
-    #"hmmtests",
-    #"integrationtests",
-    #"distributiontests",
-    #"advitests",
+    "utiltests",
+    "structuretests",
+    "expressiontests",
+    "hmmtests",
+    "integrationtests",
+    "distributiontests",
+    "advitests",
 ]
 
 print_with_color(:blue, "Running tests:\n")

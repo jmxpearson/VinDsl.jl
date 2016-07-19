@@ -62,6 +62,7 @@ export VBModel,
     E, Elog, Eloggamma, Elogmvgamma, Elogdet, V, H, C, value, naturals, @defnaturals, logpdf,
     get_node_size, get_name_mapping, HMM, MarkovChain, MarkovMatrix,
     MatrixNormal,
-    nstates, naturals, naturals_to_params, uparams, forwardbackward
+    nstates, naturals, naturals_to_params, uparams, forwardbackward,
+    LKJ, _cpc_to_corr, meanlogdet, meanlog, entropy
 
 end  # module

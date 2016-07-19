@@ -125,6 +125,7 @@ function advi_variable(x, offset, rv, dims)
 
     (L, new_offset, v)
 end
+
 function advi_variable(x, offset, rv)
     L = zero(eltype(x))
     npars = VinDsl.num_pars_advi(rv)
@@ -141,78 +142,80 @@ function advi_variable(x, offset, rv)
     (L, offset + npars, v)
 end
 
-macro advi_declarations(x)
-    esc(_advi_declarations(x))
+macro advi_declarations(adviparamlist)
+    esc(_advi_declarations(adviparamlist))
+    #_advi_declarations(adviparamlist)
 end
 
-function _advi_declarations(ex::Expr, vars)
-    if ex.head == :(::)
-        vname = ex.args[1]
-        typearg = ex.args[2]
-        if isa(typearg, Expr)
-            if typearg.head == :ref   # array of variables
-                T = _convert_typename(typearg.args[1])
-                dims = typearg.args[2:end]
-                d_expr = :(
+function _advi_declarations(adviexpr::Expr, paramlist)
+    if adviexpr.head == :(::)
+        advivname = adviexpr.args[1]
+        advitypearg = adviexpr.args[2]
+        if isa(advitypearg, Expr)
+            if advitypearg.head == :ref   # array of variables
+                advitype = _convert_typename(advitypearg.args[1])
+                paramdims = advitypearg.args[2:end]
+                dimsexpr = :(
                 begin
-                    ΔL, ctr, $vname = VinDsl.advi_variable(x, ctr, $T, tuple($(dims...)))
-                    L += ΔL
+                    ΔLoweradvi, adviparamctr, $advivname = VinDsl.advi_variable(adviparamlist, adviparamctr, $advitype, tuple($(paramdims...)))
+                    Loweradvi += ΔLoweradvi
                 end
                     )
             else  # single variable
-                T = _convert_typename(typearg)
-                d_expr = :(
+                advitype = _convert_typename(advitypearg)
+                dimsexpr = :(
                 begin
-                    ΔL, ctr, $vname = VinDsl.advi_variable(x, ctr, $T)
-                    L += ΔL
+                    ΔLoweradvi, adviparamctr, $advivname = VinDsl.advi_variable(adviparamlist, adviparamctr, $advitype)
+                    Loweradvi += ΔLoweradvi
                 end
                     )
             end
-            push!(vars, d_expr)
+            push!(paramlist, dimsexpr)
+            #println(paramlist)
         end
 
     else
-        for a in filter(x -> isa(x, Expr), ex.args)
-            _advi_declarations(a, vars)
+        for aadiviex in filter(adviparamlist -> isa(adviparamlist, Expr), adviexpr.args)
+            _advi_declarations(aadiviex, paramlist)
         end
     end
-    Expr(:block, vars...)
+    Expr(:block, paramlist...)
 end
 
-_advi_declarations(ex::Expr) = _advi_declarations(ex, [])
+_advi_declarations(adviexpr::Expr) = _advi_declarations(adviexpr, [])
 
-function _convert_typename(ex)
-    out = copy(ex)
-    out.args[1] = Symbol("R", out.args[1])
-    out
+function _convert_typename(adviexpr)
+    adviexprout = copy(adviexpr)
+    adviexprout.args[1] = Symbol("R", adviexprout.args[1])
+    adviexprout
 end
 
-macro advi_model(x)
-    esc(_advi_model(x))
+macro advi_model(adviparamlist)
+    esc(_advi_model(adviparamlist))
 end
 
-function _advi_model(ex::Expr)
+function _advi_model(adviexpr::Expr)
     # if we have a ~ expression, replace with increment of L
-    if ex.head == :macrocall && ex.args[1] == Symbol("@~")
-        out = :(L += logpdf($(ex.args[3]), $(ex.args[2])))
+    if adviexpr.head == :macrocall && adviexpr.args[1] == Symbol("@~")
+        adviexprout = :(Loweradvi += logpdf($(adviexpr.args[3]), $(adviexpr.args[2])))
     else  # recursively parse
-        out = copy(ex)
-        for i in eachindex(out.args)
-            out.args[i] = isa(out.args[i], Expr) ? _advi_model(out.args[i]) : out.args[i]
+        adviexprout = copy(adviexpr)
+        for indxadiviex in eachindex(adviexprout.args)
+            adviexprout.args[indxadiviex] = isa(adviexprout.args[indxadiviex], Expr) ? _advi_model(adviexprout.args[indxadiviex]) : adviexprout.args[indxadiviex]
         end
     end
-    out
+    adviexprout
 end
 
-macro ELBO(ex)
-    out = quote
-        function ELBO(x::Vector)
-            ctr = 1
-            L = zero(eltype(x))
-            $ex
-            L
+macro ELBO(adviexpr)
+    adviexprout = quote
+        function ELBO(adviparamlist::Vector)
+            adviparamctr = 1
+            Loweradvi = zero(eltype(adviparamlist))
+            $adviexpr
+            Loweradvi
         end
     end
 
-    esc(out)
+    esc(adviexprout)
 end

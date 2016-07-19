@@ -2,7 +2,8 @@ dists = [
     "constraints",
     "expfam",
     "HMM",
-    "matrixnormal"
+    "matrixnormal",
+    "LKJ"
 ]
 
 for dname in dists
