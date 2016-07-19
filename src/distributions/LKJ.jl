@@ -107,7 +107,7 @@ function meanlog(d::LKJ, h::Real)
     betaq = [η + (p - i)/2. for i in 2:p]
     betap = [h + (p - i)/2. for i in 2:p]
     Elogx = 0
-    for i in 1:length(betaq)
+    for i in 1:length(betaq) # compute from Dirichlet mean log
         Elogx += (p - i) * (2(betap[i] - 1) .* (digamma(betaq[i]) - digamma(2betaq[i])) - (2lgamma(betap[i]) - lgamma(2betap[i])))
     end
     Elogx
@@ -121,7 +121,7 @@ function entropy(d::LKJ)
     p = d.p
     idxvec = [η + (p - i)/2. for i in 2:p]
     H = 0
-    for i in 1:length(idxvec)
+    for i in 1:length(idxvec) # compute from Dirichlet entropy
         H += (p - i) * (2*lgamma(idxvec[i]) - lgamma(2idxvec[i]) + 2(idxvec[i] - 1) .* digamma(2idxvec[i]) - 2 * (idxvec[i] - 1) .* digamma(idxvec[i]))
     end
     H
