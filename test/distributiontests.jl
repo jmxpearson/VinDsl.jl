@@ -159,3 +159,17 @@ facts("Checking exponential family interface") do
         @fact supp(d) --> RCovMat(dim(d))
     end
 end
+
+facts("Checking LKJ distribution") do
+    lkjeta = 4
+    p = 5
+    yy = LKJ(lkjeta, p)
+    @fact dim(yy) --> 5
+    @fact size(yy) --> (5, 5)
+    @fact params(yy) --> (4, 5)
+    @fact typeof(yy) --> LKJ{Float64}
+    @fact partype(yy) --> Float64
+    @fact meanlogdet(yy) --> -7.462607436560608
+    @fact meanloglkj(yy, 10) --> 2.5154263517968545
+    @fact entropy(yy) --> -4.787291422054154
+end
