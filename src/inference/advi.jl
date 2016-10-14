@@ -38,7 +38,7 @@ function advi_rand{T<:Real}(x::Vector{T}, n::Int, full=false)
         out = L * randn(p, n)
     else
         p = Int(length(x)/2)
-        out = scale(exp(x[p+1:endof(x)]), randn(p, n))
+        out = Diagonal(exp(x[p+1:endof(x)])) * randn(p, n)
     end
     for i in 1:p
         @inbounds out[i] += x[i]

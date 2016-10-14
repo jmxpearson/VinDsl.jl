@@ -64,14 +64,14 @@ logdetcov(d::MatrixNormal) = ((n, p) = size(d); n * logdet(d.V) + p * logdet(d.U
 rand(d::MatrixNormal) = reshape(rand(convert(MvNormal, d)), size(d))
 entropy(d::MatrixNormal) = entropy(convert(MvNormal, d))
 
-function logpdf(d::MatrixNormal, X::AbstractMatrix)
+function logpdf{T<:Real}(d::MatrixNormal, X::AbstractMatrix{T})
     size(X) == size(d) || error("Input matrix x has wrong size.")
     m = X - d.M
     n, p = size(d)
     invU = full(inv(d.U))
     invV = full(inv(d.V))
     lpdf = -0.5 * trace(invV * m' * invU * m)
-    lpdf -= (n * p/2) * Float64(Distributions.log2π)
+    lpdf -= (n * p/2) * Distributions.log2π
     lpdf -= 0.5 * logdetcov(d)
     lpdf
 end

@@ -113,7 +113,7 @@ end
 end
 
 @defnaturals LogMarkovChainFactor A MarkovMatrix begin
-    (slice(sum(C(z), 3), :, :), )
+    (view(sum(C(z), 3), :, :), )
 end
 
 @defnaturals LogMarkovChainFactor z HMM begin

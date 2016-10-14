@@ -48,7 +48,7 @@ function get_structure(forced_inners::Vector{Symbol}, nodes...)
     allinds = setdiff(outers, intersect(outers, inners))
 
     # now, map these indices to consecutive integers
-    idx_to_int = [idx => idxnum for (idxnum, idx) in enumerate(allinds)]
+    idx_to_int = Dict(idx => idxnum for (idxnum, idx) in enumerate(allinds))
 
     #=
     initialize some Dicts that will be useful for working with factors:
@@ -59,9 +59,9 @@ function get_structure(forced_inners::Vector{Symbol}, nodes...)
     - ints_within_node: map node symbol to the subset of *all* its indices
         corresponding to the fully outer indices
     =#
-    idxdict = Dict{Symbol, Vector{Int}}([(idx => []) for idx in allinds])
-    inds_in_factor = Dict{Symbol, Vector{Int}}([(n.name => []) for n in nodes])
-    inds_in_node = Dict{Symbol, Vector{Int}}([(n.name => []) for n in nodes])
+    idxdict = Dict{Symbol, Vector{Int}}(Dict((idx => []) for idx in allinds))
+    inds_in_factor = Dict{Symbol, Vector{Int}}(Dict((n.name => []) for n in nodes))
+    inds_in_node = Dict{Symbol, Vector{Int}}(Dict((n.name => []) for n in nodes))
 
     # now loop over nodes, building these dicts
     for n in nodes
@@ -141,7 +141,7 @@ ndims(n::Node) = length(size(n))
 getindex(n::Node, inds...) = n.data[inds...]
 
 function getindex(n::ExprNode, inds...)
-    nd = Dict([(s => project(s, n, inds)) for (s, _) in n.nodedict])
+    nd = Dict(Dict((s => project(s, n, inds)) for (s, _) in n.nodedict))
     ExprDist{Val{n.name}}(nd)
 end
 setindex!(n::Node, val, inds...) = setindex!(n.data, val, inds...)

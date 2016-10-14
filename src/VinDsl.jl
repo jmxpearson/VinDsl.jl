@@ -13,6 +13,7 @@ using ForwardDiff
 import Base: convert, call, show, zero, getindex, setindex!, ndims
 import Distributions: params, var, entropy, cov, invcov, logpdf, logdetcov, logmvgamma
 using Base.Cartesian
+using Combinatorics
 
 # general helper functions
 include("utils.jl")

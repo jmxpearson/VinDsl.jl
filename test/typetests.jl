@@ -154,6 +154,7 @@ facts("Expression nodes") do
     context("Expectation") do
         @exprnode u (x + 3a)
 
+        print(E(u[2,3]))
         @fact E(u[2, 3]) --> E(x[2]) + 3 * E(a[3])
         @fact V(u[2, 3]) --> V(x[2]) + 9 * V(a[3])
     end

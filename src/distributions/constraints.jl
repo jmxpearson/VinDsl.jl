@@ -36,7 +36,7 @@ Positively constrained variable with (optional) lower bound.
 immutable RPositive{T <: Real}  <: RScalar
     lb::T
 end
-RPositive{T <: Real}(lb::T=0.) = RPositive{T}(lb)
+RPositive() = RPositive(0.)
 constrain(rv::RPositive, x::Real) = exp(x) + rv.lb
 unconstrain(rv::RPositive, x::Real) = log(x - rv.lb)
 logdetjac(rv::RPositive, x::Real) = x
@@ -47,7 +47,7 @@ Constrained variable with (optional) upper bound.
 immutable RNegative{T <: Real}  <: RScalar
     ub::T
 end
-RNegative{T <: Real}(ub::T=0.) = RNegative{T}(ub)
+RNegative() = RNegative(0.)
 constrain(rv::RNegative, x::Real) = rv.ub - exp(x)
 unconstrain(rv::RNegative, x::Real) = log(rv.ub - x)
 logdetjac(rv::RNegative, x::Real) = x
@@ -61,7 +61,7 @@ immutable RBounded{T <: Real}  <: RScalar
     ub::T
 end
 
-RBounded{T <: Real}(lb::T = 0., ub::T = 1.0) = RBounded{T}(lb, ub)
+RBounded() = RBounded(0., 1.)
 constrain(rv::RBounded, x::Real) = rv.lb + (rv.ub - rv.lb) * StatsFuns.logistic(x)
 unconstrain(rv::RBounded, x::Real) = logit((x - rv.lb) / (rv.ub - rv.lb))
 logdetjac(rv::RBounded, x::Real) = log(rv.ub - rv.lb) - x - 2 * StatsFuns.log1pexp(-x)
@@ -75,7 +75,7 @@ end
 
 constrain(rv::RProbability, x::Real) = StatsFuns.logistic(x)
 unconstrain(rv::RProbability, x::Real) = StatsFuns.logit(x)
-logdetjac(rv::RProbability, x::Real) = - x - 2log1pexp(-x)
+logdetjac(rv::RProbability, x::Real) = - x - 2 * StatsFuns.log1pexp(-x)
 
 """
 Correlation constrained value.
@@ -295,7 +295,7 @@ function logdetjac(rv::RCholCorr, x::Vector)
     z = tanh(x)
     pos = 2 # z[1] has no contribution to logdetjac
     U = eye(ndims(rv))
-    logdetL = sum(log(4) + 2x - 2 * StatsFuns.log1pexp(2x))
+    logdetL = sum(log(4) + 2x - 2 * StatsFuns.log1pexp.(2x))
     for j in 3:ndims(rv)
         for i in 1:j-1
             sumsqs = 0
@@ -371,7 +371,7 @@ function logdetjac(rv::RCorrMat, x::Vector)
     z = tanh(x)
     pos = 1
     val = zeros(length(x))
-    logdetL = length(x) * log(4) + 2sum(x) - 2sum(StatsFuns.log1pexp(2x))
+    logdetL = length(x) * log(4) + 2sum(x) - 2sum(StatsFuns.log1pexp.(2x))
     for k in 1:ndims(rv)-2
         for i in k+1:ndims(rv)
             val[pos] = (ndims(rv) - k - 1) * log1p(-z[pos]^2) # from Eq (11) of LKJ paper
@@ -477,7 +477,7 @@ function logdetjac(rv::RCovLKJ, x::Vector)
     z = tanh(x[1:K])
     pos = 1
     val = zeros(length(x))
-    logdetL = K * log(4) + 2sum(x[1:K]) - 2sum(StatsFuns.log1pexp(2x[1:K]))
+    logdetL = K * log(4) + 2sum(x[1:K]) - 2sum(StatsFuns.log1pexp.(2x[1:K]))
     logdetL += sum(x[K+1:end]) # log determinant for positive constraint
     logdetL += d .* (sum(x[K+1:end]) + log(2)) # correction from correlation to covariance
     for k in 1:d-2
