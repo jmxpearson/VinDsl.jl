@@ -22,7 +22,7 @@ immutable HMM{S <: Real} <: DiscreteMatrixDistribution
 
         ξ, logZ, Ξ = forwardbackward(π0, A, ψ)
 
-        new(ψ, π0, A, ξ, Ξ)
+        new(ψ, π0, A, ξ, Ξ, logZ)
     end
 end
 
